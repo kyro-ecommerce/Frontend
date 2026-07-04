@@ -3,18 +3,18 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 
 // --- Customer Imports ---
-import CustomerApp from './customer/App.jsx';
-import { AuthProvider as CustomerAuthProvider } from './customer/contexts/AuthContext.jsx';
-import { CartProvider as CustomerCartProvider } from './customer/contexts/CartContext.jsx';
-import { OrderProvider as CustomerOrderProvider } from './customer/contexts/OrderContext.jsx';
-import { ToastProvider as CustomerToastProvider } from './customer/contexts/ToastContext.jsx';
-import './customer/assets/styles/index.css';
+import CustomerApp from './routes/user/AppUser.jsx';
+import { AuthProvider as CustomerAuthProvider } from './store/user/AuthContext.jsx';
+import { CartProvider as CustomerCartProvider } from './store/user/CartContext.jsx';
+import { OrderProvider as CustomerOrderProvider } from './store/user/OrderContext.jsx';
+import { ToastProvider as CustomerToastProvider } from './store/user/ToastContext.jsx';
+import './index.css';
 
 // --- Admin Imports ---
-import AdminAppRouter from './admin/AppRouter.jsx';
-import { AuthProvider as AdminAuthProvider } from './admin/hooks/useAuth.jsx';
-import { ToastProvider as AdminToastProvider } from './admin/contexts/ToastContext.jsx';
-import './admin/styles/global.css';
+import AdminAppRouter from './routes/admin/AppRouter.jsx';
+import { AuthProvider as AdminAuthProvider } from './hooks/admin/useAuth.jsx';
+import { ToastProvider as AdminToastProvider } from './store/admin/ToastContext.jsx';
+
 
 const root = createRoot(document.getElementById('root'));
 
