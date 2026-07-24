@@ -28,7 +28,10 @@ const ProductDetail = () => {
       setError(null); // Reset lỗi cũ
       try {
         const response = await productService.getProductById(productId);
-        const productData = response.data.data;
+        const productData = response?.data?.data ?? response?.data;
+        if (!productData || typeof productData !== "object") {
+          throw new Error("Product data not found");
+        }
         console.log('productttttttt :>> ', productData);
         setProduct(productData);
         // Khởi tạo state rating từ dữ liệu fetch ban đầu
