@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import Cookies from "js-cookie";
 import { v4 as uuidv4 } from 'uuid'; // Thư viện để tạo ID duy nhất
+import { aiService } from "../../../services/user/ai.service";
 
 const ChatBot = () => {
   const [messages, setMessages] = useState([
@@ -63,56 +64,34 @@ const ChatBot = () => {
     setIsTyping(true);
 
     try {
-      // URL của Rasa server (REST channel)
-      const backendUrl = import.meta.env.VITE_RASA_BACKEND_URL || "http://localhost:5005/webhooks/rest/webhook";
-      
-      const response = await fetch(backendUrl, { 
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        // Định dạng body request theo yêu cầu của Rasa
-        body: JSON.stringify({ 
-          sender: senderId,
-          message: messageToSend
-        })
-      });
+      const data = await aiService.chat(messageToSend);
+      setIsTyping(false);
 
-      setIsTyping(false); 
+      if (data && data.reply) {
+        let formattedText = data.reply
+          .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+          .replace(/\*(.*?)\*/g, "<em>$1</em>")
+          .replace(/\n/g, "<br />");
 
-      if (!response.ok) {
-        throw new Error(`Lỗi từ máy chủ Rasa: ${response.status}`);
-      }
-
-      const botResponses = await response.json();
-      
-      if (botResponses && Array.isArray(botResponses)) {
-        botResponses.forEach(msg => {
-          // Xử lý tin nhắn văn bản
-          if (msg.text) {
-            let formattedText = msg.text
-                .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-                .replace(/\*(.*?)\*/g, "<em>$1</em>")
-                .replace(/\n/g, "<br />");
-
-            setMessages(prevMessages => [
-              ...prevMessages, 
-              { sender: "bot", content: formattedText, isHTML: true }
-            ]);
-          }
-          // Xử lý tin nhắn hình ảnh (nếu có)
-          if (msg.image) {
-            setMessages(prevMessages => [
-              ...prevMessages, 
-              { sender: "bot", image: msg.image }
-            ]);
-          }
-        });
+        setMessages((prevMessages) => [
+          ...prevMessages,
+          {
+            sender: "bot",
+            content: formattedText,
+            isHTML: true,
+            recommendedProducts: data.recommended_products || [],
+          },
+        ]);
       }
     } catch (error) {
-      console.error("Lỗi khi gửi tin nhắn đến backend Rasa:", error);
+      console.error("Lỗi khi kết nối AI Service:", error);
       setIsTyping(false);
-      setMessages(prevMessages => [
-        ...prevMessages, 
-        { sender: "bot", content: "Xin lỗi, có lỗi xảy ra khi kết nối đến hệ thống hỗ trợ. Vui lòng thử lại sau." }
+      setMessages((prevMessages) => [
+        ...prevMessages,
+        {
+          sender: "bot",
+          content: "Xin lỗi, hệ thống AI đang bận. Vui lòng thử lại sau.",
+        },
       ]);
     }
   };

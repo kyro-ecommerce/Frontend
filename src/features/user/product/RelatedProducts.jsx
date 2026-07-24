@@ -1,30 +1,52 @@
-import React from "react";
-const RelatedProducts = () => {
+import React, { useEffect, useState } from "react";
+import { aiService } from "../../../services/user/ai.service";
+import ProductCard from "./ProductCard";
+
+const RelatedProducts = ({ productId }) => {
+  const [similarProducts, setSimilarProducts] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!productId) return;
+
+    const fetchSimilar = async () => {
+      setLoading(true);
+      try {
+        const res = await aiService.getSimilarProducts(productId, 4);
+        const productsList = res?.items || res?.recommendations || res?.data || (Array.isArray(res) ? res : []);
+        setSimilarProducts(productsList);
+      } catch (err) {
+        console.error("Error fetching AI recommendations:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSimilar();
+  }, [productId]);
+
+  if (loading || !similarProducts || similarProducts.length === 0) return null;
+
   return (
-    <section className="px-64 py-10 max-md:p-5">
-      <h2>Sản phẩm đã xem</h2>
-      <div className="flex gap-5 mt-5 max-sm:flex-col">
-        <article className="w-[calc(33%_-_14px)]">
-          <img src="product1.jpg" alt="Product 1" />
-          <div>
-            <h3>Laptop ASUS Vivobook 5 14</h3>
-            <p>22.990.000đ</p>
-          </div>
-        </article>
-        <article className="w-[calc(33%_-_14px)]">
-          <img src="product2.jpg" alt="Product 2" />
-          <div>
-            <h3>Card màn hình MSI RTX 3060</h3>
-            <p>29.490.000đ</p>
-          </div>
-        </article>
-        <article className="w-[calc(33%_-_14px)]">
-          <img src="product3.jpg" alt="Product 3" />
-          <div>
-            <h3>MacBook Pro 14 M2 Pro</h3>
-            <p>48.800.000đ</p>
-          </div>
-        </article>
+    <section className="px-64 py-10 max-md:p-5 bg-gray-50 border-t border-gray-100 mt-10">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
+          <span>✨</span> Sản Phẩm Tương Tự (AI Gợi Ý)
+        </h2>
+      </div>
+      <div className="grid grid-cols-4 gap-6 max-lg:grid-cols-2 max-sm:grid-cols-1">
+        {similarProducts.map((item) => (
+          <ProductCard
+            key={item.product_id || item.id}
+            productId={item.product_id || item.id}
+            image={item.image_url || item.imageUrl}
+            title={item.title || item.name}
+            price={item.discounted_price || item.price}
+            originalPrice={item.original_price || item.originalPrice}
+            ratingImage={item.average_rating || item.averageRating}
+            discountPercent={item.discount_percent || item.discountPercent}
+          />
+        ))}
       </div>
     </section>
   );

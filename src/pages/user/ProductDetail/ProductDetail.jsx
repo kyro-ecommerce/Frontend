@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import ProductGallery from "../../../features/user/product/ProductGallery";
 import ProductInfo from "../../../features/user/product/ProductInfo";
 import ProductReviews from "../../../features/user/product/ProductReviews";
+import RelatedProducts from "../../../features/user/product/RelatedProducts";
 import { productService } from "../../../services/user/product.service";
 import { Alert, CircularProgress, Typography } from "@mui/material";
 
@@ -28,12 +29,13 @@ const ProductDetail = () => {
       setError(null); // Reset lỗi cũ
       try {
         const response = await productService.getProductById(productId);
-        const productData = response.data.data;
+        const productData = response.data?.data || response.data;
         console.log('productttttttt :>> ', productData);
-        setProduct(productData);
-        // Khởi tạo state rating từ dữ liệu fetch ban đầu
-        setCurrentAverageRating(productData.averageRating || 0);
-        setCurrentTotalReviews(productData.numRatings || 0);
+        if (productData) {
+          setProduct(productData);
+          setCurrentAverageRating(productData.averageRating || 0);
+          setCurrentTotalReviews(productData.numRatings || 0);
+        }
       } catch (err) {
         console.error("Error fetching product:", err); // Log lỗi chi tiết
         setError("Product not found or error loading data."); // Thông báo lỗi chung
@@ -103,6 +105,9 @@ const ProductDetail = () => {
               initialAverageRating={currentAverageRating}
               initialTotalReviews={currentTotalReviews}
             />
+
+            {/* AI Gợi ý sản phẩm tương tự */}
+            <RelatedProducts productId={productId} />
           </>
         )}
         {!productInfoData && !loading && <p>Không tìm thấy thông tin sản phẩm.</p>}

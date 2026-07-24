@@ -34,7 +34,9 @@ export const cartService = {
 
     updateCartItem: async (cartUpdateData, itemId) => {
         try {
-            const response = await api.put(`/cart/update/${itemId}`, cartUpdateData);
+            // Backend CartController: @PutMapping("/update") — no path variable
+            // itemId should be included in cartUpdateData body if needed
+            const response = await api.put(`/cart/update`, cartUpdateData);
             return response;
         } catch (error) {
             console.error("Error updating cart item in service:", error.response || error);
