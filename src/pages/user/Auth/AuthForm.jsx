@@ -27,7 +27,7 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import Github from "@mui/icons-material/GitHub";
 import Google from "@mui/icons-material/Google";
 
-const BACKEND_URL = import.meta.env.VITE_API_URL;
+const BACKEND_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
 const AuthForms = ({ handleClose }) => {
   const [showLoginForm, setShowLoginForm] = useState(true);

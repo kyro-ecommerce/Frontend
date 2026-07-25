@@ -117,8 +117,9 @@ export const AuthProvider = ({ children }) => {
 
       console.log("User roles:", roles);
 
-      // Check if user is a seller
-      if (roles.includes("SELLER") || userFromLogin?.role === "SELLER") {
+      // Check if user is a seller and seller app is on a separate host/port
+      const isExternalSellerApp = urlSeller && !urlSeller.includes(window.location.host);
+      if ((roles.includes("SELLER") || userFromLogin?.role === "SELLER") && isExternalSellerApp) {
         console.log("Seller detected, redirecting to seller app");
         
         try {

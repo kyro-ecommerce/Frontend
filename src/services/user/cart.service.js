@@ -4,7 +4,7 @@ import { api } from "../../config/user/ApiConfig";
 export const cartService = {
     getCart: async () => {
         try {
-            const response = await api.get(`/cart/`);
+            const response = await api.get(`/cart`);
             return response;
         } catch (error) {
             console.error("Error fetching cart in service:", error.response || error);
@@ -32,11 +32,17 @@ export const cartService = {
         }
     },
 
-    updateCartItem: async (cartUpdateData, itemId) => {
+    updateCartItem: async (productId, quantity) => {
         try {
-            // Backend CartController: @PutMapping("/update") — no path variable
-            // itemId should be included in cartUpdateData body if needed
-            const response = await api.put(`/cart/update`, cartUpdateData);
+            let pId = productId;
+            let qVal = quantity;
+            if (typeof productId === 'object' && productId !== null) {
+                pId = productId.productId || quantity;
+                qVal = productId.quantity;
+            }
+            const response = await api.put(`/cart/update`, null, {
+                params: { productId: pId, quantity: qVal }
+            });
             return response;
         } catch (error) {
             console.error("Error updating cart item in service:", error.response || error);

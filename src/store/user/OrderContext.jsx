@@ -44,7 +44,7 @@ export const OrderProvider = ({ children }) => {
   }, [isAuthenticated, fetchAddresses]); // Thêm fetchAddresses
 
   // createNewOrder (giữ nguyên hoặc đảm bảo useCallback nếu cần)
-  const createNewOrder = useCallback(async (addressId) => {
+  const createNewOrder = useCallback(async (addressId, paymentMethod = 'COD') => {
     if (!isAuthenticated) {
       setError("Vui lòng đăng nhập để đặt hàng.");
       throw new Error("User not authenticated");
@@ -56,7 +56,7 @@ export const OrderProvider = ({ children }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await orderService.createOrder(addressId);
+      const response = await orderService.createOrder(addressId, paymentMethod);
       const responseBody = response.data;
       let actualOrderObject = null;
       if (responseBody && Array.isArray(responseBody.orders) && responseBody.orders.length > 0) {

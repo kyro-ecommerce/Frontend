@@ -214,20 +214,13 @@ const Checkout = () => {
                             setIsProcessingPostOrder(true);
                             
                             try {
-                                console.log(`[POST_PROCESSING_EFFECT] ATTEMPTING TO SEND EMAIL AND CLEAR CART for order ${orderIdForPostProcessing}`);
+                                console.log(`[POST_PROCESSING_EFFECT] Order post-processing for order ${orderIdForPostProcessing}`);
                                 
-                                await orderService.sendOrderToEmail(orderIdForPostProcessing);
-                                showToast("Thông tin đơn hàng đã được gửi qua email.", "success");
                                 setEmailSentForOrderId(orderIdForPostProcessing);
-
                                 await clearCartContext();
-                                showToast("Giỏ hàng đã được xóa.", "info");
-                                
                                 setOrderProcessedForEmailAndCartClear(true);
                             } catch (error) {
                                 console.error(`[POST_PROCESSING_EFFECT] Error during post-processing for order ${orderIdForPostProcessing}:`, error);
-                                const errorMessage = error.message || "Lỗi khi hoàn tất các bước cuối của đơn hàng.";
-                                showToast(errorMessage, "error");
                             } finally {
                                 // ---- MỞ KHÓA ----
                                 setIsProcessingPostOrder(false);
@@ -343,7 +336,7 @@ const Checkout = () => {
         const finalAddressId = Number(addressIdFromUrl);
 
         try {
-            const createdOrder = await createNewOrderContext(finalAddressId);
+            const createdOrder = await createNewOrderContext(finalAddressId, paymentMethod);
             if (!createdOrder || !createdOrder.id) { throw new Error("Không nhận được ID đơn hàng sau khi tạo."); }
 
             setProcessedOrderId(createdOrder.id.toString());
@@ -353,8 +346,16 @@ const Checkout = () => {
 
             if (paymentMethod === "VNPAY") {
                 const paymentResponse = await orderService.createVNPayPayment(createdOrder.id);
-                if (paymentResponse.data?.paymentUrl) { window.location.href = paymentResponse.data.paymentUrl; return; }
-                else { throw new Error("Không nhận được link thanh toán VNPAY."); }
+                console.log("[Checkout] VNPay Response:", paymentResponse);
+                const paymentUrl = paymentResponse?.data?.paymentUrl || paymentResponse?.paymentUrl;
+                if (paymentUrl && typeof paymentUrl === 'string' && (paymentUrl.startsWith('http://') || paymentUrl.startsWith('https://'))) {
+                    console.log("[Checkout] Redirecting to VNPay URL:", paymentUrl);
+                    window.location.href = paymentUrl;
+                    return;
+                } else {
+                    console.error("[Checkout] Invalid VNPay URL payload:", paymentResponse);
+                    throw new Error("Không nhận được link thanh toán VNPAY hợp lệ từ hệ thống.");
+                }
             } else { // COD
                 const params = new URLSearchParams();
                 params.set('step', '4');
@@ -364,15 +365,32 @@ const Checkout = () => {
             }
         } catch (err) {
             console.error("[Checkout] Lỗi trong quá trình đặt hàng:", err.message, err);
-            const apiErrorMessage = orderContextError || err.message || "Đặt hàng thất bại. Vui lòng thử lại.";
-            if (err.message && err.message.includes("Authentication in progress")) { showToast("Hệ thống đang xử lý thông tin đăng nhập, vui lòng thử lại sau giây lát.", "warning");
-            } else { showToast(apiErrorMessage, "error"); }
+            const apiErrorMessage = err.response?.data?.message || err.response?.data?.detail || orderContextError || err.message || "Đặt hàng thất bại. Vui lòng thử lại.";
+            if (err.message && err.message.includes("Authentication in progress")) {
+                showToast("Hệ thống đang xử lý thông tin đăng nhập, vui lòng thử lại sau giây lát.", "warning");
+            } else {
+                showToast(apiErrorMessage, "error");
+            }
+            setIsPlacingOrder(false);
         } finally {
-             if (paymentMethod !== 'VNPAY' || (err && !err.message?.toLowerCase().includes("vnpay"))) { setIsPlacingOrder(false); }
+            if (paymentMethod !== 'VNPAY') {
+                setIsPlacingOrder(false);
+            }
         }
     };
 
     const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', minimumFractionDigits: 0 }).format(amount || 0);
+
+    const formatDate = (dateInput) => {
+        if (!dateInput) return "Đang cập nhật...";
+        if (Array.isArray(dateInput)) {
+            const [year, month, day, hour = 0, minute = 0, second = 0] = dateInput;
+            const d = new Date(year, month - 1, day, hour, minute, second);
+            return isNaN(d.getTime()) ? "Đang cập nhật..." : d.toLocaleString('vi-VN');
+        }
+        const d = new Date(dateInput);
+        return isNaN(d.getTime()) ? "Đang cập nhật..." : d.toLocaleString('vi-VN');
+    };
 
     const CheckoutProgress = () => ( /* ... (Giữ nguyên) ... */ <div className="flex items-center justify-between mb-10 w-full max-w-3xl mx-auto px-2 sm:px-0">
             {["Giỏ hàng", "Thông tin", "Thanh toán", "Hoàn tất"].map((label, index) => {
@@ -505,7 +523,7 @@ const Checkout = () => {
                     <p className="text-lg text-gray-600 mb-6">Cảm ơn bạn đã đặt hàng tại Tech Shop.</p>
                     <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 mb-6 text-left space-y-3 text-sm sm:text-base">
                         <h3 className="text-xl font-semibold mb-3 text-gray-700">Thông tin đơn hàng #{orderIdToDisplay}</h3>
-                        <p><strong>Ngày đặt:</strong> {orderDetails?.orderDate ? new Date(orderDetails.orderDate).toLocaleString('vi-VN') : "Đang cập nhật..."}</p>
+                        <p><strong>Ngày đặt:</strong> {formatDate(orderDetails?.orderDate)}</p>
                         <p><strong>Phương thức:</strong> {orderDetails?.paymentMethod === "COD" ? "Thanh toán khi nhận hàng (COD)" : (orderDetails?.paymentMethod || (vnpayStatus === 'success' ? "VNPAY" : "Đang cập nhật..."))}</p>
                         <p><strong>Địa chỉ giao:</strong> {`${orderDetails?.shippingAddress?.street || ''}, ${orderDetails?.shippingAddress?.ward || ''}, ${orderDetails?.shippingAddress?.district || ''}, ${orderDetails?.shippingAddress?.province || ''}`}</p>
                         <p className="font-bold"><strong>Tổng tiền:</strong> <span className="text-red-600">{orderDetails ? formatCurrency(orderDetails.totalDiscountedPrice) : "Đang cập nhật..."}</span></p>

@@ -22,13 +22,32 @@ export const CartProvider = ({ children }) => {
 
   const normalizeCartData = (dataFromApi) => {
     if (dataFromApi && typeof dataFromApi === 'object') {
+      const rawItems = dataFromApi.cartItems || dataFromApi.items || [];
+      const normalizedItems = rawItems.map(item => ({
+        ...item,
+        id: item.id || item.productId,
+        productId: item.productId || item.id,
+        productName: item.productName || item.title || item.name || "Sản phẩm",
+        imageUrl: item.productImageUrl || item.imageUrl || item.image || "/Placeholder2.png",
+        productImageUrl: item.productImageUrl || item.imageUrl || item.image || "/Placeholder2.png",
+        price: item.price || 0,
+        discountedPrice: item.discountedPrice != null ? item.discountedPrice : (item.price || 0),
+        quantity: item.quantity || 1,
+        size: item.size || null,
+      }));
+
+      const totalOriginalPrice = dataFromApi.totalOriginalPrice ?? dataFromApi.totalPrice ?? 0;
+      const totalDiscountedPrice = dataFromApi.totalDiscountedPrice ?? (dataFromApi.totalPrice || 0);
+      const discount = dataFromApi.discount ?? (totalOriginalPrice - totalDiscountedPrice);
+      const totalItems = dataFromApi.totalItems ?? normalizedItems.reduce((acc, curr) => acc + (curr.quantity || 1), 0);
+
       return {
-        cartItems: dataFromApi.cartItems || [],
-        totalOriginalPrice: dataFromApi.totalOriginalPrice || 0,
-        totalDiscountedPrice: dataFromApi.totalDiscountedPrice || 0,
-        discount: dataFromApi.discount || 0,
-        totalItems: dataFromApi.totalItems || 0,
-        id: dataFromApi.id || cart?.id || null, // Giữ lại cartId nếu có
+        cartItems: normalizedItems,
+        totalOriginalPrice,
+        totalDiscountedPrice,
+        discount: discount > 0 ? discount : 0,
+        totalItems,
+        id: dataFromApi.id || cart?.id || null,
       };
     }
     console.warn("[CartContext] Dữ liệu giỏ hàng từ API không đúng định dạng hoặc rỗng:", dataFromApi);
@@ -129,8 +148,7 @@ export const CartProvider = ({ children }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const payload = { quantity: newQuantity };
-      await cartService.updateCartItem(payload, cartItemId);
+      await cartService.updateCartItem(cartItemId, newQuantity);
       await internalFetchCart();
     } catch (err) {
       const errorMessage = err.response?.data?.message || err.message || "Không thể cập nhật số lượng.";

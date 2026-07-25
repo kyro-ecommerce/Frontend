@@ -2,12 +2,14 @@
 import { api } from "../../config/user/ApiConfig";
 
 export const orderService = {
-    createOrder: async (addressId) => {
+    createOrder: async (addressId, paymentMethod = "COD") => {
         try {
             if (!addressId) {
                 throw new Error("Address ID is required to create an order.");
             }
-            const response = await api.post(`/orders/create/${addressId}`);
+            const response = await api.post(`/orders/create/${addressId}`, null, {
+                params: { paymentMethod }
+            });
             return response; 
         } catch (error) {
             console.error('Lỗi khi tạo đơn hàng (Service):', error.response || error);
