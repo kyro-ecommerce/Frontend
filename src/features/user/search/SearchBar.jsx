@@ -138,7 +138,6 @@ const SearchBar = () => {
             <div>
               <div className="px-4 py-2 bg-gray-50 border-b border-gray-100 text-xs font-medium text-gray-500 flex justify-between items-center">
                 <span>Gợi ý sản phẩm ({totalCount})</span>
-                <span className="text-[10px] text-gray-400">Cuộn để xem thêm</span>
               </div>
               <div className="max-h-80 overflow-y-auto divide-y divide-gray-50 scrollbar-thin scrollbar-thumb-gray-200">
                 {results.map((product) => {

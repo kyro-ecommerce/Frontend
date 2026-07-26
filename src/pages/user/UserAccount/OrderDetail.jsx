@@ -92,10 +92,9 @@ const OrderDetail = () => {
 
   if (error && !isLoading && !order) {
     return (
-      <Box className="flex flex-col pt-3 bg-gray-50 min-h-screen">
-        <main className="flex flex-col px-4 sm:px-10 py-6">
-          <BreadcrumbNav />
-          <div className="flex flex-col md:flex-row gap-6 md:gap-10 mt-6 md:mt-10">
+      <div className="flex flex-col pt-4 bg-gray-50/50 min-h-screen">
+        <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex gap-8 max-md:flex-col items-start">
             <AccountSidebar />
             <Box className="flex-1 flex flex-col items-center justify-center py-20">
                 <Alert severity="error" action={<MuiButton color="inherit" size="small" onClick={() => fetchOrderById(orderId)}>Thử lại</MuiButton>}>
@@ -104,34 +103,31 @@ const OrderDetail = () => {
             </Box>
           </div>
         </main>
-      </Box>
+      </div>
     );
   }
-   if (!order && !isLoading) { // Sau khi load xong mà vẫn không có order
+   if (!order && !isLoading) {
     return (
-        <Box className="flex flex-col pt-3 bg-gray-50 min-h-screen">
-            <main className="flex flex-col px-4 sm:px-10 py-6">
-            <BreadcrumbNav />
-            <div className="flex flex-col md:flex-row gap-6 md:gap-10 mt-6 md:mt-10">
+        <div className="flex flex-col pt-4 bg-gray-50/50 min-h-screen">
+          <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+            <div className="flex gap-8 max-md:flex-col items-start">
                 <AccountSidebar />
                 <Box className="flex-1 flex flex-col items-center justify-center py-20">
                     <Typography variant="h6" color="text.secondary">Không tìm thấy thông tin đơn hàng.</Typography>
                     <MuiButton variant="outlined" onClick={() => navigate('/my-order')} sx={{mt:2}}>Quay lại danh sách</MuiButton>
                 </Box>
             </div>
-            </main>
-        </Box>
+          </main>
+        </div>
     );
 }
 
-
   return (
-    <div className="flex flex-col pt-3 bg-gray-50 min-h-screen">
-      <main className="flex flex-col px-4 sm:px-10 py-6">
-        <BreadcrumbNav />
-        <div className="flex flex-col md:flex-row gap-6 md:gap-10 mt-6 md:mt-10">
+    <div className="flex flex-col pt-4 bg-gray-50/50 min-h-screen">
+      <main className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex gap-8 max-md:flex-col items-start">
           <AccountSidebar />
-          <div className="flex-1 bg-white p-6 rounded-lg shadow-lg">
+          <div className="flex-1 bg-white p-6 rounded-3xl border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
             <div className="flex flex-col sm:flex-row justify-between items-center mb-6 pb-4 border-b border-gray-200">
               <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Chi tiết đơn hàng #{order.id}</h1>
               <MuiButton variant="outlined" onClick={() => navigate('/my-order')} size="small">Quay lại danh sách</MuiButton>

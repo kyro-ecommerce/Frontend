@@ -105,7 +105,7 @@ const Footer = () => {
 
             {/* Copyright */}
             <div className="text-xs text-gray-500">
-              <p>Copyright © 2025 Tech Shop Pty. Ltd.</p>
+              <p>Copyright © 2026 Kyro Store Pty. Ltd.</p>
               <p className="mt-1">Tất cả các quyền được bảo lưu.</p>
             </div>
 

@@ -70,13 +70,13 @@ const Checkout = () => {
 
     useEffect(() => {
         const addressIdFromQuery = queryParams.get('addressId');
-        if (addressIdFromQuery && savedAddressesContext.length > 0) {
+        if (addressIdFromQuery && savedAddressesContext.length > 0 && !shippingInfo.fullName) {
             const foundAddress = savedAddressesContext.find(addr => addr.id.toString() === addressIdFromQuery);
             if (foundAddress) {
                 setSelectedAddress(foundAddress);
             }
         }
-    }, [savedAddressesContext, locationHook.search, queryParams, step]); // Thêm queryParams
+    }, [savedAddressesContext, locationHook.search, step, shippingInfo.fullName]); // Thêm queryParams
 
     useEffect(() => {
         const currentOrderIdFromUrl = queryParams.get('orderId');
@@ -249,27 +249,81 @@ const Checkout = () => {
         isProcessingPostOrder 
     ]);
 
-    const handleShippingChange = (e) => { const { name, value } = e.target; setShippingInfo(prev => ({ ...prev, [name]: value })); };
-    const handleProvinceChange = (e) => { /* ... */ const code = e.target.value; const selectedOption = provinces.find(p => p.code.toString() === code); const name = selectedOption ? selectedOption.name : ''; setSelectedProvinceCode(code); setShippingInfo(prev => ({ ...prev, city: name, district: '', ward: '' })); setSelectedDistrictCode(''); setSelectedWardCode(''); setDistricts([]); setWards([]); };
-    const handleDistrictChange = (e) => { /* ... */ const code = e.target.value; const selectedOption = districts.find(d => d.code.toString() === code); const name = selectedOption ? selectedOption.name : ''; setSelectedDistrictCode(code); setShippingInfo(prev => ({ ...prev, district: name, ward: '' })); setSelectedWardCode(''); setWards([]); };
-    const handleWardChange = (e) => { /* ... */ const code = e.target.value; const selectedOption = wards.find(w => w.code.toString() === code); const name = selectedOption ? selectedOption.name : ''; setSelectedWardCode(code); setShippingInfo(prev => ({ ...prev, ward: name })); };
-    const handleAddressSelect = (address) => { /* ... */ setSelectedAddress(address); setShippingInfo({ fullName: "", phone: "", email: "", address: "", city: "", district: "", ward: "", note: "" }); setSelectedProvinceCode(''); setSelectedDistrictCode(''); setSelectedWardCode(''); setDistricts([]); setWards([]); const params = new URLSearchParams(locationHook.search); params.set('addressId', address.id.toString()); navigate({ pathname: locationHook.pathname, search: params.toString() }, { replace: true }); };
+    const clearAddressIdQueryParam = () => {
+        setSelectedAddress(null);
+        const params = new URLSearchParams(locationHook.search);
+        if (params.has('addressId')) {
+            params.delete('addressId');
+            navigate({ pathname: locationHook.pathname, search: params.toString() }, { replace: true });
+        }
+    };
+
+    const handleShippingChange = (e) => {
+        clearAddressIdQueryParam();
+        const { name, value } = e.target;
+        setShippingInfo(prev => ({ ...prev, [name]: value }));
+    };
+
+    const handleProvinceChange = (e) => {
+        clearAddressIdQueryParam();
+        const code = e.target.value;
+        const selectedOption = provinces.find(p => p.code.toString() === code);
+        const name = selectedOption ? selectedOption.name : '';
+        setSelectedProvinceCode(code);
+        setShippingInfo(prev => ({ ...prev, city: name, district: '', ward: '' }));
+        setSelectedDistrictCode('');
+        setSelectedWardCode('');
+        setDistricts([]);
+        setWards([]);
+    };
+
+    const handleDistrictChange = (e) => {
+        clearAddressIdQueryParam();
+        const code = e.target.value;
+        const selectedOption = districts.find(d => d.code.toString() === code);
+        const name = selectedOption ? selectedOption.name : '';
+        setSelectedDistrictCode(code);
+        setShippingInfo(prev => ({ ...prev, district: name, ward: '' }));
+        setSelectedWardCode('');
+        setWards([]);
+    };
+
+    const handleWardChange = (e) => {
+        clearAddressIdQueryParam();
+        const code = e.target.value;
+        const selectedOption = wards.find(w => w.code.toString() === code);
+        const name = selectedOption ? selectedOption.name : '';
+        setSelectedWardCode(code);
+        setShippingInfo(prev => ({ ...prev, ward: name }));
+    };
+
+    const handleAddressSelect = (address) => {
+        setSelectedAddress(address);
+        setShippingInfo({ fullName: "", phone: "", email: "", address: "", city: "", district: "", ward: "", note: "" });
+        setSelectedProvinceCode('');
+        setSelectedDistrictCode('');
+        setSelectedWardCode('');
+        setDistricts([]);
+        setWards([]);
+        const params = new URLSearchParams(locationHook.search);
+        params.set('addressId', address.id.toString());
+        navigate({ pathname: locationHook.pathname, search: params.toString() }, { replace: true });
+    };
 
     const handleNextStep = () => {
         clearOrderError();
         if (step === 2) {
-            const addressIdFromQuery = queryParams.get('addressId');
-            if (selectedAddress && selectedAddress.id.toString() === addressIdFromQuery) {
+            if (selectedAddress) {
                 const params = new URLSearchParams(locationHook.search);
+                params.set('addressId', selectedAddress.id.toString());
                 params.set('step', '3');
                 navigate({ pathname: locationHook.pathname, search: params.toString() });
                 setStep(3);
-            } else if (!selectedAddress && (shippingInfo.fullName && shippingInfo.phone && shippingInfo.address && selectedProvinceCode && selectedDistrictCode && selectedWardCode)) {
-                showToast("Vui lòng 'Lưu & Sử dụng địa chỉ này' hoặc chọn một địa chỉ đã lưu.", "warning"); return;
-            } else if (!addressIdFromQuery) {
-                 showToast("Vui lòng chọn địa chỉ giao hàng hoặc thêm và lưu địa chỉ mới.", "warning"); return;
+            } else if (shippingInfo.fullName && shippingInfo.phone && shippingInfo.address && selectedProvinceCode && selectedDistrictCode && selectedWardCode) {
+                handleAddAddressAndContinue();
             } else {
-                 showToast("Vui lòng chọn hoặc xác nhận địa chỉ giao hàng.", "warning"); return;
+                showToast("Vui lòng chọn địa chỉ giao hàng hoặc điền đầy đủ thông tin địa chỉ mới.", "warning");
+                return;
             }
         }
         window.scrollTo(0, 0);
@@ -454,11 +508,28 @@ const Checkout = () => {
                 )}
             </div>
             {orderContextError && <Alert severity="error" sx={{ mb: 2 }} onClose={clearOrderError}>{orderContextError}</Alert>}
-            <div className="flex justify-between mt-8">
-                <MuiButton variant="outlined" onClick={handlePrevStep} disabled={isPlacingOrder} sx={{ py: 1.5, px: 4 }}>Quay Lại</MuiButton>
-                <MuiButton variant="contained" onClick={handlePlaceOrder} disabled={isPlacingOrder || isCartContextLoading || !cartData?.cartItems?.length || authIsLoading} sx={{ py: 1.5, px: 6, bgcolor: 'rgb(220 38 38)', '&:hover': { bgcolor: 'rgb(185 28 28)' } }}>
-                    {isPlacingOrder || authIsLoading ? <CircularProgress size={24} color="inherit" /> : 'Hoàn tất đặt hàng'}
-                </MuiButton>
+            <div className="flex justify-between items-center mt-8 pt-6 border-t border-gray-100">
+                <button
+                    type="button"
+                    onClick={handlePrevStep}
+                    disabled={isPlacingOrder}
+                    className="px-6 py-3 rounded-2xl border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-all cursor-pointer disabled:opacity-50"
+                >
+                    ← QUAY LẠI
+                </button>
+
+                <button
+                    type="button"
+                    onClick={handlePlaceOrder}
+                    disabled={isPlacingOrder || isCartContextLoading || !cartData?.cartItems?.length || authIsLoading}
+                    className="bg-red-600 hover:bg-red-700 active:scale-[0.99] text-white text-xs sm:text-sm font-bold py-3.5 px-8 rounded-2xl shadow-lg shadow-red-100 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                    {isPlacingOrder || authIsLoading ? (
+                        <CircularProgress size={20} color="inherit" />
+                    ) : (
+                        <span>HOÀN TẤT ĐẶT HÀNG</span>
+                    )}
+                </button>
             </div>
         </div>);
     const CompleteStep = () => { /* ... (Giữ nguyên) ... */ const orderDetails = orderFromContext;
@@ -530,8 +601,18 @@ const Checkout = () => {
                     </div>
                     <p className="mb-8 text-gray-600">Chúng tôi sẽ xử lý đơn hàng của bạn trong thời gian sớm nhất.</p>
                     <div className="flex flex-col sm:flex-row justify-center gap-4">
-                        <MuiButton variant="contained" color="primary" onClick={() => navigate('/')} sx={{ py: 1.5, px: 5 }}>TIẾP TỤC MUA SẮM</MuiButton>
-                        <MuiButton variant="outlined" color="primary" onClick={() => navigate(`/my-order/${orderIdToDisplay || ''}`)} sx={{ py: 1.5, px: 5 }}>XEM ĐƠN HÀNG</MuiButton>
+                        <button
+                            onClick={() => navigate('/')}
+                            className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-3 px-8 rounded-2xl shadow-md shadow-blue-100 transition-all cursor-pointer"
+                        >
+                            TIẾP TỤC MUA SẮM
+                        </button>
+                        <button
+                            onClick={() => navigate(`/my-order/${orderIdToDisplay || ''}`)}
+                            className="px-8 py-3 rounded-2xl border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-all cursor-pointer"
+                        >
+                            XEM ĐƠN HÀNG
+                        </button>
                     </div>
                 </div>
             </div>
@@ -562,6 +643,7 @@ const Checkout = () => {
                         isLoadingProvinces={isLoadingProvinces} isLoadingDistricts={isLoadingDistricts} isLoadingWards={isLoadingWards}
                         handlePrevStep={handlePrevStep} onAddAddressAndContinue={handleAddAddressAndContinue} handleNextStep={handleNextStep}
                         isAddingAddress={isPlacingOrder}
+                        onClearSelectedAddress={() => setSelectedAddress(null)}
                     />
                 )}
                 {step === 3 && <PaymentStep />}

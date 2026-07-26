@@ -1,94 +1,99 @@
 // src/pages/Cart/Cart.jsx
-import React, { useState, useEffect } from "react"; // Bỏ useEffect nếu không dùng nữa
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCartContext } from "../../../store/user/CartContext";
-import { useAuthContext } from "../../../store/user/AuthContext";
 import { useToast } from "../../../store/user/ToastContext";
 import { CircularProgress, Typography, Button as MuiButton, Box, Alert } from "@mui/material";
+import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined';
 
 // --- Component CartItem ---
-const CartItem = ({ item, onRemove, formatCurrency, isLoading: isActionLoading }) => { // Đổi tên isLoading để rõ ràng hơn
+const CartItem = ({ item, isSelected, onToggleSelect, onRemove, formatCurrency, isLoading: isActionLoading }) => {
     const { updateCartItem: contextUpdateCartItem, isLoading: isCartContextUpdating } = useCartContext();
     const [quantity, setQuantity] = useState(item.quantity);
     const { showToast } = useToast();
 
-    // Cập nhật quantity state nếu item.quantity từ context thay đổi (ví dụ sau khi fetch lại cart)
     useEffect(() => {
         setQuantity(item.quantity);
     }, [item.quantity]);
-
 
     const handleLocalQuantityChange = async (changeValue) => {
         const newQuantity = Math.max(1, quantity + changeValue);
         if (newQuantity === quantity && changeValue !== 0) return;
 
         const oldQuantity = quantity;
-        setQuantity(newQuantity); // Cập nhật UI ngay
+        setQuantity(newQuantity);
 
         try {
             await contextUpdateCartItem(item.id, newQuantity);
-            // Không cần showToast ở đây nếu context đã xử lý
         } catch (error) {
             console.error("Error updating cart item quantity (CartItem):", error);
             showToast(error.message || "Lỗi cập nhật số lượng", "error");
-            setQuantity(oldQuantity); // Rollback nếu lỗi
+            setQuantity(oldQuantity);
         }
     };
 
     const handleInputChange = (e) => {
         const value = e.target.value;
         if (value === "") {
-            setQuantity(""); // Cho phép input rỗng tạm thời
+            setQuantity("");
         } else {
             const numValue = parseInt(value, 10);
             if (!isNaN(numValue) && numValue > 0) {
                 setQuantity(numValue);
-            } else if (isNaN(numValue) && value !== "") {
-                // Nếu nhập chữ hoặc ký tự không phải số, giữ nguyên giá trị cũ
-                setQuantity(prev => prev);
             }
         }
     };
 
     const handleInputBlur = async () => {
         let finalQuantity = parseInt(quantity, 10);
-
         if (isNaN(finalQuantity) || finalQuantity <= 0) {
-            // Nếu giá trị không hợp lệ (rỗng, chữ, số âm, 0), rollback về giá trị từ context (item.quantity)
             finalQuantity = item.quantity;
-            setQuantity(finalQuantity); // Cập nhật UI
-            if (item.quantity.toString() !== quantity.toString() && quantity !== "") {
-                 // Chỉ thông báo nếu người dùng đã nhập gì đó không hợp lệ và nó khác với giá trị gốc
-                 showToast("Số lượng không hợp lệ. Đã khôi phục số lượng trước đó.", "warning");
-            }
-            return; // Không gọi API nếu không có thay đổi hợp lệ
+            setQuantity(finalQuantity);
+            return;
         }
-
-        if (finalQuantity === item.quantity) return; // Không gọi API nếu không có thay đổi
+        if (finalQuantity === item.quantity) return;
 
         try {
             await contextUpdateCartItem(item.id, finalQuantity);
         } catch (error) {
-            console.error("Error updating cart item quantity on blur (CartItem):", error);
+            console.error("Error updating cart item quantity on blur:", error);
             showToast(error.message || "Lỗi cập nhật số lượng", "error");
-            setQuantity(item.quantity); // Rollback về giá trị gốc từ context nếu API lỗi
+            setQuantity(item.quantity);
         }
     };
+
     const currentLoadingState = isActionLoading || isCartContextUpdating;
 
     return (
-        <article className="flex flex-col sm:flex-row justify-between items-center p-4 md:p-6 mb-4 border border-gray-300 rounded-lg shadow-sm hover:shadow-md transition-shadow bg-white">
-            <div className="flex flex-col sm:flex-row gap-4 items-center w-full sm:w-auto mb-4 sm:mb-0">
-                <img
-                    src={item?.imageUrl || "/Placeholder2.png"}
-                    alt={item?.productName || "Sản phẩm"}
-                    className="w-24 h-24 sm:w-30 sm:h-30 object-contain rounded-md border"
+        <article className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 md:p-5 mb-4 border border-gray-200 rounded-xl bg-white shadow-2xs hover:border-gray-300 transition-colors gap-4">
+            {/* Left section: Checkbox + Image + Title + Config + Xoá */}
+            <div className="flex items-start sm:items-center gap-3 sm:gap-4 w-full sm:w-auto">
+                {/* Checkbox chọn sản phẩm */}
+                <input
+                    type="checkbox"
+                    checked={isSelected}
+                    onChange={() => onToggleSelect(item.id)}
+                    className="w-4 h-4 sm:w-5 sm:h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer shrink-0 mt-1 sm:mt-0"
                 />
-                <div className="text-center sm:text-left">
-                    <h3 className="mb-1 text-base sm:text-lg font-medium text-gray-800 line-clamp-2" title={item?.productName || "Sản phẩm"}>{item?.productName || "Sản phẩm"}</h3>
-                    {item?.size && <p className="text-xs sm:text-sm text-gray-500 mb-1">Cấu hình: {item.size}</p>}
+
+                {/* Product Image */}
+                <div className="w-20 h-20 sm:w-24 sm:h-24 bg-white border border-gray-300 rounded-xl p-1.5 shrink-0 flex items-center justify-center overflow-hidden">
+                    <img
+                        src={item?.imageUrl || "/Placeholder2.png"}
+                        alt={item?.productName || "Sản phẩm"}
+                        className="w-full h-full object-contain"
+                    />
+                </div>
+
+                <div className="flex flex-col">
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 line-clamp-2 leading-snug mb-1" title={item?.productName || "Sản phẩm"}>
+                        {item?.productName || "Sản phẩm"}
+                    </h3>
+                    <p className="text-xs sm:text-sm text-gray-500 mb-1.5">
+                        Cấu hình: <span className="text-gray-700 font-normal">{item?.size || "Một cỡ"}</span>
+                    </p>
                     <button
-                        className="text-xs sm:text-sm text-red-600 hover:text-red-700 transition-colors font-medium disabled:opacity-50"
+                        className="text-xs sm:text-sm text-red-600 hover:text-red-700 transition-colors font-semibold cursor-pointer underline text-left disabled:opacity-50"
                         onClick={() => onRemove(item.id)}
                         disabled={currentLoadingState}
                     >
@@ -96,33 +101,38 @@ const CartItem = ({ item, onRemove, formatCurrency, isLoading: isActionLoading }
                     </button>
                 </div>
             </div>
-            <div className="flex flex-col sm:flex-row gap-4 items-center w-full sm:w-auto">
-                <div className="text-lg sm:text-xl font-semibold text-red-600 order-first sm:order-0">
-                    {formatCurrency(item.discountedPrice * item.quantity)}
+
+            {/* Right section: Prices + Quantity Stepper */}
+            <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100">
+                <div className="flex items-baseline gap-2">
+                    <span className="text-base sm:text-lg font-bold text-red-600 underline underline-offset-2 decoration-red-600">
+                        {formatCurrency(item.discountedPrice * item.quantity)}
+                    </span>
+                    {item?.price > item.discountedPrice && (
+                        <span className="text-xs sm:text-sm line-through text-gray-400">
+                            {formatCurrency(item.price * item.quantity)}
+                        </span>
+                    )}
                 </div>
-                {item?.price > item.discountedPrice && (
-                    <div className="text-xs sm:text-sm line-through text-gray-500">
-                        {formatCurrency(item.price * item.quantity)}
-                    </div>
-                )}
-                <div className="flex items-center rounded border border-gray-300">
+
+                <div className="flex items-center border border-gray-300 rounded-md overflow-hidden bg-white shrink-0">
                     <button
-                        className="px-3 py-1 sm:py-2 text-base hover:bg-gray-100 disabled:opacity-50"
+                        className="px-2.5 py-1 text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-40 cursor-pointer transition-colors"
                         onClick={() => handleLocalQuantityChange(-1)}
                         disabled={currentLoadingState || quantity <= 1}
                     >
                         -
                     </button>
                     <input
-                        type="text" // Giữ type text để cho phép input rỗng tạm thời
-                        value={quantity} // Hiển thị quantity từ state
+                        type="text"
+                        value={quantity}
                         onChange={handleInputChange}
-                        onBlur={handleInputBlur} // Xử lý logic khi focus ra ngoài
-                        className="w-10 text-center border-x border-gray-300 py-1 sm:py-2 focus:outline-none bg-white"
+                        onBlur={handleInputBlur}
+                        className="w-10 text-center text-sm font-semibold border-x border-gray-300 py-1 bg-white focus:outline-none"
                         disabled={currentLoadingState}
                     />
                     <button
-                        className="px-3 py-1 sm:py-2 text-base hover:bg-gray-100 disabled:opacity-50"
+                        className="px-2.5 py-1 text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-40 cursor-pointer transition-colors"
                         onClick={() => handleLocalQuantityChange(1)}
                         disabled={currentLoadingState}
                     >
@@ -135,47 +145,43 @@ const CartItem = ({ item, onRemove, formatCurrency, isLoading: isActionLoading }
 };
 
 // --- Component CartSummary ---
-const CartSummary = ({ cartData, formatCurrency, onCheckout, isLoading }) => {
-    if (!cartData) return null;
+const CartSummary = ({ selectedItemsCount, totalOriginalPrice, totalDiscountedPrice, discount, formatCurrency, onCheckout, isLoading }) => {
     return (
         <div className="w-full md:w-1/3 lg:w-1/4 mt-6 md:mt-0 md:sticky md:top-10">
-            <div className="bg-white p-6 rounded-lg shadow-md">
-                <h2 className="text-xl font-semibold mb-5 text-gray-800">Tóm tắt đơn hàng</h2>
-                <div className="space-y-3 mb-5">
+            <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
+                <h2 className="text-xl font-semibold mb-5 text-center text-gray-800">Đơn hàng</h2>
+                <div className="space-y-3 mb-5 text-sm">
+                    <div className="flex justify-between items-center">
+                        <p className="text-gray-600">Sản phẩm chọn:</p>
+                        <p className="font-bold text-gray-800">{selectedItemsCount} món</p>
+                    </div>
                     <div className="flex justify-between items-center">
                         <p className="text-gray-600">Tạm tính:</p>
-                        <p className="font-medium text-gray-800">{formatCurrency(cartData?.totalOriginalPrice || 0)}</p>
+                        <p className="font-medium text-gray-800">{formatCurrency(totalOriginalPrice)}</p>
                     </div>
                     <div className="flex justify-between items-center">
                         <p className="text-gray-600">Giảm giá:</p>
-                        <p className="font-medium text-green-600">-{formatCurrency(cartData?.discount || 0)}</p>
+                        <p className="font-medium text-green-600">-{formatCurrency(discount)}</p>
                     </div>
                     <div className="flex justify-between items-center">
                         <p className="text-gray-600">Phí vận chuyển:</p>
                         <p className="font-medium text-green-600">Miễn phí</p>
                     </div>
                 </div>
-                <hr className="my-4 border-gray-300" />
+                <hr className="my-4 border-gray-200" />
                 <div className="flex justify-between items-center text-lg font-bold mb-6">
                     <p className="text-gray-800">Tổng cộng:</p>
-                    <p className="text-red-600 text-xl">{formatCurrency(cartData?.totalDiscountedPrice || 0)}</p>
+                    <p className="text-red-600 text-xl">{formatCurrency(totalDiscountedPrice)}</p>
                 </div>
-                <MuiButton
-                    variant="contained"
-                    fullWidth
+
+                <button
+                    type="button"
+                    className="w-full h-12 sm:h-14 rounded-lg bg-red-600 text-white font-semibold text-lg hover:bg-red-700 transition-colors"
                     onClick={onCheckout}
-                    disabled={isLoading || !cartData?.cartItems?.length}
-                    sx={{
-                        py: 1.5,
-                        fontSize: '1rem',
-                        fontWeight: 'bold',
-                        bgcolor: 'rgb(220 38 38)', // Tailwind red-600
-                        '&:hover': { bgcolor: 'rgb(185 28 28)' }, // Tailwind red-700
-                        '&.Mui-disabled': { bgcolor: 'rgb(209 213 219)', color: 'rgb(107 114 128)' } // Tailwind gray-300 and gray-500
-                    }}
+                    disabled={isLoading || selectedItemsCount === 0}
                 >
-                    {isLoading ? <CircularProgress size={24} color="inherit" /> : "ĐẶT HÀNG"}
-                </MuiButton>
+                    {isLoading ? <CircularProgress size={24} color="inherit" /> : `Đặt Hàng`}
+                </button>
             </div>
         </div>
     );
@@ -186,30 +192,61 @@ const Cart = () => {
     const navigate = useNavigate();
     const {
         cart,
-        isLoading: isCartContextLoading, // Đây là loading của context (ví dụ: khi fetch toàn bộ cart)
+        isLoading: isCartContextLoading,
         error: cartContextError,
-        // fetchCart, // Không cần gọi fetchCart từ đây nữa
         removeItemFromCart,
         clearCartError
     } = useCartContext();
     const { showToast } = useToast();
-    // const { isAuthenticated } = useAuthContext(); // Không cần isAuthenticated nếu fetchCart đã bị loại bỏ
 
-    const [isProcessingAction, setIsProcessingAction] = useState(false); // Loading cho từng action (remove, update)
+    const [isProcessingAction, setIsProcessingAction] = useState(false);
+    const [selectedItemIds, setSelectedItemIds] = useState([]);
 
-    // Loại bỏ useEffect gọi fetchCart từ đây. CartContext sẽ tự xử lý việc fetch.
-    // useEffect(() => {
-    //     if (isAuthenticated && !isCartContextLoading && (!cart || cart.cartItems.length === 0) && !cartContextError) {
-    //         fetchCart();
-    //     }
-    // }, [isAuthenticated, isCartContextLoading, cart, cartContextError, fetchCart]);
+    // Khi cart load xong, mặc định chọn tất cả sản phẩm
+    useEffect(() => {
+        if (cart?.cartItems?.length > 0) {
+            setSelectedItemIds(cart.cartItems.map(item => item.id));
+        }
+    }, [cart?.cartItems]);
 
     const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', minimumFractionDigits: 0 }).format(amount || 0);
+
+    const handleToggleSelect = (itemId) => {
+        setSelectedItemIds(prev =>
+            prev.includes(itemId) ? prev.filter(id => id !== itemId) : [...prev, itemId]
+        );
+    };
+
+    const handleToggleSelectAll = () => {
+        if (!cart?.cartItems) return;
+        if (selectedItemIds.length === cart.cartItems.length) {
+            setSelectedItemIds([]);
+        } else {
+            setSelectedItemIds(cart.cartItems.map(item => item.id));
+        }
+    };
+
+    const handleRemoveSelected = async () => {
+        if (selectedItemIds.length === 0) return;
+        setIsProcessingAction(true);
+        try {
+            for (const id of selectedItemIds) {
+                await removeItemFromCart(id);
+            }
+            setSelectedItemIds([]);
+            showToast("Đã xóa các sản phẩm được chọn.", "success");
+        } catch (err) {
+            showToast(err.message || "Lỗi xóa sản phẩm", "error");
+        } finally {
+            setIsProcessingAction(false);
+        }
+    };
 
     const handleRemoveItem = async (itemId) => {
         setIsProcessingAction(true);
         try {
             await removeItemFromCart(itemId);
+            setSelectedItemIds(prev => prev.filter(id => id !== itemId));
             showToast("Đã xóa sản phẩm khỏi giỏ hàng.", "success");
         } catch (err) {
             showToast(err.message || "Lỗi xóa sản phẩm", "error");
@@ -217,12 +254,18 @@ const Cart = () => {
         setIsProcessingAction(false);
     };
 
-    const handleCheckout = () => navigate('/checkout?step=2');
+    const handleCheckout = () => {
+        if (selectedItemIds.length === 0) {
+            showToast("Vui lòng chọn ít nhất 1 sản phẩm để thanh toán", "warning");
+            return;
+        }
+        navigate('/checkout?step=2');
+    };
 
     const CheckoutProgress = () => {
         const currentStepInCart = 1;
         return (
-            <div className="flex items-center justify-between mb-10 w-full max-w-3xl mx-auto px-2 sm:px-0">
+            <div className="flex items-center justify-between mb-8 w-full max-w-3xl mx-auto px-2 sm:px-0">
                 {["Giỏ hàng", "Thông tin", "Thanh toán", "Hoàn tất"].map((label, index) => {
                     const stepNumber = index + 1;
                     const isActive = stepNumber <= currentStepInCart;
@@ -246,7 +289,6 @@ const Cart = () => {
         );
     };
 
-    // Hiển thị loading toàn cục nếu context đang fetch lần đầu VÀ chưa có lỗi
     if (isCartContextLoading && (!cart || cart.cartItems.length === 0) && !cartContextError) {
         return (
             <Box className="flex flex-col items-center justify-center min-h-[calc(100vh-200px)] py-10">
@@ -265,12 +307,7 @@ const Cart = () => {
                         <MuiButton
                             color="inherit"
                             size="small"
-                            onClick={() => {
-                                clearCartError();
-                                // Không gọi fetchCart() trực tiếp ở đây nữa,
-                                // CartContext sẽ tự fetch nếu cần sau khi lỗi được clear
-                                // Hoặc, bạn có thể có một hàm refreshCart trong context
-                            }}
+                            onClick={() => clearCartError()}
                         >
                             Thử lại
                         </MuiButton>
@@ -284,39 +321,87 @@ const Cart = () => {
     }
     
     const hasItems = cart && cart.cartItems && cart.cartItems.length > 0;
+    const isAllSelected = hasItems && selectedItemIds.length === cart.cartItems.length;
+
+    // Tính toán số liệu dựa TRÊN CÁC SẢN PHẨM ĐƯỢC CHỌN
+    const selectedItems = cart?.cartItems?.filter(i => selectedItemIds.includes(i.id)) || [];
+    const totalOriginalPrice = selectedItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
+    const totalDiscountedPrice = selectedItems.reduce((acc, item) => acc + (item.discountedPrice * item.quantity), 0);
+    const totalDiscount = totalOriginalPrice - totalDiscountedPrice;
 
     return (
         <main className="flex flex-col pt-3 bg-gray-50 min-h-screen">
             <section className="flex flex-col items-center px-4 md:px-10 lg:px-16 xl:px-24 py-10">
-                <h1 className="mb-8 text-3xl sm:text-4xl font-bold text-gray-800">Giỏ hàng của bạn</h1>
+                <h1 className="mb-6 text-3xl sm:text-4xl font-bold text-gray-800">Giỏ hàng của bạn</h1>
                 <CheckoutProgress />
                 
                 {!hasItems && !isCartContextLoading ? (
-                    <div className="w-full py-16 text-center min-h-[40vh] flex flex-col justify-center items-center bg-white rounded-lg shadow-md">
-                        <img src="/empty-cart.svg" alt="Empty Cart" className="w-48 h-48 mb-6 text-gray-400" />
-                        <Typography variant="h5" className="mb-4 text-gray-700">Giỏ hàng của bạn trống</Typography>
-                        <Typography variant="body1" className="mb-6 text-gray-500">Thêm sản phẩm vào giỏ để tiếp tục mua sắm.</Typography>
-                        <MuiButton
-                            variant="contained" color="primary" onClick={() => navigate('/product/all')}
-                            sx={{ py: 1.5, px: 6, fontSize: '1rem', bgcolor: 'rgb(37 99 235)', '&:hover': { bgcolor: 'rgb(29 78 216)' } }}
+                    <div className="w-full py-16 text-center min-h-[40vh] flex flex-col justify-center items-center bg-white rounded-3xl border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)] px-6">
+                        <div className="w-24 h-24 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center mb-5">
+                            <ShoppingBagOutlinedIcon sx={{ fontSize: 48 }} />
+                        </div>
+                        <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900 mb-2">
+                            Giỏ hàng của bạn đang trống
+                        </h2>
+                        <p className="text-xs sm:text-sm text-gray-500 max-w-md mb-6 leading-relaxed">
+                            Hãy khám phá hàng ngàn sản phẩm công nghệ chất lượng cao và chọn món hàng yêu thích của bạn nhé!
+                        </p>
+                        <button
+                            onClick={() => navigate('/product/all')}
+                            className="bg-red-600 hover:bg-red-700 active:scale-[0.99] text-white font-bold text-xs sm:text-sm py-3.5 px-8 rounded-2xl shadow-lg shadow-red-100 transition-all cursor-pointer flex items-center gap-2"
                         >
-                            Khám phá sản phẩm
-                        </MuiButton>
+                            <span>KHÁM PHÁ SẢN PHẨM</span>
+                            <span className="text-base">→</span>
+                        </button>
                     </div>
                 ) : cart && cart.cartItems ? (
                     <div className="w-full flex flex-col md:flex-row gap-6">
                         <div className="w-full md:grow">
-                            {/* Hiển thị loading nhỏ nếu context đang update (sau action) nhưng vẫn có items */}
-                            {isCartContextLoading && hasItems && <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}><CircularProgress /></Box>}
+                            {/* Header Chọn tất cả */}
+                            <div className="flex items-center justify-between p-3.5 mb-4 bg-white border border-gray-200 rounded-xl shadow-2xs">
+                                <label className="flex items-center gap-3 cursor-pointer text-sm font-bold text-gray-800 select-none">
+                                    <input
+                                        type="checkbox"
+                                        checked={isAllSelected}
+                                        onChange={handleToggleSelectAll}
+                                        className="w-4 h-4 sm:w-5 sm:h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                                    />
+                                    <span>Tất cả ({cart.cartItems.length} sản phẩm)</span>
+                                </label>
+
+                                {selectedItemIds.length > 0 && (
+                                    <button
+                                        onClick={handleRemoveSelected}
+                                        disabled={isProcessingAction}
+                                        className="text-xs text-red-600 hover:text-red-700 font-semibold underline cursor-pointer disabled:opacity-50"
+                                    >
+                                        Xóa mục đã chọn ({selectedItemIds.length})
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Danh sách các item trong giỏ */}
                             {cart.cartItems.map((cartItem) => (
                                 <CartItem
-                                    key={cartItem.id} item={cartItem} onRemove={handleRemoveItem}
-                                    formatCurrency={formatCurrency} isLoading={isProcessingAction || isCartContextLoading} // item loading + context loading
+                                    key={cartItem.id}
+                                    item={cartItem}
+                                    isSelected={selectedItemIds.includes(cartItem.id)}
+                                    onToggleSelect={handleToggleSelect}
+                                    onRemove={handleRemoveItem}
+                                    formatCurrency={formatCurrency}
+                                    isLoading={isProcessingAction || isCartContextLoading}
                                 />
                             ))}
                         </div>
+
+                        {/* Tóm tắt đơn hàng (tính theo các món được tick chọn) */}
                         <CartSummary
-                            cartData={cart} formatCurrency={formatCurrency} onCheckout={handleCheckout}
+                            selectedItemsCount={selectedItemIds.length}
+                            totalOriginalPrice={totalOriginalPrice}
+                            totalDiscountedPrice={totalDiscountedPrice}
+                            discount={totalDiscount}
+                            formatCurrency={formatCurrency}
+                            onCheckout={handleCheckout}
                             isLoading={isProcessingAction || isCartContextLoading}
                         />
                     </div>

@@ -47,6 +47,26 @@ export const orderService = {
         }
     },
 
+    deleteAddress: async (addressId) => {
+        try {
+            const response = await api.delete(`/users/addresses/${addressId}`);
+            return response;
+        } catch (error) {
+            console.error('Lỗi khi xóa địa chỉ (Service):', error.response || error);
+            throw error;
+        }
+    },
+
+    updateAddress: async (addressId, addressData) => {
+        try {
+            const response = await api.put(`/users/addresses/${addressId}`, addressData);
+            return response;
+        } catch (error) {
+            console.error('Lỗi khi sửa địa chỉ (Service):', error.response || error);
+            throw error;
+        }
+    },
+
     createVNPayPayment: async (orderId) => {
         try {
             const response = await api.post(`/payment/create/${orderId}`);

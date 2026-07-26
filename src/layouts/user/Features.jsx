@@ -14,11 +14,10 @@ const Features = () => {
               />
               <div className="flex flex-col items-center mt-6 max-w-full w-66.25">
                 <div className="text-lg font-bold leading-none">
-                  Product Support
+                  Hỗ trợ sản phẩm
                 </div>
                 <div className="mt-3.5 text-sm leading-5">
-                  Up to 3 years on-site warranty available for your peace of
-                  mind.
+                  Chế độ bảo hành tận nơi lên đến 3 năm giúp bạn hoàn toàn yên tâm khi sử dụng sản phẩm.
                 </div>
               </div>
             </div>
@@ -32,11 +31,10 @@ const Features = () => {
               />
               <div className="flex flex-col items-center mt-6 max-w-full w-66.25">
                 <div className="text-lg font-bold leading-none">
-                  Personal Account
+                  Tài khoản cá nhân
                 </div>
                 <div className="mt-3.5 text-sm leading-5">
-                  With big discounts, free delivery and a dedicated support
-                  specialist.
+                  Tận hưởng ưu đãi giảm giá lớn, miễn phí vận chuyển và đội ngũ hỗ trợ tận tâm.
                 </div>
               </div>
             </div>
@@ -50,10 +48,10 @@ const Features = () => {
               />
               <div className="flex flex-col items-center mt-6 max-w-full w-66.25">
                 <div className="text-lg font-bold leading-none">
-                  Amazing Savings
+                  Tiết kiệm hấp dẫn
                 </div>
                 <div className="mt-3.5 text-sm leading-5">
-                  Up to 70% off new Products, you can be sure of the best price.
+                  Giảm giá tới 70% cho sản phẩm mới, đảm bảo giá tốt nhất.
                 </div>
               </div>
             </div>

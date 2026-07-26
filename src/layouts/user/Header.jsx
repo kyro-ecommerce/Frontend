@@ -268,12 +268,12 @@ const Header = () => {
       {/* Modal LoginForm */}
       {showLoginForm && (
         <div
-          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          className="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 p-4"
           onClick={handleClose}
         >
           <div
             ref={modalRef}
-            className="bg-white p-6 md:p-8 rounded-2xl shadow-2xl w-full max-w-md"
+            className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden transition-all duration-300"
             onClick={(e) => e.stopPropagation()}
           >
             <AuthForms handleClose={handleClose} />
