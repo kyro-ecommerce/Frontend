@@ -33,12 +33,13 @@ const TopSale = () => {
     <div className="flex flex-col w-full max-md:max-w-full px-4"> {/* Thêm px-4 để có khoảng trống hai bên */}
       <div className="flex flex-wrap gap-5 justify-between items-center mb-2 mt-5 max-md:max-w-full"> {/* Giảm mb, thêm items-center */}
         <div className="text-2xl font-semibold text-black">
-          TOP SALE 
+          Top Sale
         </div>
         <a
-          href="/product/all" // Cân nhắc dùng Link của react-router-dom nếu đây là SPA
-          className="text-sm leading-none text-blue-600 hover:underline">
-           Xem toàn bộ sản phẩm
+          href="/product/all" 
+          className="text-sm font-semibold leading-none text-blue-600 transition-colors duration-300 hover:text-blue-900 hover:underline hover:underline-offset-4 hover:decoration-2"
+        >
+          Xem toàn bộ
         </a>
       </div>
       {/* Thay đổi từ flex flex-wrap sang grid */}

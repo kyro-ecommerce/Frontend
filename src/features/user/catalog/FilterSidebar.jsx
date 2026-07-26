@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useFilter } from "./FilterContext";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { productService } from "../../../services/user/product.service";
+import Filter from "./Filter";
 
 // Price filter data (Giữ nguyên)
 const priceRanges = [
@@ -119,7 +120,6 @@ const FilterSidebar = ({ topCategory }) => {
         targetPath = `/${topCategory}`;
       }
     
-      // Giữ lại query string (color, price, sort, v.v.) từ URL hiện tại
       const queryString = params.toString();
       const targetUrl = `${targetPath}${queryString ? `?${queryString}` : ''}`;
     
@@ -127,216 +127,155 @@ const FilterSidebar = ({ topCategory }) => {
       navigate(targetUrl, { replace: true });
     };
 
-
-
   return (
-    <aside className="w-[20%] max-md:ml-0 max-md:w-full">
-      <div className="max-md:mt-1.5">
-        <section className="bg-violet-50 divide-y divide-gray-300">
-          {/* Filter Header & Clear Button */}
-          <div className="max-w-full text-center rounded-none w-62.5">
-             <div className="flex flex-col px-4 py-5">
-              <h2 className="self-center text-base font-bold text-black">Filters</h2>
+    <aside className="w-full md:w-64 shrink-0">
+      <div className="bg-white border border-gray-100 rounded-3xl p-5 shadow-[0_4px_20px_rgba(0,0,0,0.03)] flex flex-col divide-y divide-gray-100">
+        {/* Filter Header */}
+        <div className="flex items-center justify-between pb-3">
+          <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
+            <span>Bộ lọc sản phẩm</span>
+          </h2>
+        </div>
+
+        {/* Mục đang chọn (Filter Tags) */}
+        <Filter />
+
+        {/* --- Category Section --- */}
+        {topCategory && topCategory !== 'all' && (
+          <section className="py-4">
+            <div
+              className="flex justify-between items-center text-sm font-bold text-gray-800 cursor-pointer mb-2 group"
+              onClick={() => toggleSection('category')}
+            >
+              <span>{topCategory.charAt(0).toUpperCase() + topCategory.slice(1)} Types</span>
+              <svg className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${expandedSections.category ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+              </svg>
             </div>
-          </div>
-
-          {/* --- Category Section (Radio Buttons for Navigation) --- */}
-          {topCategory && topCategory !== 'all' && (
-            <section className="px-4 py-5 w-full text-black min-w-62.5">
-                <div
-                    className="flex gap-5 justify-between text-sm font-semibold whitespace-nowrap cursor-pointer mb-3"
-                    onClick={() => toggleSection('category')}
-                >
-                    {/* Đổi tên "Types" nếu muốn */}
-                    <h3>{topCategory.charAt(0).toUpperCase() + topCategory.slice(1)} Types</h3>
-                    <img src={expandedSections.category ? "/UpArrow.svg" : "/DownArrow.svg"} alt="Toggle" className="object-contain shrink-0 w-4 aspect-square"/>
-                </div>
-                {expandedSections.category && (
-                    <div className="flex flex-col gap-1 mt-4 text-sm leading-7">
-                        {categoryLoading && <div>Loading...</div>}
-                        {categoryError && <div className="text-red-600">Error: {categoryError}</div>}
-                        {/* Radio "All" (Xem tất cả trong topCategory) */}
-                        {!categoryLoading && !categoryError && categoryData && (
-                             <div key="all-types" className="flex items-center">
-                                <input
-                                    type="radio"
-                                    id={`category-all-${topCategory}`}
-                                    name="secondLevelCategoryFilter"
-                                    value="" // Giá trị rỗng cho All
-                                    checked={!secondLevelCategoryFromUrl} // Checked khi không có second level trên URL
-                                    onChange={() => handleCategoryChange("")} // Điều hướng về /topCategory/1
-                                    className="mr-2 cursor-pointer"
-                                />
-                                <label htmlFor={`category-all-${topCategory}`} className="cursor-pointer">
-                                    All {topCategory.charAt(0).toUpperCase() + topCategory.slice(1)}
-                                </label>
-                             </div>
-                        )}
-                        {/* Map categories cấp 2 */}
-                        {!categoryLoading && !categoryError && categoryData?.data?.length > 0 && (
-                            categoryData.data.map((category) => {
-                                // Sử dụng tên category trực tiếp làm slug (hoặc dùng ID nếu ổn định hơn)
-                                const categorySlug = category.name.toLowerCase().replace(/\s+/g, '-');
-                                const isChecked = secondLevelCategoryFromUrl?.toLowerCase() === categorySlug;
-                                const inputId = `category-${categorySlug}-${category.id}`; // Đảm bảo ID duy nhất
-
-                                return (
-                                    <div key={category.id || category.name} className="flex items-center">
-                                        <input
-                                            type="radio"
-                                            id={inputId}
-                                            name="secondLevelCategoryFilter" // Cùng name để nhóm radio
-                                            value={categorySlug} // Value là slug
-                                            checked={isChecked}
-                                            onChange={() => handleCategoryChange(categorySlug)} // Điều hướng về /topCategory/slug/1
-                                            className="mr-2 cursor-pointer"
-                                        />
-                                        <label htmlFor={inputId} className="cursor-pointer">
-                                            {category.name}
-                                        </label>
-                                    </div>
-                                );
-                            })
-                        )}
-                        {/* Thông báo nếu không có sub-category */}
-                        {!categoryLoading && !categoryError && (!categoryData || !categoryData.data || categoryData.data.length === 0) && (
-                             <div className="text-gray-500 pl-6">No specific types found.</div>
-                        )}
-                    </div>
+            {expandedSections.category && (
+              <div className="flex flex-col gap-1 mt-3 text-sm text-gray-700">
+                {categoryLoading && <div className="text-gray-400 text-xs py-1">Đang tải...</div>}
+                {categoryError && <div className="text-red-500 text-xs py-1">Lỗi: {categoryError}</div>}
+                {!categoryLoading && !categoryError && categoryData && (
+                  <label key="all-types" className="flex items-center gap-2.5 py-1 px-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                    <input
+                      type="radio"
+                      name="secondLevelCategoryFilter"
+                      value=""
+                      checked={!secondLevelCategoryFromUrl}
+                      onChange={() => handleCategoryChange("")}
+                      className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Tất cả {topCategory}</span>
+                  </label>
                 )}
-            </section>
-          )}
-          {/* ----------------------------------------------------------- */}
+                {!categoryLoading && !categoryError && categoryData?.data?.length > 0 && (
+                  categoryData.data.map((category) => {
+                    const categorySlug = category.name.toLowerCase().replace(/\s+/g, '-');
+                    const isChecked = secondLevelCategoryFromUrl?.toLowerCase() === categorySlug;
+                    const inputId = `category-${categorySlug}-${category.id}`;
 
-          <section className="px-4 py-5 w-full text-black min-w-62.5">
-            <div className="flex gap-5 justify-between text-sm font-semibold whitespace-nowrap cursor-pointer mb-3" onClick={() => toggleSection('color')}>
-              <h3 className="my-auto">Color</h3>
-              <img src={expandedSections.color ? "/UpArrow.svg" : "/DownArrow.svg"} alt="Toggle color" className="object-contain shrink-0 w-4 aspect-square"/>
-            </div>
-            {expandedSections.color && (
-              <div className="text-sm leading-7 flex flex-col gap-1 mt-4">
-                {/* 1. Radio Button cho "All Colors" */}
-                <div key="color-all" className="flex items-center">
-                    <input
-                        type="radio"
-                        id="color-all"
-                        name="colorFilter" // Cùng name cho nhóm color
-                        value="" // Giá trị rỗng hoặc null cho "All"
-                        // Checked khi activeFilters.color là null
-                        checked={!activeFilters.color}
-                        // Gọi updateFilters với value=null và isActive=false để xóa filter
-                        onChange={() => {
-                            console.log("Updating color: All");
-                            updateFilters('color', null, false);
-                         }}
-                        className="mr-2 cursor-pointer"
-                    />
-                    <label htmlFor="color-all" className="cursor-pointer">All Colors</label>
-                </div>
-
-                {/* 2. Map qua các màu cụ thể */}
-                {colors.map((color) => (
-                  <div key={color.value} className="flex items-center">
-                    <input
-                      type="radio" // Đổi thành radio
-                      id={`color-${color.value.toLowerCase()}`} // ID duy nhất
-                      name="colorFilter" // Cùng name với "All Colors"
-                      value={color.value} // Value là tên màu
-                      // Checked khi activeFilters.color khớp với value của radio này
-                      checked={activeFilters.color === color.value}
-                      // Gọi updateFilters với value=tên màu và isActive=true
-                      onChange={() => {
-                        console.log("Updating color:", color.value);
-                        updateFilters('color', color.value, true);
-                      }}
-                      className="mr-2 cursor-pointer"
-                    />
-                    <label htmlFor={`color-${color.value.toLowerCase()}`} className="cursor-pointer">
-                        {color.name}
-                    </label>
-                  </div>
-                ))}
+                    return (
+                      <label key={category.id || category.name} htmlFor={inputId} className="flex items-center gap-2.5 py-1 px-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                        <input
+                          type="radio"
+                          id={inputId}
+                          name="secondLevelCategoryFilter"
+                          value={categorySlug}
+                          checked={isChecked}
+                          onChange={() => handleCategoryChange(categorySlug)}
+                          className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
+                        />
+                        <span className={`text-sm ${isChecked ? 'font-bold text-blue-600' : 'font-medium text-gray-700'}`}>{category.name}</span>
+                      </label>
+                    );
+                  })
+                )}
               </div>
             )}
           </section>
-          {/* ---------------------------------------------------- */}
+        )}
 
-          {/* --- Price Section --- */}
-          <section className="p-4 w-full text-black min-w-62.5">
-             <div className="flex gap-5 justify-between text-sm font-semibold whitespace-nowrap cursor-pointer mb-3" onClick={() => toggleSection('price')}>
-                 <h3>Price</h3>
-                 <img src={expandedSections.price ? "/UpArrow.svg" : "/DownArrow.svg"} alt="Toggle price" className="object-contain shrink-0 w-4 aspect-square"/>
-             </div>
-             {expandedSections.price && (
-                 <div className="flex flex-col gap-2 text-sm leading-7 mt-4">
-                     {priceRanges.map((priceRange) => (
-                         <div key={priceRange.value} className="flex items-center">
-                             <input
-                                 type="radio"
-                                 id={`price-${priceRange.value}`}
-                                 name="priceFilter" // Đổi tên radio group cho price
-                                 value={priceRange.value}
-                                 checked={activeFilters.price === priceRange.value}
-                                 onChange={() => {
-                                     console.log("Updating price:", priceRange.value);
-                                     updateFilters('price', priceRange.value, true); // Cập nhật context/query
-                                 }}
-                                 className="mr-2 cursor-pointer"
-                             />
-                             <label htmlFor={`price-${priceRange.value}`} className="cursor-pointer">{priceRange.range}</label>
-                         </div>
-                     ))}
-                     {/* Thêm nút bỏ chọn Price */}
-                     {activeFilters.price && (
-                        <button
-                            onClick={() => updateFilters('price', activeFilters.price, false)}
-                            className="text-xs text-blue-600 hover:underline mt-1 pl-6" // Style cho nút bỏ chọn
-                        >
-                            Clear price filter
-                        </button>
-                     )}
-                 </div>
-             )}
-          </section>
+        {/* --- Color Section --- */}
+        <section className="py-4">
+          <div
+            className="flex justify-between items-center text-sm font-bold text-gray-800 cursor-pointer mb-2 group"
+            onClick={() => toggleSection('color')}
+          >
+            <span>Màu sắc (Color)</span>
+            <svg className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${expandedSections.color ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+          {expandedSections.color && (
+            <div className="flex flex-col gap-1 mt-3 text-sm text-gray-700">
+              <label htmlFor="color-all" className="flex items-center gap-2.5 py-1 px-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                <input
+                  type="radio"
+                  id="color-all"
+                  name="colorFilter"
+                  value=""
+                  checked={!activeFilters.color}
+                  onChange={() => updateFilters('color', null, false)}
+                  className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
+                />
+                <span className={`text-sm ${!activeFilters.color ? 'font-bold text-blue-600' : 'font-medium text-gray-700'}`}>Tất cả màu sắc</span>
+              </label>
+              {colors.map((color) => (
+                <label key={color.value} htmlFor={`color-${color.value.toLowerCase()}`} className="flex items-center gap-2.5 py-1 px-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                  <input
+                    type="radio"
+                    id={`color-${color.value.toLowerCase()}`}
+                    name="colorFilter"
+                    value={color.value}
+                    checked={activeFilters.color === color.value}
+                    onChange={() => updateFilters('color', color.value, true)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
+                  />
+                  <span className={`text-sm ${activeFilters.color === color.value ? 'font-bold text-blue-600' : 'font-medium text-gray-700'}`}>{color.name}</span>
+                </label>
+              ))}
+            </div>
+          )}
+        </section>
 
-
-          {/* --- Sort Section --- */}
-          <section className="p-4 w-full text-black min-w-62.5">
-             <div className="flex gap-5 justify-between text-sm font-semibold whitespace-nowrap cursor-pointer mb-3" onClick={() => toggleSection('sort')}>
-                 <h3>Sort</h3>
-                 <img src={expandedSections.sort ? "/UpArrow.svg" : "/DownArrow.svg"} alt="Toggle price" className="object-contain shrink-0 w-4 aspect-square"/>
-             </div>
-             {expandedSections.sort && (
-                 <div className="flex flex-col gap-2 text-sm leading-7 mt-4">
-                     {sortOptions.map((sortOptions) => (
-                         <div key={sortOptions.value} className="flex items-center">
-                             <input
-                                 type="radio"
-                                 id={`sort-${sortOptions.value}`}
-                                 name="sortFilter" // Đổi tên radio group cho price
-                                 value={sortOptions.value}
-                                 checked={activeFilters.sort === sortOptions.value}
-                                 onChange={() => {
-                                     updateFilters('sort', sortOptions.value, true); // Cập nhật context/query
-                                 }}
-                                 className="mr-2 cursor-pointer"
-                             />
-                             <label htmlFor={`sort-${sortOptions.value}`} className="cursor-pointer">{sortOptions.label}</label>
-                         </div>
-                     ))}
-                     {/* Thêm nút bỏ chọn Price */}
-                     {activeFilters.sort && (
-                        <button
-                            onClick={() => updateFilters('sort', activeFilters.sort, false)}
-                            className="text-xs text-blue-600 hover:underline mt-1 pl-6" // Style cho nút bỏ chọn
-                        >
-                            Clear price filter
-                        </button>
-                     )}
-                 </div>
-             )}
-          </section>
-
+        {/* --- Price Section --- */}
+        <section className="py-4">
+          <div
+            className="flex justify-between items-center text-sm font-bold text-gray-800 cursor-pointer mb-2 group"
+            onClick={() => toggleSection('price')}
+          >
+            <span>Mức giá (Price)</span>
+            <svg className={`w-4 h-4 text-gray-500 transition-transform duration-200 ${expandedSections.price ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+          {expandedSections.price && (
+            <div className="flex flex-col gap-1 mt-3 text-sm text-gray-700">
+              {priceRanges.map((priceRange) => (
+                <label key={priceRange.value} htmlFor={`price-${priceRange.value}`} className="flex items-center gap-2.5 py-1 px-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                  <input
+                    type="radio"
+                    id={`price-${priceRange.value}`}
+                    name="priceFilter"
+                    value={priceRange.value}
+                    checked={activeFilters.price === priceRange.value}
+                    onChange={() => updateFilters('price', priceRange.value, true)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
+                  />
+                  <span className={`text-sm ${activeFilters.price === priceRange.value ? 'font-bold text-blue-600' : 'font-medium text-gray-700'}`}>{priceRange.range}</span>
+                </label>
+              ))}
+              {/* {activeFilters.price && (
+                <button
+                  onClick={() => updateFilters('price', activeFilters.price, false)}
+                  className="text-xs text-blue-600 font-medium hover:underline mt-1 self-start pl-2 cursor-pointer"
+                >
+                  Xóa lọc giá
+                </button>
+              )} */}
+            </div>
+          )}
         </section>
       </div>
     </aside>

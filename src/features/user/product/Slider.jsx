@@ -187,7 +187,7 @@ const Slider = () => {
         {/* 3. Top-left brand label */}
         <div className="absolute top-28 left-6 sm:top-32 sm:left-12 z-[60] flex items-center gap-2">
           <span className="text-xs font-bold uppercase text-white opacity-90 tracking-[0.18em] bg-white/20 backdrop-blur-md px-3 py-1 rounded-full border border-white/20">
-            THẾ GIỚI CÔNG NGHỆ TECHSHOP
+            THẾ GIỚI CÔNG NGHỆ 
           </span>
         </div>
 
@@ -246,7 +246,7 @@ const Slider = () => {
         </div>
 
         {/* 6. Bottom-right link "KHÁM PHÁ NGAY" */}
-        <div className="absolute bottom-6 right-6 sm:bottom-10 sm:right-12 z-[60]">
+        <div className="absolute bottom-6 right-6 sm:bottom-10 sm:right-18 z-[60]">
           <a
             href={currentSlide.link}
             className="flex items-center gap-2 text-white opacity-95 hover:opacity-100 hover:scale-105 transition-all duration-200 uppercase tracking-[-0.02em] leading-none group"
@@ -261,6 +261,9 @@ const Slider = () => {
             <ArrowRight className="w-6 h-6 sm:w-9 sm:h-9 stroke-[2.5] group-hover:translate-x-1 transition-transform" />
           </a>
         </div>
+
+        {/* 7. Bottom Gradient Transition Mask */}
+        <div className="absolute bottom-0 inset-x-0 h-28 bg-gradient-to-t from-white via-white/40 to-transparent pointer-events-none z-[10]" />
       </div>
     </div>
   );

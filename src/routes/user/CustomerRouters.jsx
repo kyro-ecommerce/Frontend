@@ -1,5 +1,5 @@
-import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import Home from '../../pages/user/Home/Home';
 import UserAccount from '../../pages/user/UserAccount/UserAccount';
 import UserOrders from '../../pages/user/UserAccount/UserOrders';
@@ -14,9 +14,20 @@ import Checkout from '../../pages/user/Checkout/Checkout';
 import OAuthRedirect from '../../pages/user/Auth/OAuthRedirect';
 import ProtectedRoute from './ProtectedRoute';
 
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
+  return null;
+};
+
 const CustomerRouters = () => {
   return (
     <div>
+      <ScrollToTop />
       <FilterProvider>
         <Routes>
           <Route path="/" element={<AppLayout />}>

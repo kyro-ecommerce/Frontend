@@ -213,9 +213,6 @@ const Catalog = ({ category: categoryProp }) => {
           {/* Main Content Area */}
           <section className="w-full">
             <div className="flex flex-col w-full">
-              {/* Filter Active Tags - Truyền callback để bắt sự kiện khi xóa filter */}
-              <Filter onFilterRemove={() => setLoading(true)} />
-              
               {/* Product Controls (Sort, View) */}
               <ProductControls 
                 shown={loading ? 0 : currentProducts.length} 
