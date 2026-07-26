@@ -1,7 +1,7 @@
 import React from "react";
 const RelatedProducts = () => {
   return (
-    <section className="px-64 py-10 max-md:p-5">
+    <section className="px-4 md:px-8 py-10 my-6">
       <h2>Sản phẩm đã xem</h2>
       <div className="flex gap-5 mt-5 max-sm:flex-col">
         <article className="w-[calc(33%_-_14px)]">

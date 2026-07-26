@@ -1,6 +1,6 @@
 // src/components/layout/Header.jsx
 import React, { useState, useRef, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthContext } from '../../store/user/AuthContext';
 import { useCartContext } from '../../store/user/CartContext';
 import AuthForms from '../../pages/user/Auth/AuthForm';
@@ -10,6 +10,7 @@ import SearchBar from '../../features/user/search/SearchBar';
 
 const Header = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const {
     user,
     isLoading,
@@ -18,9 +19,29 @@ const Header = () => {
   } = useAuthContext();
   const { cart } = useCartContext();
 
+  const [isScrolled, setIsScrolled] = useState(false);
   const [showLoginForm, setShowLoginForm] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
   const modalRef = useRef(null);
+
+  const isActive = (path) => {
+    if (path === '/') {
+      return location.pathname === '/';
+    }
+    return location.pathname.startsWith(path);
+  };
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 20) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   const handleClickOutside = (event) => {
     if (modalRef.current && !modalRef.current.contains(event.target)) {
@@ -120,7 +141,7 @@ const Header = () => {
     } else {
       return (
         <button
-          className="py-2 px-6 text-blue-600 cursor-pointer border-2 border-blue-600 rounded-full hover:bg-blue-600 hover:text-white transition-colors duration-300"
+          className="py-1.5 px-5 text-sm text-blue-600 cursor-pointer border-2 border-blue-600 rounded-full hover:bg-blue-600 hover:text-white transition-colors duration-300"
           onClick={() => setShowLoginForm(true)}
         >
           Đăng nhập
@@ -130,69 +151,136 @@ const Header = () => {
   };
 
   return (
-    <>
-      <div className="flex flex-col self-center max-w-full font-semibold text-center w-full">
-        <div className="flex flex-wrap gap-5 justify-center items-center mt-8 w-full text-sm text-black max-md:mr-2 max-md:max-w-full">
+    <header className="fixed top-3 left-0 right-0 z-50 w-full px-4 sm:px-6 transition-all duration-300">
+      <div
+        className={`max-w-screen-xl mx-auto flex flex-wrap items-center justify-between gap-3 px-6 py-2.5 rounded-full transition-all duration-300 ${
+          isScrolled
+            ? "bg-white/85 backdrop-blur-md shadow-xl border border-gray-200/80"
+            : "bg-white/95 backdrop-blur-sm shadow-md border border-gray-100"
+        }`}
+      >
+        {/* Brand / Logo */}
+        <Link to="/" className="flex items-center gap-2 shrink-0">
           <img
             src="/ShopIcon.png"
-            className="object-contain aspect-square w-16.25"
+            className="object-contain h-10 w-auto"
             alt="Tech Shop"
           />
-          <Link to="/" className="self-stretch my-auto hover:text-blue-600 transition-colors duration-300 cursor-pointer">Trang chủ</Link>
-          <Link to="/laptop" className="self-stretch my-auto hover:text-blue-600 transition-colors duration-300 cursor-pointer">Laptop</Link>
-          <Link to="/desktop-computers" className="self-stretch my-auto hover:text-blue-600 transition-colors duration-300 cursor-pointer">Máy tính bàn</Link>
-          <Link to="/accessories" className="self-stretch my-auto hover:text-blue-600 transition-colors duration-300 cursor-pointer">Phụ kiện</Link>
-          <Link to="/phone" className="self-stretch my-auto hover:text-blue-600 transition-colors duration-300 cursor-pointer">Điện thoại</Link>
-          <Link to="/computer-parts" className="self-stretch my-auto hover:text-blue-600 transition-colors duration-300 cursor-pointer">Linh kiện máy tính</Link>
-          <Link to="/product/all" className="self-stretch my-auto hover:text-blue-600 transition-colors duration-300 cursor-pointer">Tất cả sản phẩm</Link>
+        </Link>
+
+        {/* Navigation Items */}
+        <nav className="flex flex-wrap items-center gap-4 text-sm font-semibold">
+          <Link
+            to="/"
+            className={`py-1 hover:text-blue-600 transition-colors duration-300 cursor-pointer ${
+              isActive('/') ? 'text-blue-600 border-b-2 border-blue-600 font-bold' : 'text-gray-700'
+            }`}
+          >
+            Trang chủ
+          </Link>
+          <Link
+            to="/laptop"
+            className={`py-1 hover:text-blue-600 transition-colors duration-300 cursor-pointer ${
+              isActive('/laptop') ? 'text-blue-600 border-b-2 border-blue-600 font-bold' : 'text-gray-700'
+            }`}
+          >
+            Laptop
+          </Link>
+          <Link
+            to="/desktop-computers"
+            className={`py-1 hover:text-blue-600 transition-colors duration-300 cursor-pointer ${
+              isActive('/desktop-computers') ? 'text-blue-600 border-b-2 border-blue-600 font-bold' : 'text-gray-700'
+            }`}
+          >
+            Máy tính bàn
+          </Link>
+          <Link
+            to="/accessories"
+            className={`py-1 hover:text-blue-600 transition-colors duration-300 cursor-pointer ${
+              isActive('/accessories') ? 'text-blue-600 border-b-2 border-blue-600 font-bold' : 'text-gray-700'
+            }`}
+          >
+            Phụ kiện
+          </Link>
+          <Link
+            to="/phone"
+            className={`py-1 hover:text-blue-600 transition-colors duration-300 cursor-pointer ${
+              isActive('/phone') ? 'text-blue-600 border-b-2 border-blue-600 font-bold' : 'text-gray-700'
+            }`}
+          >
+            Điện thoại
+          </Link>
+          <Link
+            to="/computer-parts"
+            className={`py-1 hover:text-blue-600 transition-colors duration-300 cursor-pointer ${
+              isActive('/computer-parts') ? 'text-blue-600 border-b-2 border-blue-600 font-bold' : 'text-gray-700'
+            }`}
+          >
+            Linh kiện
+          </Link>
+          <Link
+            to="/product/all"
+            className={`py-1 hover:text-blue-600 transition-colors duration-300 cursor-pointer ${
+              isActive('/product/all') ? 'text-blue-600 border-b-2 border-blue-600 font-bold' : 'text-gray-700'
+            }`}
+          >
+            Tất cả
+          </Link>
           {isAuthenticated && user && (
-          <Link to="/my-order" className="gap-2.5 self-stretch my-auto px-7 py-2 text-blue-600 border-2 border-solid border-blue-600 rounded-full max-md:px-5 hover:bg-blue-600 hover:text-white transition-colors duration-300 cursor-pointer">Đơn hàng của tôi</Link>
+            <Link
+              to="/my-order"
+              className={`px-4 py-1 text-xs text-blue-600 border border-blue-600 rounded-full hover:bg-blue-600 hover:text-white transition-colors duration-300 cursor-pointer ${
+                isActive('/my-order') ? 'bg-blue-600 text-white font-bold' : ''
+              }`}
+            >
+              Đơn hàng
+            </Link>
           )}
+        </nav>
+
+        {/* SearchBar, Cart Icon & User Button */}
+        <div className="flex items-center gap-3 shrink-0">
           <SearchBar />
 
           {isAuthenticated && user && (
             <div
-              className="relative inline-block cursor-pointer"
+              className="relative cursor-pointer p-1.5 hover:bg-gray-100/80 rounded-full transition-colors"
               aria-label="Shopping Cart"
               onClick={handleCartClick}
             >
               <img
                 src="/CartIcon.png"
-                className="object-contain shrink-0 self-start aspect-[1.18] w-8.25"
+                className="object-contain w-7 h-7"
                 alt="Cart Icon"
               />
               {totalItems > 0 && (
-                <span
-                  className="absolute bottom-3 left-3 text-white bg-blue-600 rounded-full text-xs px-1.5 py-0.5"
-                >
+                <span className="absolute -top-1 -right-1 text-white bg-blue-600 rounded-full text-[10px] font-bold px-1.5 py-0.2 shadow">
                   {totalItems}
                 </span>
               )}
             </div>
           )}
 
-          <div>
-            {renderUserDisplay()}
-            {showLoginForm && (
-              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-40" onClick={handleClose}>
-                <div
-                  ref={modalRef}
-                  className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-50 bg-white p-6 md:p-8 rounded-lg shadow-xl w-full max-w-md"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <AuthForms handleClose={handleClose} />
-                </div>
-              </div>
-            )}
-          </div>
+          <div>{renderUserDisplay()}</div>
         </div>
       </div>
-      <img
-        src="/Bar.svg"
-        className="object-contain mt-5 w-full aspect-[1000] stroke-1 stroke-gray-300 max-md:max-w-full"
-        alt=""
-      />
-    </>
+
+      {/* Modal LoginForm */}
+      {showLoginForm && (
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          onClick={handleClose}
+        >
+          <div
+            ref={modalRef}
+            className="bg-white p-6 md:p-8 rounded-2xl shadow-2xl w-full max-w-md"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <AuthForms handleClose={handleClose} />
+          </div>
+        </div>
+      )}
+    </header>
   );
 };
 
