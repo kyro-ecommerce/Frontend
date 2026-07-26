@@ -32,9 +32,12 @@ const Home = () => {
   }
 
   return (
-    <div className="flex overflow-hidden flex-col pt-3 bg-white mr-33">
-      <div className="flex flex-col items-center self-end mt-3 w-full max-w-413 max-md:mr-2 max-md:max-w-full">
-        <Slider />
+    <div className="flex overflow-hidden flex-col bg-white w-full">
+      {/* Full Viewport 3D Hero Slider */}
+      <Slider />
+
+      {/* Main Content Sections */}
+      <div className="flex flex-col items-center mx-auto mt-8 w-full max-w-screen-xl px-4">
         <FlashSale />
         <TopSale />
         <LatestTop />

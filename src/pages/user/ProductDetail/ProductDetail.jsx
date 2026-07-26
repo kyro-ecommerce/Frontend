@@ -89,11 +89,11 @@ const ProductDetail = () => {
 
 
   return (
-    <div className="flex overflow-hidden flex-col pt-3 bg-white">
-      <main>
+    <div className="flex overflow-hidden flex-col pt-3 bg-white w-full">
+      <main className="w-full max-w-screen-xl mx-auto px-4 md:px-8">
         {productInfoData && ( // Chỉ render khi có productInfoData
           <>
-            <section className="flex gap-10 px-64 py-10 max-md:flex-col max-md:p-5">
+            <section className="flex gap-10 py-10 max-md:flex-col justify-center">
               {/* ProductGallery có thể chỉ cần dữ liệu gốc */}
               <ProductGallery item={product} />
               {/* ProductInfo nhận dữ liệu đã cập nhật rating */}
@@ -113,7 +113,7 @@ const ProductDetail = () => {
             <RelatedProducts productId={productId} />
           </>
         )}
-        {!productInfoData && !loading && <p>Không tìm thấy thông tin sản phẩm.</p>}
+        {!productInfoData && !loading && <p className="text-center py-10">Không tìm thấy thông tin sản phẩm.</p>}
       </main>
     </div>
   );

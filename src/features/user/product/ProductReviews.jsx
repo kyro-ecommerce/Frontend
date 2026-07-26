@@ -255,7 +255,7 @@ const ProductReviews = ({ productId, onRatingUpdate, initialAverageRating, initi
 
   // --- JSX giữ nguyên cấu trúc, chỉ thay đổi cách gọi thông báo ---
   return (
-    <section className="px-10 py-10 bg-violet-50 max-md:p-5 mx-40 ml-60">
+    <section className="px-6 md:px-10 py-10 bg-violet-50 rounded-2xl max-md:p-5 my-8">
       <h2 className="text-xl font-medium mb-6">Đánh giá & Nhận xét {productName || 'Sản phẩm'}</h2>
 
       <div className="flex gap-10 mb-8 max-md:flex-col">
