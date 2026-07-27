@@ -10,6 +10,7 @@ import ProductDetail from '../../pages/user/ProductDetail/ProductDetail';
 import AppLayout from '../../layouts/user/AppLayout';
 import { FilterProvider } from '../../features/user/catalog/FilterContext';
 import ForgotPassword from '../../pages/user/Auth/ForgotPassword';
+import LoginPage from '../../pages/user/Auth/LoginPage';
 import Checkout from '../../pages/user/Checkout/Checkout';
 import OAuthRedirect from '../../pages/user/Auth/OAuthRedirect';
 import ProtectedRoute from './ProtectedRoute';
@@ -74,6 +75,7 @@ const CustomerRouters = () => {
             } />
 
             {/* Public Routes */}
+            <Route path="login" element={<LoginPage />} />
             <Route path="forgot-password" element={<ForgotPassword />} />
             <Route path="oauth2/redirect" element={<OAuthRedirect />} />
             <Route path="search" element={<Catalog category="all" />} />

@@ -21,7 +21,7 @@ import CloseIcon from '@mui/icons-material/Close';
 
 const BACKEND_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
-const AuthForms = ({ handleClose }) => {
+const AuthForms = ({ handleClose = () => {} }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const { login, register, isAuthenticated, isLoading: authIsLoading, error: authError, clearAuthError } = useAuthContext();
@@ -36,7 +36,7 @@ const AuthForms = ({ handleClose }) => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      handleClose();
+      handleClose?.();
     }
   }, [isAuthenticated, handleClose]);
 

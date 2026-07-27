@@ -112,21 +112,24 @@ const Header = () => {
 
     if (isAuthenticated) {
       return (
-        <div className="flex items-center">
+        <div className="flex items-center shrink-0">
           <button
             onClick={handleUserMenuOpen}
-            className="flex items-center space-x-2 focus:outline-none px-3 py-1 rounded-full hover:bg-blue-50 transition duration-300"
+            className="flex items-center space-x-1.5 focus:outline-none px-2 py-1 rounded-full hover:bg-blue-50 transition duration-300 max-w-[130px] sm:max-w-[160px] lg:max-w-[200px]"
+            title={getDisplayName()}
           >
             {user?.imageUrl ? (
               <Avatar
                 src={user?.imageUrl}
                 alt={getDisplayName()}
-                sx={{ width: 32, height: 32 }}
+                sx={{ width: 30, height: 30, flexShrink: 0 }}
               />
             ) : (
-              <AccountCircleIcon sx={{ fontSize: 32, color: 'primary.main' }} />
+              <AccountCircleIcon sx={{ fontSize: 30, color: 'primary.main', flexShrink: 0 }} />
             )}
-            <span className="text-sm hidden md:inline ml-2 text-blue-600 font-medium">{getDisplayName()}</span>
+            <span className="text-sm hidden md:inline text-blue-600 font-medium truncate max-w-[80px] sm:max-w-[100px] lg:max-w-[130px]">
+              {getDisplayName()}
+            </span>
           </button>
           <Menu
             anchorEl={anchorEl}
@@ -153,7 +156,7 @@ const Header = () => {
   return (
     <header className="fixed top-3 left-0 right-0 z-50 w-full px-4 sm:px-6 transition-all duration-300">
       <div
-        className={`max-w-screen-xl mx-auto flex flex-wrap items-center justify-between gap-3 px-6 py-2.5 rounded-full transition-all duration-300 ${
+        className={`max-w-screen-xl mx-auto flex items-center justify-between gap-2 lg:gap-3 px-4 sm:px-6 py-2.5 rounded-full transition-all duration-300 ${
           isScrolled
             ? "bg-white/85 backdrop-blur-md shadow-xl border border-gray-200/80"
             : "bg-white/95 backdrop-blur-sm shadow-md border border-gray-100"
@@ -169,7 +172,7 @@ const Header = () => {
         </Link>
 
         {/* Navigation Items */}
-        <nav className="flex flex-wrap items-center gap-4 text-sm font-semibold">
+        <nav className="flex items-center gap-2 xl:gap-3 text-xs xl:text-sm font-semibold shrink">
           <Link
             to="/"
             className={`py-1 hover:text-blue-600 transition-colors duration-300 cursor-pointer ${

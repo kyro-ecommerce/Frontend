@@ -69,9 +69,9 @@ const UserFilters = ({ onSearch, onRoleFilter, selectedRole }) => {
                         onChange={handleRoleChange}
                         className="w-full md:w-auto py-2.5 px-4 border border-gray-300 rounded text-sm bg-white cursor-pointer font-sans outline-none focus:border-blue-500 transition-colors"
                     >
-                        <option value="">Tất cả user</option>
+                        <option value="">Tất cả vai trò</option>
                         <option value="CUSTOMER">Khách hàng</option>
-                        <option value="SELLER">Người bán</option>
+                        <option value="ADMIN">Quản trị viên</option>
                     </select>
                 </div>
             </div>

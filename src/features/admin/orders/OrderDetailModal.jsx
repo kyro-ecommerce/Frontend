@@ -1,8 +1,24 @@
 import React from "react";
 import { formatCurrency, formatDateTime } from "../../../utils/admin/format.js";
 
-const OrderDetailModal = ({ order, onClose }) => {
+const OrderDetailModal = ({ order, onClose, onStatusChange, onDeleteOrder }) => {
     if (!order) return null;
+
+    const handleStatusSelect = async (e) => {
+        const newStatus = e.target.value;
+        if (onStatusChange) {
+            await onStatusChange(order.id, newStatus);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (window.confirm(`Bạn có chắc chắn muốn xóa đơn hàng #${order.id}?`)) {
+            if (onDeleteOrder) {
+                await onDeleteOrder(order.id);
+                onClose();
+            }
+        }
+    };
 
 
     return (
@@ -173,8 +189,44 @@ const OrderDetailModal = ({ order, onClose }) => {
                     </div>
                 </div>
 
-                <div className="p-4 px-5 border-t border-gray-200 flex justify-end gap-3 sticky bottom-0 bg-white">
-                    <button className="py-2.5 px-5 bg-gray-50 border border-gray-200 rounded text-sm font-medium cursor-pointer hover:bg-gray-200 transition-colors" onClick={onClose}>Đóng</button>
+                <div className="p-4 px-5 border-t border-gray-200 flex flex-wrap justify-between items-center gap-3 sticky bottom-0 bg-white z-10">
+                    <div className="flex items-center gap-3">
+                        <span className="text-xs font-semibold text-gray-500">Cập nhật trạng thái:</span>
+                        <select
+                            value={order.orderStatus || "PENDING"}
+                            onChange={handleStatusSelect}
+                            className={`py-1.5 px-3 rounded-full text-xs font-bold border cursor-pointer outline-none transition-all shadow-2xs ${
+                                order.orderStatus === 'PENDING' ? 'bg-amber-50 text-amber-600 border-amber-200' :
+                                order.orderStatus === 'CONFIRMED' ? 'bg-blue-50 text-blue-600 border-blue-200' :
+                                order.orderStatus === 'SHIPPED' ? 'bg-purple-50 text-purple-600 border-purple-200' :
+                                order.orderStatus === 'DELIVERED' ? 'bg-green-50 text-green-600 border-green-200' :
+                                order.orderStatus === 'CANCELLED' ? 'bg-red-50 text-red-600 border-red-200' : 'bg-gray-50 text-gray-600 border-gray-200'
+                            }`}
+                        >
+                            <option value="PENDING">Chờ xác nhận</option>
+                            <option value="CONFIRMED">Đã xác nhận</option>
+                            <option value="SHIPPED">Đang giao</option>
+                            <option value="DELIVERED">Đã giao</option>
+                            <option value="CANCELLED">Đã hủy</option>
+                        </select>
+                    </div>
+
+                    <div className="flex gap-3">
+                        <button
+                            type="button"
+                            className="py-2 px-4 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                            onClick={handleDelete}
+                        >
+                            Xóa đơn hàng
+                        </button>
+                        <button
+                            type="button"
+                            className="py-2 px-5 bg-gray-100 border border-gray-200 rounded-lg text-xs font-semibold text-gray-700 cursor-pointer hover:bg-gray-200 transition-colors"
+                            onClick={onClose}
+                        >
+                            Đóng
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

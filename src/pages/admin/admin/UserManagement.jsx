@@ -39,22 +39,22 @@ const UserManagement = () => {
             );
 
             if (response.status === 200) {
-                const userData = response.data.data;
-                const filteredUsers = (userData.content || []).filter(user => user.role !== "ADMIN");
-                setUsers(filteredUsers);
+                const userData = response.data?.data || response.data || {};
+                const rawList = userData.content || (Array.isArray(userData) ? userData : []);
+                setUsers(rawList);
                 setTotalPages(userData.totalPages || 1);
             } else {
                 throw new Error("Không thể lấy dữ liệu người dùng");
             }
 
-            // Gọi API lấy thống kê về khách hàng
+            // Gọi API lấy thống kê về người dùng
             const statsResponse = await userService.getCustomerStats();
             if (statsResponse.status === 200) {
-                const statsData = statsResponse.data.data || {};
-                // Giả định thống kê về khách hàng và người bán
+                const statsData = statsResponse.data?.data || statsResponse.data || {};
                 setStats({
+                    totalUsers: statsData.totalUsers || 0,
                     totalCustomers: statsData.totalCustomers || 0,
-                    totalSellers: statsData.totalSellers || 0
+                    totalAdmins: statsData.totalAdmins || 0
                 });
             }
         } catch (err) {
@@ -262,19 +262,11 @@ const UserManagement = () => {
                     totalPages={totalPages}
                     onPageChange={handlePageChange}
                     onToggleStatus={handleToggleStatus}
+                    onChangeRole={handleChangeRole}
                     onDeleteUser={handleDeleteUser}
                     onViewDetail={handleViewDetail}
                 />
 
-                {isModalOpen && selectedUser && (
-                <UserDetailModal
-                    user={selectedUser}
-                    onClose={closeUserDetail}
-                    onUpdateUser={handleUpdateUser}
-                    onChangeRole={handleChangeRole}
-                    onToggleStatus={handleToggleStatus}
-                />
-                )}
                 {/* Modal chi tiết người dùng */}
                 {selectedUser && (
                     <UserDetailModal

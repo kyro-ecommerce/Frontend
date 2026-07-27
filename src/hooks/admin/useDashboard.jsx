@@ -21,58 +21,32 @@ export const useDashboard = () => {
             setError(null);
 
             // Lấy thống kê sản phẩm
-            const productStatsResponse = await dashboardService.getProductStats();
-            if (productStatsResponse.status === 200) {
-                setDashboardData(prevData => ({
-                    ...prevData,
-                    productStats: productStatsResponse.data.data || {}
-                }));
-            }
-
-            // Lấy doanh thu theo tuần
-            const weeklyRevenueResponse = await dashboardService.getWeeklyRevenue();
-            if (weeklyRevenueResponse.status === 200) {
-                setDashboardData(prevData => ({
-                    ...prevData,
-                    weeklyRevenue: weeklyRevenueResponse.data.data.data || []
-                }));
-            }
-
-            // Lấy doanh thu theo tháng
-            const monthlyRevenueResponse = await dashboardService.getMonthlyRevenue();
-            if (monthlyRevenueResponse.status === 200) {
-                setDashboardData(prevData => ({
-                    ...prevData,
-                    monthlyRevenue: monthlyRevenueResponse.data.data.data || []
-                }));
-            }
+            try {
+                const res = await dashboardService.getProductStats();
+                const data = res.data?.data || res.data || {};
+                setDashboardData(prevData => ({ ...prevData, productStats: data }));
+            } catch (e) { console.warn("Failed fetching product stats:", e); }
 
             // Lấy doanh thu theo category
-            const categoryRevenueResponse = await dashboardService.getRevenueByCategory();
-            if (categoryRevenueResponse.status === 200) {
-                setDashboardData(prevData => ({
-                    ...prevData,
-                    categoryRevenue: categoryRevenueResponse.data.data.categories || {}
-                }));
-            }
+            try {
+                const res = await dashboardService.getRevenueByCategory();
+                const data = res.data?.data || res.data || {};
+                setDashboardData(prevData => ({ ...prevData, categoryRevenue: data }));
+            } catch (e) { console.warn("Failed fetching category revenue:", e); }
 
             // Lấy đơn hàng gần đây
-            const recentOrdersResponse = await dashboardService.getRecentOrders();
-            if (recentOrdersResponse.status === 200) {
-                setDashboardData(prevData => ({
-                    ...prevData,
-                    recentOrders: recentOrdersResponse.data.data || []
-                }));
-            }
+            try {
+                const res = await dashboardService.getRecentOrders();
+                const list = res.data?.content || res.data?.data || res.data || [];
+                setDashboardData(prevData => ({ ...prevData, recentOrders: Array.isArray(list) ? list : [] }));
+            } catch (e) { console.warn("Failed fetching recent orders:", e); }
 
-            /// Lấy sản phẩm bán chạy
-            const topSellingProductsResponse = await dashboardService.getTopSellingProducts();
-            if (topSellingProductsResponse.status === 200) {
-                setDashboardData(prevData => ({
-                    ...prevData,
-                    topSellingProducts: topSellingProductsResponse.data.data || []
-                }));
-            }
+            // Lấy sản phẩm bán chạy
+            try {
+                const res = await dashboardService.getTopSellingProducts();
+                const list = res.data?.data || res.data || [];
+                setDashboardData(prevData => ({ ...prevData, topSellingProducts: Array.isArray(list) ? list : [] }));
+            } catch (e) { console.warn("Failed fetching top selling products:", e); }
 
         } catch (err) {
             console.error("Lỗi khi tải dữ liệu dashboard:", err);

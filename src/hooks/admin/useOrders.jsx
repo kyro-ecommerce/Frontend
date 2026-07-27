@@ -46,9 +46,23 @@ export const useOrders = () => {
             );
 
             if (response.status === 200) {
-                const responseData = response.data.data;
-                setOrders(responseData.orders || []);
-                setPagination(responseData.pagination || pagination);
+                const responseData = response.data?.data || response.data || {};
+                const orderList = responseData.content || responseData.orders || (Array.isArray(responseData) ? responseData : []);
+                setOrders(orderList);
+
+                const currentPage = responseData.number ?? responseData.currentPage ?? 0;
+                const totalPages = responseData.totalPages ?? 1;
+                const totalElements = responseData.totalElements ?? orderList.length;
+                const pageSize = responseData.size ?? size;
+
+                setPagination({
+                    currentPage,
+                    totalPages,
+                    totalElements,
+                    pageSize,
+                    hasNext: !responseData.last,
+                    hasPrevious: !responseData.first
+                });
             } else {
                 throw new Error("Cannot load orders data");
             }
@@ -66,7 +80,8 @@ export const useOrders = () => {
         try {
             const response = await orderService.getOrderStats(dateRange.start, dateRange.end);
             if (response.status === 200) {
-                setStats(response.data.data || stats);
+                const statsData = response.data?.data || response.data || {};
+                setStats(statsData);
             }
         } catch (err) {
             console.error("Error loading stats:", err);
@@ -99,60 +114,62 @@ export const useOrders = () => {
     }, [fetchOrders]);
 
     // Handle status change
-    const handleStatusChange = useCallback(async (orderId, action) => {
+    const handleStatusChange = useCallback(async (orderId, actionOrStatus) => {
         try {
             let response;
+            const upper = String(actionOrStatus).toUpperCase();
 
-            switch (action) {
-                case "confirm":
-                    response = await orderService.confirmOrder(orderId);
-                    break;
-                case "ship":
-                    response = await orderService.shipOrder(orderId);
-                    break;
-                case "deliver":
-                    response = await orderService.deliverOrder(orderId);
-                    break;
-                case "cancel":
-                    response = await orderService.cancelOrder(orderId);
-                    break;
-                default:
-                    throw new Error("Invalid action");
+            if (["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED", "CANCELLED"].includes(upper)) {
+                response = await orderService.updateOrderStatus(orderId, upper);
+            } else {
+                switch (actionOrStatus) {
+                    case "confirm":
+                        response = await orderService.confirmOrder(orderId);
+                        break;
+                    case "ship":
+                        response = await orderService.shipOrder(orderId);
+                        break;
+                    case "deliver":
+                        response = await orderService.deliverOrder(orderId);
+                        break;
+                    case "cancel":
+                        response = await orderService.cancelOrder(orderId);
+                        break;
+                    default:
+                        response = await orderService.updateOrderStatus(orderId, upper);
+                }
             }
 
-            if (response.status === 200) {
-                // Refresh current page to get updated data
+            if (response && (response.status === 200 || response.status === 204)) {
                 fetchOrders(pagination.currentPage, pagination.pageSize);
+                fetchStats();
                 return true;
             }
             return false;
         } catch (err) {
             console.error(`Error changing order status ${orderId}:`, err);
-            setError(`Cannot update order status. Please try again.`);
+            setError(`Không thể cập nhật trạng thái đơn hàng. Vui lòng thử lại.`);
             return false;
         }
-    }, [fetchOrders, pagination.currentPage, pagination.pageSize]);
+    }, [fetchOrders, fetchStats, pagination.currentPage, pagination.pageSize]);
 
     // Handle delete order
     const handleDeleteOrder = useCallback(async (orderId) => {
-        if (!window.confirm("Are you sure you want to delete this order?")) {
-            return false;
-        }
-
         try {
             const response = await orderService.deleteOrder(orderId);
-            if (response.status === 200) {
+            if (response.status === 200 || response.status === 204) {
                 // Refresh current page to get updated data
                 fetchOrders(pagination.currentPage, pagination.pageSize);
+                fetchStats();
                 return true;
             }
             return false;
         } catch (err) {
             console.error(`Error deleting order ${orderId}:`, err);
-            setError(`Cannot delete order. Please try again.`);
+            setError(`Không thể xóa đơn hàng. Vui lòng thử lại.`);
             return false;
         }
-    }, [fetchOrders, pagination.currentPage, pagination.pageSize]);
+    }, [fetchOrders, fetchStats, pagination.currentPage, pagination.pageSize]);
 
     // View order details
     const handleViewOrder = useCallback(async (orderId) => {

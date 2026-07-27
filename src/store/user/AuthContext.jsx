@@ -45,6 +45,7 @@ export const AuthProvider = ({ children }) => {
       const userData = response.data?.data || response.data;
       setUser(userData);
       console.log("User profile fetched successfully:", userData);
+      return userData;
     } catch (err) {
       console.error("Error fetching user profile:", err);
       
@@ -59,6 +60,7 @@ export const AuthProvider = ({ children }) => {
         console.warn("Non-auth error while fetching profile, keeping tokens");
         setError("Failed to load user profile. Please try again.");
       }
+      return null;
     }
   }, []);
 
@@ -116,6 +118,13 @@ export const AuthProvider = ({ children }) => {
                    [];
 
       console.log("User roles:", roles);
+
+      // Check if user is an ADMIN -> Redirect to /admin dashboard
+      if (userFromLogin?.role === "ADMIN" || roles.includes("ADMIN")) {
+        console.log("Admin detected, redirecting to admin dashboard");
+        window.location.href = '/admin';
+        return;
+      }
 
       // Check if user is a seller and seller app is on a separate host/port
       const isExternalSellerApp = urlSeller && !urlSeller.includes(window.location.host);
@@ -223,16 +232,19 @@ export const AuthProvider = ({ children }) => {
       if (token) {
         saveTokenToLocalStorage(token);
         setJwt(token);
-        await fetchUserProfileInternal(token);
+        const userData = await fetchUserProfileInternal(token);
+        return userData;
       } else {
         clearAllTokens();
         setJwt(null);
         setUser(null);
         setError("Invalid authentication token received");
+        return null;
       }
     } catch (err) {
       console.error("Error setting auth token:", err);
       setError("Failed to authenticate with provided token");
+      return null;
     } finally {
       setIsLoading(false);
     }

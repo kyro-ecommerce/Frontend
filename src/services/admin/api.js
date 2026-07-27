@@ -46,12 +46,13 @@ api.interceptors.response.use(
                     }
                 );
 
-                if (res.data) {
+                const newAccessToken = res.data?.accessToken || res.data?.data?.accessToken;
+                if (newAccessToken) {
                     // Lưu token mới
-                    localStorage.setItem("accessToken", res.data.data.accessToken);
+                    localStorage.setItem("accessToken", newAccessToken);
                     // Gán token mới vào header
                     api.defaults.headers.common["Authorization"] =
-                        "Bearer " + res.data.data.accessToken;
+                        "Bearer " + newAccessToken;
 
                     // Thực hiện lại request ban đầu
                     return api(originalRequest);

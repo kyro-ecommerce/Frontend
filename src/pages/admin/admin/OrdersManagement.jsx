@@ -178,6 +178,10 @@ const OrdersManagement = () => {
                         order={selectedOrder}
                         onClose={closeOrderDetail}
                         onStatusChange={handleStatusChange}
+                        onDeleteOrder={async (orderId) => {
+                            const ok = await handleDeleteOrder(orderId);
+                            if (ok) closeOrderDetail();
+                        }}
                     />
                 )}
             </div>

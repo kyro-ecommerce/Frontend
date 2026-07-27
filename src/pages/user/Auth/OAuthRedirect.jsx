@@ -42,19 +42,28 @@ const OAuthRedirect = () => {
             // Lưu token vào localStorage trước
             saveTokenToLocalStorage(token);
             
+            let userData = null;
             if (setAuthTokenAndFetchUser && typeof setAuthTokenAndFetchUser === 'function') {
               console.log('Calling setAuthTokenAndFetchUser...');
-              await setAuthTokenAndFetchUser(token);
+              userData = await setAuthTokenAndFetchUser(token);
             } else {
               console.warn('setAuthTokenAndFetchUser not available, using fallback');
             }
             
             setStatus('success');
-            console.log('OAuth success, redirecting to home...');
+            console.log('OAuth success, user profile:', userData);
+            
+            const role = userData?.role || (typeof userData?.role === 'object' ? userData.role.name : null);
             
             setTimeout(() => {
-              navigate('/');
-            }, 1500);
+              if (role === 'ADMIN') {
+                console.log('Admin user detected via OAuth, redirecting to /admin');
+                window.location.href = '/admin';
+              } else {
+                console.log('Regular user detected via OAuth, redirecting to /');
+                navigate('/');
+              }
+            }, 1000);
             
           } catch (error) {
             console.error("Error processing token:", error);

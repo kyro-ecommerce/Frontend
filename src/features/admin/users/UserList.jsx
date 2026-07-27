@@ -8,6 +8,7 @@ const UserList = ({
                       totalPages,
                       onPageChange,
                       onToggleStatus,
+                      onChangeRole,
                       onDeleteUser,
                       onViewDetail
                   }) => {
@@ -84,8 +85,22 @@ const UserList = ({
                                         ? `${user.firstName || ''} ${user.lastName || ''}`
                                         : 'Chưa cập nhật'}
                                 </td>
-                                <td className="p-3 px-4 text-center border-b border-gray-200">{user.role === "CUSTOMER" ? "Khách hàng" : "Người bán"}</td>
-                                <td className="p-3 px-4 text-center border-b border-gray-200">{formatDate(user.createdAt)}</td> {/* Hiển thị ngày đăng ký */}
+                                <td className="p-3 px-4 text-center border-b border-gray-200">
+                                    <select
+                                        value={user.role || "CUSTOMER"}
+                                        onChange={(e) => {
+                                            e.stopPropagation();
+                                            if (onChangeRole) onChangeRole(user.id, e.target.value);
+                                        }}
+                                        className={`py-1 px-2.5 rounded-full text-xs font-semibold border border-gray-200 cursor-pointer outline-none ${
+                                            user.role === "ADMIN" ? 'bg-purple-50 text-purple-600' : 'bg-blue-50 text-blue-600'
+                                        }`}
+                                    >
+                                        <option value="CUSTOMER">Khách hàng</option>
+                                        <option value="ADMIN">Quản trị viên</option>
+                                    </select>
+                                </td>
+                                <td className="p-3 px-4 text-center border-b border-gray-200">{formatDate(user.createdAt)}</td>
                                 <td className="p-3 px-4 text-center border-b border-gray-200">
                                     <div className="cursor-pointer">
                                         <button

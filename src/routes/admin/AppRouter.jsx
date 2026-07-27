@@ -11,16 +11,13 @@ import NotFound from "../../pages/admin/auth/NotFound";
 import UserManagement from "../../pages/admin/admin/UserManagement";
 import OrdersManagement from "../../pages/admin/admin/OrdersManagement";
 
-// Protected Route component đơn giản hóa
+// Protected Route component
 const ProtectedRoute = ({ element, requiredRole }) => {
-    const { user, loading, hasRole, logout } = useAuth();
+    const { user, loading, hasRole } = useAuth();
 
-    if (loading) return <div>Đang tải...</div>;
-    if (!user) {
-        return <Navigate to="/login" replace />;
-    }
-    if (requiredRole && !hasRole(requiredRole)) {
-        logout();
+    if (loading) return <div className="flex items-center justify-center min-h-screen text-gray-500 font-medium">Đang tải...</div>;
+    if (!user || (requiredRole && !hasRole(requiredRole))) {
+        window.location.href = "/login";
         return null;
     }
 
@@ -30,18 +27,14 @@ const ProtectedRoute = ({ element, requiredRole }) => {
 const AppRouter = () => {
     return (
         <Routes>
-            {/* Public routes */}
-            <Route path="/login" element={<Login />} />
-
-            {/* Protected admin routes với cấu trúc đơn giản hơn */}
+            {/* Protected admin routes */}
             <Route path="/admin" element={<ProtectedRoute element={<Dashboard />} requiredRole="ADMIN" />} />
             <Route path="/admin/products" element={<ProtectedRoute element={<ProductManagement />} requiredRole="ADMIN" />} />
             <Route path="/admin/orders" element={<ProtectedRoute element={<OrdersManagement />} requiredRole="ADMIN" />} />
             <Route path="/admin/users" element={<ProtectedRoute element={<UserManagement />} requiredRole="ADMIN" />} />
 
             {/* Redirect và 404 */}
-            <Route path="/" element={<Navigate to="/admin" replace />} />
-            <Route path="*" element={<NotFound />} />
+            <Route path="*" element={<Navigate to="/admin" replace />} />
         </Routes>
     );
 };

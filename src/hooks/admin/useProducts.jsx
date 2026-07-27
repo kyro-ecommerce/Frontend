@@ -48,8 +48,9 @@ export const useProducts = () => {
     const fetchCategories = useCallback(async () => {
         try {
             const response = await productService.getProductCategories();
-            setCategories(response.data.data);
-            return response.data.data;
+            const catData = response.data?.data || response.data || { topLevel: [], secondLevel: {} };
+            setCategories(catData);
+            return catData;
         } catch (err) {
             console.error('Error fetching categories:', err);
             return { topLevel: [], secondLevel: {} };
@@ -82,22 +83,30 @@ export const useProducts = () => {
                 status: filtersToUse.status
             });
 
-            const data = response.data.data;
-            setProducts(data.products || []);
+            const pageData = response.data?.data || response.data || {};
+            const productList = pageData.content || pageData.products || (Array.isArray(pageData) ? pageData : []);
+            setProducts(productList);
 
-            const paginationData = data.pagination;
+            const paginationData = pageData.pagination || {};
+            const currentPage = pageData.number ?? pageData.currentPage ?? paginationData.currentPage ?? 0;
+            const totalPages = pageData.totalPages ?? paginationData.totalPages ?? 1;
+            const totalElements = pageData.totalElements ?? paginationData.totalElements ?? productList.length;
+            const pageSize = pageData.size ?? pageData.pageSize ?? paginationData.pageSize ?? 10;
+            const isFirst = pageData.first ?? pageData.isFirst ?? paginationData.isFirst ?? (currentPage === 0);
+            const isLast = pageData.last ?? pageData.isLast ?? paginationData.isLast ?? (currentPage >= totalPages - 1);
+
             setPagination({
-                currentPage: paginationData.currentPage,
-                totalPages: paginationData.totalPages,
-                totalElements: paginationData.totalElements,
-                hasNext: paginationData.hasNext,
-                hasPrevious: paginationData.hasPrevious,
-                pageSize: paginationData.pageSize,
-                isFirst: paginationData.isFirst,
-                isLast: paginationData.isLast
+                currentPage,
+                totalPages,
+                totalElements,
+                hasNext: !isLast,
+                hasPrevious: !isFirst,
+                pageSize,
+                isFirst,
+                isLast
             });
 
-            return data;
+            return pageData;
         } catch (err) {
             setError(err.response?.data?.message || 'Không thể lấy danh sách sản phẩm');
             throw err;

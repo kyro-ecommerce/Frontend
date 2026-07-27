@@ -5,6 +5,7 @@ export const confirmOrder = (orderId) => api.put(`/admin/orders/${orderId}/confi
 export const shipOrder = (orderId) => api.put(`/admin/orders/${orderId}/ship`);
 export const deliverOrder = (orderId) => api.put(`/admin/orders/${orderId}/deliver`);
 export const cancelOrder = (orderId) => api.put(`/admin/orders/${orderId}/cancel`);
+export const updateOrderStatus = (orderId, status) => api.put(`/admin/orders/${orderId}/status`, { status });
 export const deleteOrder = (orderId) => api.delete(`/admin/orders/${orderId}`);
 
 export const getOrderStats = (startDate, endDate) => {

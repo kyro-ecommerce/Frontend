@@ -57,6 +57,7 @@ export const removeRefreshTokenFromCookie = () => {
 export const saveTokenToLocalStorage = (token) => {
     try {
         localStorage.setItem("jwt", token);
+        localStorage.setItem("accessToken", token);
     } catch (error) {
         console.error("Lỗi khi lưu access token vào localStorage:", error);
     }
@@ -68,7 +69,7 @@ export const saveTokenToLocalStorage = (token) => {
  */
 export const getTokenFromLocalStorage = () => {
     try {
-        return localStorage.getItem("jwt");
+        return localStorage.getItem("jwt") || localStorage.getItem("accessToken");
     } catch (error) {
         console.error("Lỗi khi lấy access token từ localStorage:", error);
         return null;
@@ -81,6 +82,7 @@ export const getTokenFromLocalStorage = () => {
 export const removeTokenFromLocalStorage = () => {
     try {
         localStorage.removeItem("jwt");
+        localStorage.removeItem("accessToken");
         console.log("Đã xóa access token từ localStorage");
     } catch (error) {
         console.error("Lỗi khi xóa access token từ localStorage:", error);

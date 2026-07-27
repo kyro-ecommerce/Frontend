@@ -144,8 +144,7 @@ const UserDetailModal = ({ user, onClose, onUpdateUser, onChangeRole, onToggleSt
                         <div className="flex flex-col md:flex-row mb-3">
                             <div className="w-full md:w-37.5 text-sm text-gray-500 mb-1 md:mb-0">Vai trò:</div>
                             <div className="text-sm font-medium">
-                                {user.role === "CUSTOMER" ? "Khách hàng" :
-                                    user.role === "SELLER" ? "Người bán" : user.role}
+                                {user.role === "ADMIN" ? "Quản trị viên" : "Khách hàng"}
                             </div>
                         </div>
 

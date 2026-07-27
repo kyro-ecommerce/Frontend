@@ -16,7 +16,7 @@ export const AuthProvider = ({ children }) => {
         const checkLoggedIn = async () => {
             try {
                 // Kiểm tra token trong localStorage
-                const token = localStorage.getItem("accessToken");
+                const token = localStorage.getItem("accessToken") || localStorage.getItem("jwt");
                 if (!token) {
                     setLoading(false);
                     return;
@@ -24,10 +24,12 @@ export const AuthProvider = ({ children }) => {
 
                 // Lấy thông tin người dùng hiện tại
                 const response = await authService.getCurrentUser();
-                setUser(response.data);
+                const userData = response.data?.data || response.data;
+                setUser(userData);
             } catch (err) {
                 console.error("Failed to fetch user:", err);
                 localStorage.removeItem("accessToken");
+                localStorage.removeItem("jwt");
             } finally {
                 setLoading(false);
             }
@@ -41,11 +43,14 @@ export const AuthProvider = ({ children }) => {
         try {
             setError(null);
             const response = await authService.login(credentials);
-            const { accessToken, user } = response.data.data;
+            const data = response.data?.data || response.data;
+            const { accessToken, user } = data || {};
 
             // Cookie refreshToken sẽ được tự động lưu bởi browser
             // Ta chỉ cần lưu accessToken
-            localStorage.setItem("accessToken", accessToken);
+            if (accessToken) {
+                localStorage.setItem("accessToken", accessToken);
+            }
             setUser(user);
             return user;
         } catch (err) {
