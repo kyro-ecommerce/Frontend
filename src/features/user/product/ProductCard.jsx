@@ -51,8 +51,13 @@ const ProductCard = ({
           src={image || "/Placeholder2.png"}
           alt={title || "Product Image"}
           loading="lazy"
+          onError={(e) => {
+            e.target.onerror = null;
+            e.target.src = "/Placeholder2.png";
+          }}
           className="max-h-full max-w-full object-contain transition-transform duration-500 ease-out group-hover:scale-110 drop-shadow-sm"
         />
+
       </div>
 
       {/* Content Section */}

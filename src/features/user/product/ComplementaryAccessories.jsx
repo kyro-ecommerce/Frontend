@@ -2,6 +2,34 @@ import React, { useEffect, useState } from "react";
 import { aiService } from "../../../services/user/ai.service";
 import ProductCard from "./ProductCard";
 
+const extractImageUrl = (product) => {
+  if (!product) return "/Placeholder2.png";
+  if (typeof product.image_url === "string" && product.image_url.trim()) return product.image_url.trim();
+  if (typeof product.imageUrl === "string" && product.imageUrl.trim()) return product.imageUrl.trim();
+  if (typeof product.image === "string" && product.image.trim()) return product.image.trim();
+  
+  if (Array.isArray(product.imageUrls) && product.imageUrls.length > 0) {
+    const first = product.imageUrls[0];
+    if (typeof first === "string") return first;
+    if (first && first.downloadUrl) return first.downloadUrl;
+    if (first && first.url) return first.url;
+  }
+  
+  if (Array.isArray(product.images) && product.images.length > 0) {
+    const first = product.images[0];
+    if (typeof first === "string") return first;
+    if (first && first.downloadUrl) return first.downloadUrl;
+    if (first && first.url) return first.url;
+  }
+
+  if (Array.isArray(product.image_urls) && product.image_urls.length > 0) {
+    const first = product.image_urls[0];
+    if (typeof first === "string") return first;
+  }
+  
+  return "/Placeholder2.png";
+};
+
 const ComplementaryAccessories = ({ productId }) => {
   const [accessories, setAccessories] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -52,7 +80,7 @@ const ComplementaryAccessories = ({ productId }) => {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {accessories.map((item, index) => {
             const id = item.id || item.product_id || item.productId;
-            const img = item.imageUrl || item.image_url || item.image || "/Placeholder2.png";
+            const img = extractImageUrl(item);
             const title = item.productTitle || item.title || item.name || "Phụ kiện";
             const price = Number(item.discountedPrice || item.discounted_price || item.price || 0);
             const origPrice = Number(item.originalPrice || item.original_price || item.price || 0);
@@ -62,8 +90,8 @@ const ComplementaryAccessories = ({ productId }) => {
             return (
               <div key={id || index} className="relative group">
                 {item.reason && (
-                  <div className="absolute top-2 left-2 z-10 max-w-[90%]">
-                    <span className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-md bg-purple-900/90 text-white shadow-sm backdrop-blur-sm truncate max-w-full">
+                  <div className="absolute top-3 left-3 z-10 max-w-[75%] pointer-events-none">
+                    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full bg-gradient-to-r from-purple-800 to-indigo-800 text-white shadow-md backdrop-blur-md truncate max-w-full">
                       ✨ {item.reason}
                     </span>
                   </div>
@@ -85,5 +113,6 @@ const ComplementaryAccessories = ({ productId }) => {
     </section>
   );
 };
+
 
 export default ComplementaryAccessories;

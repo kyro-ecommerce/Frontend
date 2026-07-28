@@ -7,6 +7,34 @@ const formatPrice = (price) => {
   return price.toLocaleString("vi-VN", { style: "currency", currency: "VND" });
 };
 
+const extractImageUrl = (product) => {
+  if (!product) return "/Placeholder2.png";
+  if (typeof product.image_url === "string" && product.image_url.trim()) return product.image_url.trim();
+  if (typeof product.imageUrl === "string" && product.imageUrl.trim()) return product.imageUrl.trim();
+  if (typeof product.image === "string" && product.image.trim()) return product.image.trim();
+  
+  if (Array.isArray(product.imageUrls) && product.imageUrls.length > 0) {
+    const first = product.imageUrls[0];
+    if (typeof first === "string") return first;
+    if (first && first.downloadUrl) return first.downloadUrl;
+    if (first && first.url) return first.url;
+  }
+  
+  if (Array.isArray(product.images) && product.images.length > 0) {
+    const first = product.images[0];
+    if (typeof first === "string") return first;
+    if (first && first.downloadUrl) return first.downloadUrl;
+    if (first && first.url) return first.url;
+  }
+
+  if (Array.isArray(product.image_urls) && product.image_urls.length > 0) {
+    const first = product.image_urls[0];
+    if (typeof first === "string") return first;
+  }
+  
+  return "/Placeholder2.png";
+};
+
 const ZeroResultsRecommendations = () => {
   const [trending, setTrending] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -60,13 +88,13 @@ const ZeroResultsRecommendations = () => {
           const pid = product.product_id || product.id;
           const price = product.discounted_price || product.discountedPrice || product.original_price || product.price;
           const origPrice = product.original_price || product.price;
-          const imageUrl = product.image_url || product.imageUrl || product.image || "/Placeholder2.png";
+          const imageUrl = extractImageUrl(product);
 
           return (
             <div key={pid || index} className="relative group">
               {product.reason && (
-                <div className="absolute top-2 left-2 z-10 max-w-[90%]">
-                  <span className="inline-block text-[10px] font-medium px-2 py-0.5 rounded bg-purple-900/90 text-white truncate max-w-full shadow-sm">
+                <div className="absolute top-3 left-3 z-10 max-w-[75%] pointer-events-none">
+                  <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full bg-gradient-to-r from-purple-800 to-indigo-800 text-white shadow-md backdrop-blur-md truncate max-w-full">
                     ✨ {product.reason}
                   </span>
                 </div>
@@ -87,5 +115,6 @@ const ZeroResultsRecommendations = () => {
     </div>
   );
 };
+
 
 export default ZeroResultsRecommendations;

@@ -8,12 +8,35 @@ import ProductCard from "../../../features/user/product/ProductCard";
 import ProductSkeleton from "../../../features/user/product/ProductSkeleton";
 import Pagination from "../../../components/user/common/Pagination";
 import { productService } from "../../../services/user/product.service";
+import { aiService } from "../../../services/user/ai.service";
 import ZeroResultsRecommendations from "../../../features/user/catalog/ZeroResultsRecommendations";
 
+const extractImageUrl = (product) => {
+  if (!product) return "/Placeholder2.png";
+  if (typeof product.image_url === "string" && product.image_url.trim()) return product.image_url.trim();
+  if (typeof product.imageUrl === "string" && product.imageUrl.trim()) return product.imageUrl.trim();
+  if (typeof product.image === "string" && product.image.trim()) return product.image.trim();
+  
+  if (Array.isArray(product.imageUrls) && product.imageUrls.length > 0) {
+    const first = product.imageUrls[0];
+    if (typeof first === "string") return first;
+    if (first && first.downloadUrl) return first.downloadUrl;
+    if (first && first.url) return first.url;
+  }
+  
+  if (Array.isArray(product.images) && product.images.length > 0) {
+    const first = product.images[0];
+    if (typeof first === "string") return first;
+    if (first && first.downloadUrl) return first.downloadUrl;
+    if (first && first.url) return first.url;
+  }
+  
+  return "/Placeholder2.png";
+};
 
 // --- Hàm định dạng giá ---
 const formatPrice = (price) => {
-  if (typeof price !== 'number') return "N/A";
+  if (typeof price !== 'number' || isNaN(price)) return "N/A";
   return price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
 };
 
@@ -73,33 +96,40 @@ const Catalog = ({ category: categoryProp }) => {
       }
   
       // 2. Tạo payload cho API
+      const searchKeyword = queryKeyword || keyword;
       const filterPayload = {
-        // Luôn lấy topLevelCategory từ path - đây là category chính
         topLevelCategory: (location.pathname.includes('/laptop')) ? "laptop" : 
                           (categoryProp && categoryProp !== 'all') ? categoryProp : undefined,
-        
-        // Chỉ thêm secondLevelCategory khi nó có giá trị
         secondLevelCategory: secondLevelCategoryProp || undefined,
-        
-        // Giữ nguyên các tham số lọc trong mọi trường hợp
         color: colorFilter || undefined,
         minPrice: minPrice,
         maxPrice: maxPrice,
         sort: sortFilter || undefined,
-        
-        // Ưu tiên keyword từ query parameter, sau đó từ path
-        keyword: queryKeyword || keyword || undefined
+        keyword: searchKeyword || undefined
       };
   
       console.log("Filter payload:", filterPayload);
+      let fetchedData = [];
+
+      // 3. Ưu tiên AI Hybrid Search (Vector + BM25 RRF) khi người dùng tìm kiếm từ khóa
+      if (searchKeyword && searchKeyword.trim()) {
+        try {
+          const aiSearchRes = await aiService.search(searchKeyword.trim(), 20);
+          if (aiSearchRes && Array.isArray(aiSearchRes.results) && aiSearchRes.results.length > 0) {
+            fetchedData = aiSearchRes.results;
+          }
+        } catch (aiErr) {
+          console.warn("AI Search unavailable, fallback to standard filter:", aiErr);
+        }
+      }
+
+      // 4. Nếu không có kết quả từ AI Search hoặc không dùng từ khóa, fallback sang SQL Filter
+      if (!fetchedData || fetchedData.length === 0) {
+        const response = await productService.getProductByFilter(filterPayload);
+        fetchedData = Array.isArray(response.data) ? response.data : (response.data?.data || []);
+      }
   
-      // 3. Gọi API lọc sản phẩm
-      const response = await productService.getProductByFilter(filterPayload);
-      console.log("API response:", response);
-  
-      const fetchedData = Array.isArray(response.data) ? response.data : (response.data?.data || []);
-  
-      // 4. Lưu trữ và Phân trang Client-side
+      // 5. Lưu trữ và Phân trang Client-side
       setAllFilteredProducts(fetchedData);
       const totalFetchedItems = fetchedData.length;
       setTotalItems(totalFetchedItems);
@@ -124,12 +154,12 @@ const Catalog = ({ category: categoryProp }) => {
       setTotalPages(0);
       setTotalItems(0);
     } finally {
-      // Thêm timeout nhỏ để hiện skeleton rõ hơn (có thể bỏ trong production)
       setTimeout(() => {
         setLoading(false);
-      }, 500);
+      }, 300);
     }
   }, [categoryProp, secondLevelCategoryProp, currentPage, location.search, itemsPerPage, keyword, location.pathname]);
+
 
   useEffect(() => {
     fetchDataAndPaginate();
@@ -234,20 +264,31 @@ const Catalog = ({ category: categoryProp }) => {
                   skeletonItems
                 ) : (
                   // Hiển thị sản phẩm thực khi đã load xong
-                  currentProducts.map((product) => (
-                    <ProductCard
-                      key={product.id}
-                      productId={product.id}
-                      image={product.imageUrls?.[0]?.downloadUrl || "/Placeholder2.png"}
-                      stockStatus={product.quantity > 0 ? "in stock" : "out of stock"}
-                      title={product.title}
-                      price={formatPrice(product.discountedPrice)}
-                      originalPrice={formatPrice(product.price)}
-                      reviewCount={product.numRatings || 0}
-                      discountPercent={product.discountPercent || 0}
-                      onClick={() => navigate(`/product/${product.id}`)}
-                    />
-                  ))
+                  currentProducts.map((product, index) => {
+                    const pid = product.id || product.product_id;
+                    const price = Number(product.discountedPrice || product.discounted_price || product.price || product.original_price || 0);
+                    const origPrice = Number(product.originalPrice || product.original_price || product.price || 0);
+                    const imageUrl = extractImageUrl(product);
+                    const rating = Number(product.averageRating || product.average_rating || 5);
+                    const numRatings = Number(product.numRatings || product.num_ratings || 0);
+                    const discount = Number(product.discountPercent || product.discount_percent || 0);
+
+                    return (
+                      <ProductCard
+                        key={pid || index}
+                        productId={pid}
+                        image={imageUrl}
+                        stockStatus={product.quantity > 0 || product.is_active !== false ? "in stock" : "out of stock"}
+                        title={product.title}
+                        price={formatPrice(price)}
+                        originalPrice={origPrice > price ? formatPrice(origPrice) : null}
+                        reviewCount={numRatings}
+                        ratingImage={rating}
+                        discountPercent={discount}
+                      />
+                    );
+                  })
+
                 )}
               </div>
               
