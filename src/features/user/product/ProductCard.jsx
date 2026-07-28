@@ -3,6 +3,23 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Rating } from '@mui/material';
 
+const formatPrice = (value) => {
+  if (value === null || value === undefined || value === "") return null;
+  if (typeof value === 'number') {
+    if (isNaN(value) || value <= 0) return null;
+    return value.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+  }
+  if (typeof value === 'string') {
+    if (value.includes("₫") || value.includes("VND")) return value;
+    const num = Number(value.replace(/[^0-9]/g, ''));
+    if (!isNaN(num) && num > 0) {
+      return num.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
+    }
+    return value;
+  }
+  return String(value);
+};
+
 const ProductCard = ({
   productId,
   image,
@@ -24,6 +41,9 @@ const ProductCard = ({
 
   const isOutOfStock = stockStatus !== "in stock";
   const displayRating = typeof ratingImage === 'number' && ratingImage > 0 ? ratingImage : 5;
+  const formattedPrice = formatPrice(price);
+  const formattedOriginalPrice = formatPrice(originalPrice);
+
 
   return (
     <div
@@ -90,14 +110,15 @@ const ProductCard = ({
         {/* Price Section */}
         <div className="flex items-baseline justify-center gap-2 mt-auto pt-1">
           <span className="text-base sm:text-lg font-extrabold text-[#E05600] tracking-tight">
-            {price || "Liên hệ"}
+            {formattedPrice || "Liên hệ"}
           </span>
-          {originalPrice && price !== originalPrice && (
+          {formattedOriginalPrice && formattedPrice !== formattedOriginalPrice && (
             <span className="text-xs text-gray-400 font-normal line-through">
-              {originalPrice}
+              {formattedOriginalPrice}
             </span>
           )}
         </div>
+
       </div>
     </div>
   );
