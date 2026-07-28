@@ -357,61 +357,63 @@ const Cart = () => {
                         </button>
                     </div>
                 ) : cart && cart.cartItems ? (
-                    <div className="w-full flex flex-col md:flex-row gap-6">
-                        <div className="w-full md:grow">
-                            {/* Header Chọn tất cả */}
-                            <div className="flex items-center justify-between p-3.5 mb-4 bg-white border border-gray-200 rounded-xl shadow-2xs">
-                                <label className="flex items-center gap-3 cursor-pointer text-sm font-bold text-gray-800 select-none">
-                                    <input
-                                        type="checkbox"
-                                        checked={isAllSelected}
-                                        onChange={handleToggleSelectAll}
-                                        className="w-4 h-4 sm:w-5 sm:h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                                    />
-                                    <span>Tất cả ({cart.cartItems.length} sản phẩm)</span>
-                                </label>
+                    <div className="flex flex-col w-full">
+                        <div className="w-full flex flex-col md:flex-row gap-6">
+                            <div className="w-full md:grow">
+                                {/* Header Chọn tất cả */}
+                                <div className="flex items-center justify-between p-3.5 mb-4 bg-white border border-gray-200 rounded-xl shadow-2xs">
+                                    <label className="flex items-center gap-3 cursor-pointer text-sm font-bold text-gray-800 select-none">
+                                        <input
+                                            type="checkbox"
+                                            checked={isAllSelected}
+                                            onChange={handleToggleSelectAll}
+                                            className="w-4 h-4 sm:w-5 sm:h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                                        />
+                                        <span>Tất cả ({cart.cartItems.length} sản phẩm)</span>
+                                    </label>
 
-                                {selectedItemIds.length > 0 && (
-                                    <button
-                                        onClick={handleRemoveSelected}
-                                        disabled={isProcessingAction}
-                                        className="text-xs text-red-600 hover:text-red-700 font-semibold underline cursor-pointer disabled:opacity-50"
-                                    >
-                                        Xóa mục đã chọn ({selectedItemIds.length})
-                                    </button>
-                                )}
+                                    {selectedItemIds.length > 0 && (
+                                        <button
+                                            onClick={handleRemoveSelected}
+                                            disabled={isProcessingAction}
+                                            className="text-xs text-red-600 hover:text-red-700 font-semibold underline cursor-pointer disabled:opacity-50"
+                                        >
+                                            Xóa mục đã chọn ({selectedItemIds.length})
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Danh sách các item trong giỏ */}
+                                {cart.cartItems.map((cartItem) => (
+                                    <CartItem
+                                        key={cartItem.id}
+                                        item={cartItem}
+                                        isSelected={selectedItemIds.includes(cartItem.id)}
+                                        onToggleSelect={handleToggleSelect}
+                                        onRemove={handleRemoveItem}
+                                        formatCurrency={formatCurrency}
+                                        isLoading={isProcessingAction || isCartContextLoading}
+                                    />
+                                ))}
                             </div>
 
-                            {/* Danh sách các item trong giỏ */}
-                            {cart.cartItems.map((cartItem) => (
-                                <CartItem
-                                    key={cartItem.id}
-                                    item={cartItem}
-                                    isSelected={selectedItemIds.includes(cartItem.id)}
-                                    onToggleSelect={handleToggleSelect}
-                                    onRemove={handleRemoveItem}
-                                    formatCurrency={formatCurrency}
-                                    isLoading={isProcessingAction || isCartContextLoading}
-                                />
-                            ))}
+                            {/* Tóm tắt đơn hàng (tính theo các món được tick chọn) */}
+                            <CartSummary
+                                selectedItemsCount={selectedItemIds.length}
+                                totalOriginalPrice={totalOriginalPrice}
+                                totalDiscountedPrice={totalDiscountedPrice}
+                                discount={totalDiscount}
+                                formatCurrency={formatCurrency}
+                                onCheckout={handleCheckout}
+                                isLoading={isProcessingAction || isCartContextLoading}
+                            />
                         </div>
 
-                        {/* Tóm tắt đơn hàng (tính theo các món được tick chọn) */}
-
-                        <CartSummary
-                            selectedItemsCount={selectedItemIds.length}
-                            totalOriginalPrice={totalOriginalPrice}
-                            totalDiscountedPrice={totalDiscountedPrice}
-                            discount={totalDiscount}
-                            formatCurrency={formatCurrency}
-                            onCheckout={handleCheckout}
-                            isLoading={isProcessingAction || isCartContextLoading}
-                        />
+                        {/* AI Gợi ý phụ kiện mua kèm trước khi thanh toán */}
+                        <CartAccessories cartItems={cart?.cartItems} />
                     </div>
-
-                    {/* AI Gợi ý phụ kiện mua kèm trước khi thanh toán */}
-                    <CartAccessories cartItems={cart?.cartItems} />
                 ) : null}
+
             </section>
         </main>
     );
