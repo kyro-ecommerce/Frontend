@@ -1,6 +1,40 @@
 import React, { useState, useRef, useEffect } from "react";
 import { aiService } from "../../../services/user/ai.service";
 
+const renderMessageText = (text) => {
+  if (!text) return null;
+  const linkRegex = /\[([^\]]+)\]\(([^)]+)\)/g;
+  const parts = [];
+  let lastIndex = 0;
+  let match;
+
+  while ((match = linkRegex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(text.substring(lastIndex, match.index));
+    }
+    const linkTitle = match[1];
+    const linkUrl = match[2];
+    parts.push(
+      <a
+        key={match.index}
+        href={linkUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        style={{ color: "#2563eb", fontWeight: "700", textDecoration: "underline", margin: "0 2px" }}
+      >
+        {linkTitle} 🔗
+      </a>
+    );
+    lastIndex = linkRegex.lastIndex;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push(text.substring(lastIndex));
+  }
+
+  return parts;
+};
+
 export const AIChatWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
@@ -147,67 +181,74 @@ export const AIChatWidget = () => {
               >
                 <div
                   style={{
-                    maxWidth: "80%",
+                    maxWidth: "85%",
                     padding: "10px 14px",
                     borderRadius: msg.sender === "user" ? "16px 16px 2px 16px" : "16px 16px 16px 2px",
                     backgroundColor: msg.sender === "user" ? "#2563eb" : "#ffffff",
                     color: msg.sender === "user" ? "#ffffff" : "#1f2937",
                     fontSize: "14px",
-                    lineHeight: "1.4",
+                    lineHeight: "1.5",
                     boxShadow: "0 2px 5px rgba(0,0,0,0.05)",
                     whiteSpace: "pre-line",
                   }}
                 >
-                  {msg.text}
+                  {renderMessageText(msg.text)}
                 </div>
 
                 {/* Render Recommended Products if available */}
                 {msg.recommendedProducts && msg.recommendedProducts.length > 0 && (
                   <div style={{ width: "100%", marginTop: "8px", display: "flex", flexDirection: "column", gap: "8px" }}>
-                    <span style={{ fontSize: "12px", fontWeight: "600", color: "#4b5563" }}>✨ Sản phẩm AI gợi ý phù hợp:</span>
-                    {msg.recommendedProducts.map((prod) => (
-                      <a
-                        key={prod.product_id}
-                        href={`/product/${prod.product_id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{
-                          padding: "8px 10px",
-                          backgroundColor: "#ffffff",
-                          borderRadius: "10px",
-                          border: "1px solid #e5e7eb",
-                          display: "flex",
-                          gap: "10px",
-                          alignItems: "center",
-                          textDecoration: "none",
-                          boxShadow: "0 2px 4px rgba(0,0,0,0.03)",
-                          transition: "all 0.2s ease",
-                        }}
-                      >
-                        {prod.image_url && (
+                    <span style={{ fontSize: "12px", fontWeight: "700", color: "#4b5563" }}>✨ Thẻ sản phẩm gợi ý chi tiết:</span>
+                    {msg.recommendedProducts.map((prod) => {
+                      const pid = prod.product_id || prod.id;
+                      const price = prod.discounted_price || prod.discountedPrice || prod.original_price || prod.price;
+                      const priceStr = typeof price === 'number' ? price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' }) : price;
+
+                      return (
+                        <a
+                          key={pid}
+                          href={`/product/${pid}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            padding: "10px 12px",
+                            backgroundColor: "#ffffff",
+                            borderRadius: "12px",
+                            border: "1px solid #e5e7eb",
+                            display: "flex",
+                            gap: "12px",
+                            alignItems: "center",
+                            textDecoration: "none",
+                            boxShadow: "0 2px 6px rgba(0,0,0,0.04)",
+                            transition: "all 0.2s ease",
+                          }}
+                        >
                           <img
-                            src={prod.image_url}
+                            src={prod.image_url || "/Placeholder2.png"}
                             alt={prod.title}
-                            style={{ width: "40px", height: "40px", objectFit: "contain", borderRadius: "6px" }}
+                            onError={(e) => { e.target.onerror = null; e.target.src = "/Placeholder2.png"; }}
+                            style={{ width: "48px", height: "48px", objectFit: "contain", borderRadius: "8px", backgroundColor: "#f9fafb", padding: "2px" }}
                           />
-                        )}
-                        <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-                          <span style={{ fontWeight: "600", color: "#111827", fontSize: "12px", lineHeight: "1.3" }}>
-                            {prod.title}
-                          </span>
-                          {prod.reason && (
-                            <span style={{ fontSize: "10px", color: "#7c3aed", fontWeight: "500", marginTop: "2px" }}>
-                              💡 {prod.reason}
+                          <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                            <span style={{ fontWeight: "700", color: "#111827", fontSize: "13px", lineHeight: "1.3" }}>
+                              {prod.title}
                             </span>
-                          )}
-                          <span style={{ color: "#ef4444", fontWeight: "700", fontSize: "12px", marginTop: "2px" }}>
-                            {(prod.discounted_price || prod.original_price)?.toLocaleString("vi-VN")} đ
-                          </span>
-                        </div>
-                      </a>
-                    ))}
+                            {prod.reason && (
+                              <span style={{ fontSize: "11px", color: "#7c3aed", fontWeight: "600", marginTop: "2px" }}>
+                                ✨ {prod.reason}
+                              </span>
+                            )}
+                            <span style={{ color: "#E05600", fontWeight: "800", fontSize: "13px", marginTop: "2px" }}>
+                              {priceStr || "Xem chi tiết"}
+                            </span>
+                          </div>
+                          <span style={{ fontSize: "16px", color: "#2563eb", fontWeight: "bold" }}>➔</span>
+                        </a>
+                      );
+                    })}
                   </div>
                 )}
+
 
               </div>
             ))}
