@@ -109,11 +109,12 @@ const RecommendedForYou = () => {
           </div>
         </div>
         <a
-          href="/catalog"
-          className="text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors duration-200 hover:underline"
+          href="/product/all"
+          className="text-sm font-semibold text-blue-600 hover:text-blue-800 transition-colors duration-200 hover:underline flex items-center gap-1 cursor-pointer"
         >
           Khám phá thêm &rarr;
         </a>
+
       </div>
 
       {/* Grid Container */}
