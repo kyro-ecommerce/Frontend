@@ -4,6 +4,7 @@ import TopSale from "../../../features/user/product/TopSale";
 import Slider from "../../../features/user/product/Slider";
 import FlashSale from "../../../features/user/product/FlashSale";
 import LatestTop from "../../../features/user/product/LatestTop";
+import RecommendedForYou from "../../../features/user/product/RecommendedForYou";
 
 const Home = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -39,11 +40,13 @@ const Home = () => {
       {/* Main Content Sections */}
       <div className="flex flex-col items-center mx-auto mt-8 w-full max-w-screen-xl px-4">
         <FlashSale />
+        <RecommendedForYou />
         <TopSale />
         <LatestTop />
       </div>
     </div>
   );
 };
+
 
 export default Home;

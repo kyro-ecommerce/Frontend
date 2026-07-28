@@ -65,4 +65,37 @@ export const aiService = {
       throw error;
     }
   },
+  /**
+   * Get Personalized Product Recommendations for user
+   * @param {number} userId 
+   * @param {number} limit 
+   */
+  getPersonalizedProducts: async (userId, limit = 5) => {
+    try {
+      const response = await api.get(`${API_BASE_URL}/ai/recommendations/personalized/${userId}`, {
+        params: { limit },
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Lỗi khi lấy gợi ý cá nhân hóa:", error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get Cold-Start Trending Products
+   * @param {number} limit 
+   */
+  getTrendingProducts: async (limit = 5) => {
+    try {
+      const response = await api.get(`${API_BASE_URL}/ai/recommendations/trending`, {
+        params: { limit },
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Lỗi khi lấy gợi ý sản phẩm bán chạy:", error);
+      throw error;
+    }
+  },
 };
+

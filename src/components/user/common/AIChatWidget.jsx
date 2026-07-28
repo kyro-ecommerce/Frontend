@@ -163,30 +163,52 @@ export const AIChatWidget = () => {
 
                 {/* Render Recommended Products if available */}
                 {msg.recommendedProducts && msg.recommendedProducts.length > 0 && (
-                  <div style={{ width: "100%", marginTop: "8px", display: "flex", flexDirection: "column", gap: "6px" }}>
-                    <span style={{ fontSize: "12px", fontWeight: "600", color: "#4b5563" }}>Sản phẩm gợi ý:</span>
+                  <div style={{ width: "100%", marginTop: "8px", display: "flex", flexDirection: "column", gap: "8px" }}>
+                    <span style={{ fontSize: "12px", fontWeight: "600", color: "#4b5563" }}>✨ Sản phẩm AI gợi ý phù hợp:</span>
                     {msg.recommendedProducts.map((prod) => (
-                      <div
+                      <a
                         key={prod.product_id}
+                        href={`/product/${prod.product_id}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         style={{
                           padding: "8px 10px",
                           backgroundColor: "#ffffff",
-                          borderRadius: "8px",
+                          borderRadius: "10px",
                           border: "1px solid #e5e7eb",
                           display: "flex",
-                          justifyContent: "space-between",
+                          gap: "10px",
                           alignItems: "center",
-                          fontSize: "13px",
+                          textDecoration: "none",
+                          boxShadow: "0 2px 4px rgba(0,0,0,0.03)",
+                          transition: "all 0.2s ease",
                         }}
                       >
-                        <span style={{ fontWeight: "500", color: "#111827", flex: 1, marginRight: "8px" }}>{prod.title}</span>
-                        <span style={{ color: "#ef4444", fontWeight: "600" }}>
-                          {(prod.discounted_price || prod.original_price)?.toLocaleString("vi-VN")} đ
-                        </span>
-                      </div>
+                        {prod.image_url && (
+                          <img
+                            src={prod.image_url}
+                            alt={prod.title}
+                            style={{ width: "40px", height: "40px", objectFit: "contain", borderRadius: "6px" }}
+                          />
+                        )}
+                        <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+                          <span style={{ fontWeight: "600", color: "#111827", fontSize: "12px", lineHeight: "1.3" }}>
+                            {prod.title}
+                          </span>
+                          {prod.reason && (
+                            <span style={{ fontSize: "10px", color: "#7c3aed", fontWeight: "500", marginTop: "2px" }}>
+                              💡 {prod.reason}
+                            </span>
+                          )}
+                          <span style={{ color: "#ef4444", fontWeight: "700", fontSize: "12px", marginTop: "2px" }}>
+                            {(prod.discounted_price || prod.original_price)?.toLocaleString("vi-VN")} đ
+                          </span>
+                        </div>
+                      </a>
                     ))}
                   </div>
                 )}
+
               </div>
             ))}
             {loading && (

@@ -5,6 +5,8 @@ import { useCartContext } from "../../../store/user/CartContext";
 import { useToast } from "../../../store/user/ToastContext";
 import { CircularProgress, Typography, Button as MuiButton, Box, Alert } from "@mui/material";
 import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined';
+import CartAccessories from "../../../features/user/product/CartAccessories";
+
 
 // --- Component CartItem ---
 const CartItem = ({ item, isSelected, onToggleSelect, onRemove, formatCurrency, isLoading: isActionLoading }) => {
@@ -395,6 +397,7 @@ const Cart = () => {
                         </div>
 
                         {/* Tóm tắt đơn hàng (tính theo các món được tick chọn) */}
+
                         <CartSummary
                             selectedItemsCount={selectedItemIds.length}
                             totalOriginalPrice={totalOriginalPrice}
@@ -405,10 +408,14 @@ const Cart = () => {
                             isLoading={isProcessingAction || isCartContextLoading}
                         />
                     </div>
+
+                    {/* AI Gợi ý phụ kiện mua kèm trước khi thanh toán */}
+                    <CartAccessories cartItems={cart?.cartItems} />
                 ) : null}
             </section>
         </main>
     );
 };
+
 
 export default Cart;

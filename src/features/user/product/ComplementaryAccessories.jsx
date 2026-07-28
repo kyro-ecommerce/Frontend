@@ -1,0 +1,89 @@
+import React, { useEffect, useState } from "react";
+import { aiService } from "../../../services/user/ai.service";
+import ProductCard from "./ProductCard";
+
+const ComplementaryAccessories = ({ productId }) => {
+  const [accessories, setAccessories] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!productId) return;
+
+    const fetchAccessories = async () => {
+      setLoading(true);
+      try {
+        const res = await aiService.getComplementaryProducts(productId, 4);
+        const list = res?.recommendations || res?.items || res?.data || (Array.isArray(res) ? res : []);
+        setAccessories(list);
+      } catch (err) {
+        console.error("Error fetching complementary accessories:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAccessories();
+  }, [productId]);
+
+  if (loading || !accessories || accessories.length === 0) return null;
+
+  return (
+    <section className="w-full bg-gradient-to-br from-purple-50/80 via-pink-50/40 to-blue-50/70 p-6 md:p-8 border border-purple-100/80 my-8 rounded-3xl shadow-[0_10px_35px_rgba(168,85,247,0.06)]">
+      <div className="max-w-7xl mx-auto px-2 sm:px-4">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-purple-600 text-white text-sm font-bold">
+              🎧
+            </div>
+            <div>
+              <h2 className="text-xl sm:text-2xl font-extrabold text-gray-900 tracking-tight flex items-center gap-2">
+                Phụ Kiện Gợi Ý Mua Kèm
+                <span className="text-xs px-2.5 py-0.5 rounded-full font-medium bg-purple-100 text-purple-800 border border-purple-200">
+                  Cross-Category Synergy
+                </span>
+              </h2>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Các thiết bị phụ kiện tương thích tối ưu nhất cho sản phẩm này
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+          {accessories.map((item, index) => {
+            const id = item.id || item.product_id || item.productId;
+            const img = item.imageUrl || item.image_url || item.image || "/Placeholder2.png";
+            const title = item.productTitle || item.title || item.name || "Phụ kiện";
+            const price = Number(item.discountedPrice || item.discounted_price || item.price || 0);
+            const origPrice = Number(item.originalPrice || item.original_price || item.price || 0);
+            const rating = Number(item.averageRating || item.average_rating || 5);
+            const discount = Number(item.discountPercent || item.discount_percent || 0);
+
+            return (
+              <div key={id || index} className="relative group">
+                {item.reason && (
+                  <div className="absolute top-2 left-2 z-10 max-w-[90%]">
+                    <span className="inline-block text-[10px] font-semibold px-2 py-0.5 rounded-md bg-purple-900/90 text-white shadow-sm backdrop-blur-sm truncate max-w-full">
+                      ✨ {item.reason}
+                    </span>
+                  </div>
+                )}
+                <ProductCard
+                  productId={id}
+                  image={img}
+                  title={title}
+                  price={price}
+                  originalPrice={origPrice > price ? origPrice : null}
+                  ratingImage={rating}
+                  discountPercent={discount}
+                />
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default ComplementaryAccessories;

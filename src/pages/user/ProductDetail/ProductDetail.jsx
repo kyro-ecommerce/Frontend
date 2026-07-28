@@ -4,6 +4,7 @@ import ProductGallery from "../../../features/user/product/ProductGallery";
 import ProductInfo from "../../../features/user/product/ProductInfo";
 import ProductReviews from "../../../features/user/product/ProductReviews";
 import RelatedProducts from "../../../features/user/product/RelatedProducts";
+import ComplementaryAccessories from "../../../features/user/product/ComplementaryAccessories";
 import { productService } from "../../../services/user/product.service";
 import { Alert, CircularProgress, Typography } from "@mui/material";
 
@@ -113,6 +114,9 @@ const ProductDetail = () => {
 
             {/* AI Gợi ý sản phẩm tương tự */}
             <RelatedProducts productId={productId} />
+
+            {/* AI Gợi ý phụ kiện mua kèm */}
+            <ComplementaryAccessories productId={productId} />
           </>
         )}
         {!productInfoData && !loading && <p className="text-center py-10">Không tìm thấy thông tin sản phẩm.</p>}
@@ -120,5 +124,6 @@ const ProductDetail = () => {
     </div>
   );
 };
+
 
 export default ProductDetail;

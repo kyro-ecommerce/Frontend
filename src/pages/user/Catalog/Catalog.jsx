@@ -8,6 +8,8 @@ import ProductCard from "../../../features/user/product/ProductCard";
 import ProductSkeleton from "../../../features/user/product/ProductSkeleton";
 import Pagination from "../../../components/user/common/Pagination";
 import { productService } from "../../../services/user/product.service";
+import ZeroResultsRecommendations from "../../../features/user/catalog/ZeroResultsRecommendations";
+
 
 // --- Hàm định dạng giá ---
 const formatPrice = (price) => {
@@ -222,8 +224,10 @@ const Catalog = ({ category: categoryProp }) => {
               
               {/* Product Grid */}
               {!loading && !allFilteredProducts.length && messageType !== 'error' && (
-          <div className="text-center p-10 text-gray-500">Không tìm thấy sản phẩm nào phù hợp.</div>
-        )}
+                <ZeroResultsRecommendations />
+              )}
+
+
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 mt-4">
                 {/* Hiển thị skeleton khi đang loading */}
                 {loading ? (
