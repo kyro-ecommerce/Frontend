@@ -49,9 +49,16 @@ const CartAccessories = ({ cartItems = [] }) => {
     const fetchCartAccessories = async () => {
       setLoading(true);
       try {
-        const res = await aiService.getComplementaryProducts(mainProductId, 4);
+        const res = await aiService.getComplementaryProducts(mainProductId, 6);
         const list = res?.recommendations || res?.items || res?.data || (Array.isArray(res) ? res : []);
-        setAccessories(list);
+        const cartProductIds = new Set(
+          cartItems.map((ci) => String(ci?.productId || ci?.product?.id || ci?.id))
+        );
+        const filteredList = list.filter((item) => {
+          const itemId = item.id || item.product_id || item.productId;
+          return !cartProductIds.has(String(itemId));
+        }).slice(0, 4);
+        setAccessories(filteredList);
       } catch (err) {
         console.warn("Could not fetch cart accessories:", err);
       } finally {

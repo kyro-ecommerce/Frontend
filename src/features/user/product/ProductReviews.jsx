@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Rating } from '@mui/material';
 import { reviewService } from "../../../services/user/review.service";
 import { authService } from "../../../services/user/auth.service";
+import { isAuthenticated } from "../../../services/user/util";
 import { useToast } from "../../../store/user/ToastContext.jsx";
 import StarIcon from '@mui/icons-material/Star';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
@@ -35,8 +36,17 @@ const ProductReviews = ({ productId, onRatingUpdate, initialAverageRating, initi
     try {
       const response = await reviewService.getReviewsByProduct(productId);
       const result = response.data;
-      const tempp = await reviewService.canReview(productId);
-      setCanReview(Boolean(tempp?.data?.data));
+
+      if (isAuthenticated()) {
+        try {
+          const tempp = await reviewService.canReview(productId);
+          setCanReview(Boolean(tempp?.data?.data));
+        } catch (err) {
+          setCanReview(false);
+        }
+      } else {
+        setCanReview(false);
+      }
 
       if (result.data) {
         const { reviews: fetchedReviews = [], averageRating: avgRating = 0, ratingDistribution = {}, productName: fetchedProductName = "", totalReviews: total = 0 } = result.data;
@@ -99,7 +109,8 @@ const ProductReviews = ({ productId, onRatingUpdate, initialAverageRating, initi
   }, [productId, onRatingUpdate]);
 
   const fetchUser = async () => {
-     try {
+    if (!isAuthenticated()) return;
+    try {
       const response = await authService.getUserProfile();
       if (response && response.data) {
         setCurrentUserId(response.data.id);

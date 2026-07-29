@@ -40,9 +40,13 @@ const ComplementaryAccessories = ({ productId }) => {
     const fetchAccessories = async () => {
       setLoading(true);
       try {
-        const res = await aiService.getComplementaryProducts(productId, 4);
+        const res = await aiService.getComplementaryProducts(productId, 6);
         const list = res?.recommendations || res?.items || res?.data || (Array.isArray(res) ? res : []);
-        setAccessories(list);
+        const filteredList = list.filter((item) => {
+          const itemId = item.id || item.product_id || item.productId;
+          return String(itemId) !== String(productId);
+        }).slice(0, 4);
+        setAccessories(filteredList);
       } catch (err) {
         console.error("Error fetching complementary accessories:", err);
       } finally {

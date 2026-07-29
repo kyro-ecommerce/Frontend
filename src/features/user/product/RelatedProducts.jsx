@@ -12,10 +12,14 @@ const RelatedProducts = ({ productId }) => {
     const fetchSimilar = async () => {
       setLoading(true);
       try {
-        const res = await aiService.getSimilarProducts(productId, 4);
+        const res = await aiService.getSimilarProducts(productId, 6);
         console.log("AI Similar Products raw res:", res);
         const productsList = res?.items || res?.recommendations || res?.data || (Array.isArray(res) ? res : []);
-        setSimilarProducts(productsList);
+        const filteredList = productsList.filter((item) => {
+          const itemId = item.id || item.product_id || item.productId;
+          return String(itemId) !== String(productId);
+        }).slice(0, 4);
+        setSimilarProducts(filteredList);
       } catch (err) {
         console.error("Error fetching AI recommendations:", err);
       } finally {
