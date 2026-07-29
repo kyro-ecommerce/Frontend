@@ -69,6 +69,7 @@ const ChatBot = () => {
 
       if (data && data.reply) {
         let formattedText = data.reply
+          .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" class="text-blue-600 font-bold underline hover:text-blue-800 inline-flex items-center gap-1 mx-1">$1 🔗</a>')
           .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
           .replace(/\*(.*?)\*/g, "<em>$1</em>")
           .replace(/\n/g, "<br />");
@@ -110,7 +111,6 @@ const ChatBot = () => {
     ]);
   };
   
-  // --- PHẦN GIAO DIỆN (JSX) - chỉ thay đổi nhỏ ---
   return (
     <div className="fixed bottom-4 right-4 z-50 font-sans">
       <button 
@@ -132,9 +132,8 @@ const ChatBot = () => {
         >
           <div id="chatbox-header" className="bg-blue-600 text-white p-3 sm:p-4 rounded-t-lg flex justify-between items-center shrink-0">
             <div>
-              <h3 className="font-medium text-sm sm:text-base">Tech Shop Trợ Lý AI</h3>
-              {/* THAY ĐỔI 3: Cập nhật nền tảng */}
-              <p className="text-xs opacity-80">Hỗ trợ bởi Rasa</p>
+              <h3 className="font-medium text-sm sm:text-base">Kyro Store Trợ Lý AI</h3>
+              <p className="text-xs opacity-80">Tư vấn mua sắm thông minh</p>
             </div>
             <button 
               onClick={clearChatHistory}
@@ -147,19 +146,68 @@ const ChatBot = () => {
 
           <div className="flex-1 p-3 sm:p-4 overflow-y-auto">
             {messages.map((message, index) => (
-              <div key={index} className={`mb-3 sm:mb-4 flex ${message.sender === "user" ? "justify-end" : "justify-start"}`}>
-                {message.sender === "bot" && (
-                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-blue-100 flex items-center justify-center mr-2 shrink-0">
-                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" viewBox="0 0 20 20" fill="currentColor"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zM6 8a2 2 0 11-4 0 2 2 0 014 0zM1.49 15.326C1.49 13.845 2.73 13 4.21 13h11.58c1.48 0 2.72 1.157 2.72 2.636 0 1.176-.755 2.158-1.788 2.522-.346.124-.698.182-1.048.182H4.21c-1.48 0-2.72-1.157-2.72-2.636z" /></svg>
+              <div key={index} className={`mb-3 sm:mb-4 flex flex-col ${message.sender === "user" ? "items-end" : "items-start"}`}>
+                <div className={`flex ${message.sender === "user" ? "justify-end" : "justify-start"} w-full`}>
+                  {message.sender === "bot" && (
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-blue-100 flex items-center justify-center mr-2 shrink-0">
+                       <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" viewBox="0 0 20 20" fill="currentColor"><path d="M10 9a3 3 0 100-6 3 3 0 000 6zM6 8a2 2 0 11-4 0 2 2 0 014 0zM1.49 15.326C1.49 13.845 2.73 13 4.21 13h11.58c1.48 0 2.72 1.157 2.72 2.636 0 1.176-.755 2.158-1.788 2.522-.346.124-.698.182-1.048.182H4.21c-1.48 0-2.72-1.157-2.72-2.636z" /></svg>
+                    </div>
+                  )}
+                  <div className={`p-2.5 sm:p-3 rounded-xl max-w-[85%] wrap-break-word text-sm ${ message.sender === "user" ? "bg-blue-600 text-white rounded-br-none" : "bg-gray-100 text-gray-800 rounded-bl-none shadow-xs"}`}>
+                    {message.isHTML ? <div dangerouslySetInnerHTML={{ __html: message.content }} /> : message.content ? <p>{message.content}</p> : null}
+                    {message.image && <img src={message.image} alt="Hình ảnh từ bot" className="mt-2 rounded-md max-w-full h-auto" />}
                   </div>
-                )}
-                <div className={`p-2 sm:p-3 rounded-lg max-w-[80%] wrap-break-word text-sm sm:text-base ${ message.sender === "user" ? "bg-blue-500 text-white rounded-br-none" : "bg-gray-100 text-gray-800 rounded-bl-none"}`}>
-                  {message.isHTML ? <div dangerouslySetInnerHTML={{ __html: message.content }} /> : message.content ? <p>{message.content}</p> : null}
-                  {message.image && <img src={message.image} alt="Hình ảnh từ bot" className="mt-2 rounded-md max-w-full h-auto" />}
+                  {message.sender === "user" && (
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-blue-500 flex items-center justify-center ml-2 shrink-0 text-white">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg>
+                    </div>
+                  )}
                 </div>
-                {message.sender === "user" && (
-                  <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-blue-500 flex items-center justify-center ml-2 shrink-0 text-white">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 sm:h-5 sm:w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" /></svg>
+
+                {/* Render Product Cards for Bot Messages */}
+                {message.sender === "bot" && message.recommendedProducts && message.recommendedProducts.length > 0 && (
+                  <div className="mt-2.5 pl-9 space-y-2 w-full max-w-[92%]">
+                    <span className="text-[11px] font-bold text-gray-600 flex items-center gap-1">
+                      ✨ Thẻ sản phẩm gợi ý:
+                    </span>
+                    {message.recommendedProducts.map((prod) => {
+                      const pid = prod.product_id || prod.id;
+                      const price = prod.discounted_price || prod.discountedPrice || prod.original_price || prod.price;
+                      const priceStr = typeof price === 'number' ? price.toLocaleString('vi-VN') + ' đ' : price;
+
+                      return (
+                        <a
+                          key={pid}
+                          href={`/product/${pid}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-3 p-2.5 bg-white border border-gray-200 rounded-xl hover:border-blue-500 hover:shadow-md transition-all text-decoration-none group"
+                        >
+                          <img
+                            src={prod.image_url || "/Placeholder2.png"}
+                            alt={prod.title}
+                            onError={(e) => { e.target.onerror = null; e.target.src = "/Placeholder2.png"; }}
+                            className="w-11 h-11 object-contain rounded-lg bg-gray-50 p-1 shrink-0"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <h4 className="text-xs font-bold text-gray-900 group-hover:text-blue-600 truncate">
+                              {prod.title}
+                            </h4>
+                            {prod.reason && (
+                              <p className="text-[10px] text-purple-600 font-semibold truncate">
+                                ✨ {prod.reason}
+                              </p>
+                            )}
+                            <p className="text-xs font-extrabold text-orange-600 mt-0.5">
+                              {priceStr || "Xem chi tiết"}
+                            </p>
+                          </div>
+                          <span className="text-blue-600 font-bold text-sm group-hover:translate-x-0.5 transition-transform">
+                            ➔
+                          </span>
+                        </a>
+                      );
+                    })}
                   </div>
                 )}
               </div>
