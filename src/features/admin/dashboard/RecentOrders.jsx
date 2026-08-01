@@ -22,26 +22,38 @@ const RecentOrders = ({ orders = [] }) => {
                     </tr>
                     </thead>
                     <tbody>
-                    {safeOrders.map((order) => (
-                        <tr key={order.id}>
-                            <td className="p-3 text-left border-b border-gray-200">{order.trackingNo || `TN-${order.id}`}</td>
-                            <td className="p-3 text-left border-b border-gray-200">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden">
-                                        {order.productImg ? (
-                                            <img className="w-full h-full object-cover" src={order.productImg} alt={order.productName} />
-                                        ) : (
-                                            <div className="flex items-center justify-center w-full h-full text-xs text-gray-400">No image</div>
-                                        )}
+                    {safeOrders.map((order) => {
+                        const firstItem = order.orderItems?.[0];
+                        const trackingNo = order.trackingNo || (order.id ? `ORD-${order.id}` : 'N/A');
+                        const productImg = firstItem?.imageUrl || order.productImg;
+                        const mainTitle = firstItem?.productTitle || firstItem?.productName || order.productName || 'Đơn hàng';
+                        const extraCount = (order.orderItems?.length || 1) - 1;
+                        const productName = extraCount > 0 ? `${mainTitle} (+${extraCount})` : mainTitle;
+                        const price = firstItem?.discountedPrice || firstItem?.price || order.price || 0;
+                        const quantity = order.totalItems || firstItem?.quantity || order.quantity || 1;
+                        const totalAmount = order.totalDiscountedPrice ?? order.originalPrice ?? order.totalAmount ?? (price * quantity);
+
+                        return (
+                            <tr key={order.id}>
+                                <td className="p-3 text-left border-b border-gray-200">{trackingNo}</td>
+                                <td className="p-3 text-left border-b border-gray-200">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden shrink-0">
+                                            {productImg ? (
+                                                <img className="w-full h-full object-cover" src={productImg} alt={productName} />
+                                            ) : (
+                                                <div className="flex items-center justify-center w-full h-full text-xs text-gray-400">No image</div>
+                                            )}
+                                        </div>
+                                        <div className="font-medium text-sm text-gray-800 line-clamp-1">{productName}</div>
                                     </div>
-                                    <div className="font-medium">{order.productName}</div>
-                                </div>
-                            </td>
-                            <td className="p-3 text-left border-b border-gray-200">{formatCurrency(order.price)}</td>
-                            <td className="p-3 text-left border-b border-gray-200">{order.quantity}</td>
-                            <td className="p-3 text-left border-b border-gray-200">{formatCurrency(order.totalAmount)}</td>
-                        </tr>
-                    ))}
+                                </td>
+                                <td className="p-3 text-left border-b border-gray-200">{formatCurrency(price)}</td>
+                                <td className="p-3 text-left border-b border-gray-200">{quantity}</td>
+                                <td className="p-3 text-left border-b border-gray-200 font-semibold">{formatCurrency(totalAmount)}</td>
+                            </tr>
+                        );
+                    })}
                     </tbody>
                 </table>
             ) : (

@@ -11,20 +11,23 @@ const RevenueByCategory = ({ data = {} }) => {
     let storeData = [];
 
     if (typeof data === 'object' && data !== null) {
-        if (data.categories) {
-            // Nếu data có cấu trúc { categories: {...} }
-            storeData = Object.entries(data.categories).map(([name, info]) => ({
-                name,
-                percentage: info.percentage || 0,
-                revenue: info.value || 0
-            }));
-        } else {
-            // Nếu data là đối tượng với các cặp key-value trực tiếp
-            storeData = Object.entries(data).map(([name, info]) => ({
-                name,
-                percentage: typeof info === 'object' ? (info.percentage || 0) : 0,
-                revenue: typeof info === 'object' ? (info.value || 0) : 0
-            }));
+        const categoryMap = data.categoryRevenue || data.categories || data;
+        
+        if (typeof categoryMap === 'object' && categoryMap !== null) {
+            const entries = Object.entries(categoryMap);
+            // Tính tổng doanh thu
+            const totalSum = entries.reduce((sum, [, val]) => {
+                const amount = typeof val === 'number' ? val : (val?.value || val?.revenue || 0);
+                return sum + amount;
+            }, 0);
+
+            storeData = entries.map(([name, info]) => {
+                const revenue = typeof info === 'number' ? info : (info?.value || info?.revenue || 0);
+                const percentage = typeof info === 'object' && info?.percentage !== undefined 
+                    ? info.percentage 
+                    : (totalSum > 0 ? (revenue / totalSum) * 100 : 0);
+                return { name, revenue, percentage };
+            });
         }
     }
 

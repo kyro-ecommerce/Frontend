@@ -10,15 +10,15 @@ export const getTopSellingProducts = () => api.get("/admin/products/top-selling?
 
 export const getRevenueByDateRange = async (startDate, endDate) => {
     try {
-        const response = await api.get("/admin/orders/stats", {
+        const response = await api.get("/admin/orders/daily-revenue", {
             params: {
                 startDate,
                 endDate
             }
         });
-        return response.data?.data || response.data || {};
+        return response.data?.data || response.data || [];
     } catch (err) {
         console.error("Error fetching revenue by date range:", err);
-        return {};
+        return [];
     }
 };

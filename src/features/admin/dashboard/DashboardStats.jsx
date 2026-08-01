@@ -1,11 +1,9 @@
 import React from 'react';
 
 const DashboardStats = ({ stats = {} }) => {
-    const {
-        totalProducts = 0,
-        inStock = 0,
-        soldItems = 0
-    } = stats;
+    const totalProducts = stats.totalProducts ?? stats.stockStatus?.total ?? 0;
+    const inStock = stats.inStock ?? stats.stockStatus?.inStock ?? 0;
+    const soldItems = stats.soldItems ?? stats.totalSoldItems ?? 0;
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">

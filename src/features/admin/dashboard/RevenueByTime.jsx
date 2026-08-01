@@ -18,7 +18,8 @@ const CustomTooltip = ({ active, payload, label }) => {
 const formatDate = (date) => date.toISOString().split('T')[0];
 
 const RevenueByTime = ({ initialData = [], isLoading, onDateChange }) => {
-    const [chartData, setChartData] = useState(initialData);
+    const safeData = Array.isArray(initialData) ? initialData : [];
+    const [chartData, setChartData] = useState(safeData);
 
     // State cho date picker
     const today = new Date();
@@ -28,7 +29,7 @@ const RevenueByTime = ({ initialData = [], isLoading, onDateChange }) => {
     const [endDate, setEndDate] = useState(today);
 
     useEffect(() => {
-        setChartData(initialData);
+        setChartData(Array.isArray(initialData) ? initialData : []);
     }, [initialData]);
 
     const handleFilterClick = () => {
