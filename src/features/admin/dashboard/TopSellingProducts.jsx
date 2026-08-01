@@ -12,33 +12,42 @@ const TopSellingProducts = ({ products = [] }) => {
 
             {safeProducts.length > 0 ? (
                 <div>
-                    {safeProducts.map((product) => (
-                        <div key={product.id} className="flex items-center py-3 border-b border-gray-200">
-                            <div className="w-12.5 h-12.5 rounded-lg bg-gray-100 mr-4 overflow-hidden shrink-0">
-                                {product.imageUrl ? (
-                                    <img className="w-full h-full object-cover" src={product.imageUrl} alt={product.title || product.name} />
-                                ) : (
-                                    <div className="flex items-center justify-center w-full h-full text-xs text-gray-400">No image</div>
-                                )}
-                            </div>
-                            <div className="flex-1">
-                                <div className="font-medium mb-1 text-sm">{product.title || product.name}</div>
-                                <div className="text-blue-600 font-medium text-sm">
-                                    {product.discounted_price !== undefined && product.discounted_price < product.price ? (
-                                        <>
-                                            <span className="text-blue-600 mr-2">{formatCurrency(product.discounted_price)}</span>
-                                            <span className="text-gray-400 line-through text-xs">{formatCurrency(product.price)}</span>
-                                        </>
+                    {safeProducts.map((product) => {
+                        const img = product.imageUrl || product.imageUrls?.[0]?.imageUrl || product.imageUrls?.[0]?.downloadUrl;
+                        const title = product.title || product.name;
+                        const discountedPrice = product.discountedPrice ?? product.discounted_price;
+                        const price = product.price || 0;
+                        const sold = product.quantitySold ?? product.quantity_sold ?? 0;
+                        const hasDiscount = discountedPrice !== undefined && discountedPrice !== null && discountedPrice < price;
+
+                        return (
+                            <div key={product.id} className="flex items-center py-3 border-b border-gray-200">
+                                <div className="w-12.5 h-12.5 rounded-lg bg-gray-100 mr-4 overflow-hidden shrink-0">
+                                    {img ? (
+                                        <img className="w-full h-full object-cover" src={img} alt={title} />
                                     ) : (
-                                        formatCurrency(product.price)
+                                        <div className="flex items-center justify-center w-full h-full text-xs text-gray-400">No image</div>
                                     )}
                                 </div>
-                                <div className="flex items-center text-yellow-500 text-xs mt-1">
-                                    <span className="text-gray-500">| Đã bán: {product.quantitySold || 0}</span>
+                                <div className="flex-1">
+                                    <div className="font-medium mb-1 text-sm">{title}</div>
+                                    <div className="text-blue-600 font-medium text-sm">
+                                        {hasDiscount ? (
+                                            <>
+                                                <span className="text-blue-600 mr-2">{formatCurrency(discountedPrice)}</span>
+                                                <span className="text-gray-400 line-through text-xs">{formatCurrency(price)}</span>
+                                            </>
+                                        ) : (
+                                            formatCurrency(price)
+                                        )}
+                                    </div>
+                                    <div className="flex items-center text-xs mt-1">
+                                        <span className="text-gray-500 font-medium">Đã bán: {sold}</span>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    ))}
+                        );
+                    })}
                 </div>
             ) : (
                 <div className="text-center p-5 text-gray-500">

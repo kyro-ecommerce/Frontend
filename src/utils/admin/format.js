@@ -30,14 +30,21 @@ const formatCurrency = (amount) => {
  * @param {string|Date} dateTimeStr - Chuỗi ngày giờ hoặc đối tượng Date
  * @returns {string} Chuỗi đã định dạng hoặc 'N/A' nếu không hợp lệ
  */
+const parseDateInput = (val) => {
+    if (!val) return null;
+    if (Array.isArray(val)) {
+        const [year, month, day, hour = 0, minute = 0, second = 0] = val;
+        return new Date(year, month - 1, day, hour, minute, second);
+    }
+    return new Date(val);
+};
+
 const formatDateTime = (dateTimeStr) => {
     if (!dateTimeStr) return 'N/A';
 
     try {
-        const date = new Date(dateTimeStr);
-
-        // Kiểm tra xem date có hợp lệ không
-        if (isNaN(date.getTime())) return 'N/A';
+        const date = parseDateInput(dateTimeStr);
+        if (!date || isNaN(date.getTime())) return 'N/A';
 
         return new Intl.DateTimeFormat('vi-VN', {
             year: 'numeric',
@@ -54,17 +61,15 @@ const formatDateTime = (dateTimeStr) => {
 
 /**
  * Định dạng chỉ ngày (ngày/tháng/năm)
- * @param {string|Date} dateStr - Chuỗi ngày hoặc đối tượng Date
+ * @param {string|Date|Array} dateStr - Chuỗi ngày hoặc đối tượng Date hoặc mảng mốc thời gian
  * @returns {string} Chuỗi đã định dạng hoặc 'N/A' nếu không hợp lệ
  */
 const formatDate = (dateStr) => {
     if (!dateStr) return 'N/A';
 
     try {
-        const date = new Date(dateStr);
-
-        // Kiểm tra xem date có hợp lệ không
-        if (isNaN(date.getTime())) return 'N/A';
+        const date = parseDateInput(dateStr);
+        if (!date || isNaN(date.getTime())) return 'N/A';
 
         return new Intl.DateTimeFormat('vi-VN', {
             year: 'numeric',
