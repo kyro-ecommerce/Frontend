@@ -1,5 +1,5 @@
-// src/services/api.js
 import axios from "axios";
+import { getErrorMessage, getErrorCode } from "../../utils/errorUtils";
 
 
 const BACKEND_URL = import.meta.env.VITE_API_URL || "http://localhost:8080"; // Thay đổi URL này nếu cần
@@ -34,6 +34,9 @@ api.interceptors.response.use(
     },
     async (error) => {
         const originalRequest = error.config;
+        error.normalizedMessage = getErrorMessage(error);
+        error.errorCode = getErrorCode(error);
+
         if (error.response?.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
             try {

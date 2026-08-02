@@ -1,6 +1,7 @@
 import axios from "axios";
 import { authService } from "../../services/user/auth.service";
 import { getTokenFromLocalStorage, removeTokenFromLocalStorage } from "../../services/user/util";
+import { getErrorMessage, getErrorCode } from "../../utils/errorUtils";
 
 const BACKEND_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
@@ -55,8 +56,10 @@ api.interceptors.response.use(
     },
     async (error) => {
         const originalRequest = error.config;
+        error.normalizedMessage = getErrorMessage(error);
+        error.errorCode = getErrorCode(error);
 
-        console.error("Lỗi API:", error.response?.status, error.config?.url, error.message);
+        console.error(`[API Error ${error.response?.status || 'NETWORK'}] ${error.errorCode}:`, error.normalizedMessage, error.config?.url);
 
         // Kiểm tra xem có phải lỗi 401 (Unauthorized) không và chưa thử refresh token
         if (error.response && error.response.status === 401 && !originalRequest._retry) {
