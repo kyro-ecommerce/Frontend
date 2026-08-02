@@ -9,10 +9,10 @@ export const reviewService = {
         ),
 
     addReview: (reviewData) =>
-        api.post(`${API_BASE_URL}/reviews/create`, reviewData),
+        api.post(`${API_BASE_URL}/reviews`, reviewData),
 
     deleteReview: (reviewId) =>
-        api.delete(`${API_BASE_URL}/reviews/delete/${reviewId}`),
+        api.delete(`${API_BASE_URL}/reviews/${reviewId}`),
 
     canReview: (reviewId) =>
         api.get(`${API_BASE_URL}/reviews/can-review/${reviewId}`),

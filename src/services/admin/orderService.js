@@ -27,5 +27,5 @@ export const getAllOrders = (page = 0, size = 10, search = '', status = '', star
     if (startDate) params.append('startDate', startDate);
     if (endDate) params.append('endDate', endDate);
 
-    return api.get(`/admin/orders/all?${params.toString()}`);
+    return api.get(`/admin/orders?${params.toString()}`);
 };

@@ -105,7 +105,7 @@ export const authService = {
 
     updateProfile: async (userData) => {
         try {
-            const response = await api.put(`${API_BASE_URL}/users/update`, userData);
+            const response = await api.put(`${API_BASE_URL}/users/profile`, userData);
             return response.data; // Trả về data để context/component xử lý
         } catch (error) {
             throw error;

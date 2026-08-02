@@ -7,9 +7,7 @@ export const orderService = {
             if (!addressId) {
                 throw new Error("Address ID is required to create an order.");
             }
-            const response = await api.post(`/orders/create/${addressId}`, null, {
-                params: { paymentMethod }
-            });
+            const response = await api.post(`/orders`, { addressId, paymentMethod });
             return response; 
         } catch (error) {
             console.error('Lỗi khi tạo đơn hàng (Service):', error.response || error);
@@ -29,7 +27,7 @@ export const orderService = {
 
     getAddresses: async () => {
         try {
-            const response = await api.get("/users/address");
+            const response = await api.get("/users/addresses");
             return response;
         } catch (error) {
             console.error('Lỗi khi lấy địa chỉ (Service):', error.response || error);
@@ -69,7 +67,7 @@ export const orderService = {
 
     createVNPayPayment: async (orderId) => {
         try {
-            const response = await api.post(`/payment/create/${orderId}`);
+            const response = await api.post(`/payments/${orderId}`);
             return response;
         } catch (error) {
             console.error(`Lỗi khi tạo thanh toán VNPAY cho đơn ${orderId} (Service):`, error.response || error);
@@ -82,11 +80,8 @@ export const orderService = {
              return Promise.reject(new Error("VNPAY parameters are required for callback"));
         }
         try {
-            // SỬA ĐỔI CHÍNH: Đổi từ POST sang GET
-            // Axios GET request gửi params trong config object.
-            // Không cần truyền body (null) nữa.
             console.log("[OrderService] Calling VNPAY Callback with params:", vnpayParams);
-            const response = await api.get(`/payment/vnpay-callback`, { 
+            const response = await api.get(`/payments/vnpay-callback`, { 
                 params: vnpayParams 
             });
             console.log("[OrderService] VNPAY Callback response:", response);
@@ -97,15 +92,15 @@ export const orderService = {
         }
     },
 
-    getAllOrders: async () => { /* ... Giữ nguyên ... */ 
+    getAllOrders: async () => { 
         try {
-            const response = await api.get("/orders/user");
+            const response = await api.get("/orders");
             return response;
         } catch (error) {
             throw error;
         }
     },
-    getPendingOrders: async () => { /* ... Giữ nguyên ... */ 
+    getPendingOrders: async () => { 
         try {
             const response = await api.get("/orders/pending");
             return response;
@@ -113,7 +108,7 @@ export const orderService = {
             throw error;
         }
     },
-    getShippingOrders: async () => { /* ... Giữ nguyên ... */ 
+    getShippingOrders: async () => { 
         try {
             const response = await api.get("/orders/shipped");
             return response;
@@ -121,7 +116,7 @@ export const orderService = {
             throw error;
         }
     },
-    getDeliveredOrders: async () => { /* ... Giữ nguyên ... */ 
+    getDeliveredOrders: async () => { 
         try {
             const response = await api.get("/orders/delivered");
             return response;
@@ -129,7 +124,7 @@ export const orderService = {
             throw error;
         }
     },
-    getCancelledOrders: async () => { /* ... Giữ nguyên ... */ 
+    getCancelledOrders: async () => { 
         try {
             const response = await api.get("/orders/cancelled");
             return response;
@@ -137,7 +132,7 @@ export const orderService = {
             throw error;
         }
     },
-    getConfirmedOrders: async () => { /* ... Giữ nguyên ... */ 
+    getConfirmedOrders: async () => { 
         try {
             const response = await api.get("/orders/confirmed");
             return response;
@@ -145,9 +140,9 @@ export const orderService = {
             throw error;
         }
     },
-    cancelOrder: async (orderId) => { /* ... Giữ nguyên ... */ 
+    cancelOrder: async (orderId) => { 
         try {
-            const response = await api.put(`/orders/cancel/${orderId}`);
+            const response = await api.put(`/orders/${orderId}/cancel`);
             return response;
         } catch (error) {
             throw error;

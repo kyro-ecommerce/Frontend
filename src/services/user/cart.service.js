@@ -4,7 +4,7 @@ import { api } from "../../config/user/ApiConfig";
 export const cartService = {
     getCart: async () => {
         try {
-            const response = await api.get(`/cart`);
+            const response = await api.get(`/carts`);
             return response;
         } catch (error) {
             console.error("Error fetching cart in service:", error.response || error);
@@ -14,7 +14,7 @@ export const cartService = {
 
     addToCart: async (cartData) => {
         try {
-            const response = await api.post(`/cart/add`, cartData);
+            const response = await api.post(`/carts/items`, cartData);
             return response;
         } catch (error) {
             console.error("Error adding to cart in service:", error.response || error);
@@ -24,7 +24,7 @@ export const cartService = {
 
     removeFromCart: async (itemId) => {
         try {
-            const response = await api.delete(`/cart/remove/${itemId}`);
+            const response = await api.delete(`/carts/items/${itemId}`);
             return response;
         } catch (error) {
             console.error("Error removing from cart in service:", error.response || error);
@@ -40,7 +40,7 @@ export const cartService = {
                 pId = productId.productId || quantity;
                 qVal = productId.quantity;
             }
-            const response = await api.put(`/cart/update`, null, {
+            const response = await api.put(`/carts/items`, null, {
                 params: { productId: pId, quantity: qVal }
             });
             return response;
@@ -52,7 +52,7 @@ export const cartService = {
 
     clearCart: async () => {
         try {
-            const response = await api.delete(`/cart/clear`);
+            const response = await api.delete(`/carts/items`);
             return response; // API này có thể trả về 204 No Content hoặc cart rỗng
         } catch (error) {
             console.error("Error clearing cart in service:", error.response || error);

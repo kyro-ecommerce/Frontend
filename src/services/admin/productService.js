@@ -30,7 +30,7 @@ export const getAllProducts = (params = {}) => {
     if (maxPrice !== null) queryParams.append('maxPrice', maxPrice);
     if (status && status !== 'all') queryParams.append('status', status);
 
-    return api.get(`/admin/products/all?${queryParams.toString()}`);
+    return api.get(`/admin/products?${queryParams.toString()}`);
 };
 
 export const getProductById = (productId) => api.get(`/admin/products/${productId}`);
@@ -56,14 +56,14 @@ export const createProduct = (productData) => {
             formData.append(`images`, image);
         });
 
-        return api.post("/admin/products/create", formData, {
+        return api.post("/admin/products", formData, {
             headers: {
                 'Content-Type': 'multipart/form-data'
             }
         });
     }
 
-    return api.post("/admin/products/create", productData);
+    return api.post("/admin/products", productData);
 };
 
 export const updateProduct = (productId, productData) => {
@@ -85,17 +85,17 @@ export const updateProduct = (productId, productData) => {
             formData.append(`images`, image);
         });
 
-        return api.put(`/admin/products/${productId}/update`, formData, {
+        return api.put(`/admin/products/${productId}`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data'
             }
         });
     }
 
-    return api.put(`/admin/products/${productId}/update`, productData);
+    return api.put(`/admin/products/${productId}`, productData);
 };
 
-export const deleteProduct = (productId) => api.delete(`/admin/products/${productId}/delete`);
+export const deleteProduct = (productId) => api.delete(`/admin/products/${productId}`);
 
 export const deleteMultipleProducts = (productIds) => {
     return api.delete(`/admin/products/delete-multiple`, {
