@@ -7,7 +7,7 @@ export const productService = {
             if (!productId) {
                 throw new Error("Product ID is required");
             }
-            return api.get(`${API_BASE_URL}/products/id/${productId}`);
+            return api.get(`${API_BASE_URL}/products/${productId}`);
         } catch (error) {
             console.error("Error fetching product by ID:", error);
             throw error; // Rethrow the error to be handled by the calling function
@@ -15,7 +15,7 @@ export const productService = {
     },
 
     getAllProducts: () =>
-        api.get(`${API_BASE_URL}/products/all`),
+        api.get(`${API_BASE_URL}/products`),
 
     getProductByFilter: (filterPayload) => {
         const {
