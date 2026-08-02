@@ -9,6 +9,8 @@ import { useAuthContext } from '../../../store/user/AuthContext';
 import { useToast } from '../../../store/user/ToastContext';
 import AddressStep from './AddressStep';
 import { CircularProgress, Typography, Button as MuiButton, Box, Alert } from '@mui/material';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
 
 const API_LOCATION_BASE_URL = "https://provinces.open-api.vn/api";
 
@@ -192,6 +194,20 @@ const Checkout = () => {
             }
         }
     }, [locationHook.search, vnpayStatus, showToast, fetchOrderByIdContext, orderIdFromUrl, orderFromContext, isOrderContextLoadingGlobal, queryParams]);
+
+    // Polling effect: khi đang ở step 4 và đơn hàng ở trạng thái PENDING, tự động gọi API 2s/lần để cập nhật trạng thái Saga
+    useEffect(() => {
+        let timer;
+        const currentOrderId = processedOrderId || orderFromContext?.id?.toString();
+        if (step === 4 && currentOrderId && orderFromContext?.orderStatus === 'PENDING') {
+            timer = setInterval(() => {
+                fetchOrderByIdContext(currentOrderId);
+            }, 2000);
+        }
+        return () => {
+            if (timer) clearInterval(timer);
+        };
+    }, [step, processedOrderId, orderFromContext?.orderStatus, fetchOrderByIdContext]);
 
 
     useEffect(() => {
@@ -593,7 +609,33 @@ const Checkout = () => {
                     </h2>
                     <p className="text-lg text-gray-600 mb-6">Cảm ơn bạn đã đặt hàng tại Tech Shop.</p>
                     <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 mb-6 text-left space-y-3 text-sm sm:text-base">
-                        <h3 className="text-xl font-semibold mb-3 text-gray-700">Thông tin đơn hàng #{orderIdToDisplay}</h3>
+                        <h3 className="text-xl font-semibold mb-3 text-gray-700 flex justify-between items-center">
+                            <span>Thông tin đơn hàng #{orderIdToDisplay}</span>
+                            {orderDetails?.orderStatus === 'PENDING' && (
+                                <span className="bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5 shadow-xs">
+                                    <CircularProgress size={12} color="inherit" /> Đang xác nhận đơn hàng...
+                                </span>
+                            )}
+                            {orderDetails?.orderStatus === 'CONFIRMED' && (
+                                <span className="bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-xs">
+                                    <CheckCircleOutlineIcon sx={{ fontSize: 16 }} /> Đã xác nhận
+                                </span>
+                            )}
+                            {orderDetails?.orderStatus === 'CANCELLED' && (
+                                <span className="bg-red-50 text-red-700 border border-red-200 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-xs">
+                                    <ErrorOutlineIcon sx={{ fontSize: 16 }} /> Đã hủy (Hết kho)
+                                </span>
+                            )}
+                        </h3>
+                        <p>
+                            <strong>Trạng thái:</strong>{' '}
+                            <span className="font-semibold text-gray-800">
+                                {orderDetails?.orderStatus === 'PENDING' && 'Chờ xử lý (PENDING)'}
+                                {orderDetails?.orderStatus === 'CONFIRMED' && 'Đã xác nhận (CONFIRMED)'}
+                                {orderDetails?.orderStatus === 'CANCELLED' && 'Đã hủy (CANCELLED)'}
+                                {!['PENDING', 'CONFIRMED', 'CANCELLED'].includes(orderDetails?.orderStatus) && (orderDetails?.orderStatus || 'PENDING')}
+                            </span>
+                        </p>
                         <p><strong>Ngày đặt:</strong> {formatDate(orderDetails?.orderDate)}</p>
                         <p><strong>Phương thức:</strong> {orderDetails?.paymentMethod === "COD" ? "Thanh toán khi nhận hàng (COD)" : (orderDetails?.paymentMethod || (vnpayStatus === 'success' ? "VNPAY" : "Đang cập nhật..."))}</p>
                         <p><strong>Địa chỉ giao:</strong> {`${orderDetails?.shippingAddress?.street || ''}, ${orderDetails?.shippingAddress?.ward || ''}, ${orderDetails?.shippingAddress?.district || ''}, ${orderDetails?.shippingAddress?.province || ''}`}</p>
