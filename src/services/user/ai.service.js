@@ -16,6 +16,66 @@ export const aiService = {
   },
 
   /**
+   * Stream chat response from AI shopping consultant via SSE
+   * @param {string} message 
+   * @param {function} onMetadata ({ source, recommended_products })
+   * @param {function} onChunk (textChunk)
+   * @param {function} onDone ()
+   * @param {function} onError (err)
+   */
+  chatStream: async (message, onMetadata, onChunk, onDone, onError) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/ai/chat/stream`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ message }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error ${response.status}`);
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder("utf-8");
+      let buffer = "";
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split("\n\n");
+        buffer = lines.pop() || "";
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (trimmed.startsWith("data: ")) {
+            const rawJson = trimmed.slice(6);
+            try {
+              const evt = JSON.parse(rawJson);
+              if (evt.type === "metadata") {
+                if (onMetadata) onMetadata(evt);
+              } else if (evt.type === "chunk") {
+                if (onChunk) onChunk(evt.content);
+              } else if (evt.type === "done") {
+                if (onDone) onDone();
+              }
+            } catch (err) {
+              console.error("Failed to parse SSE line:", rawJson, err);
+            }
+          }
+        }
+      }
+      if (onDone) onDone();
+    } catch (error) {
+      console.error("Lỗi khi stream AI Chatbot:", error);
+      if (onError) onError(error);
+    }
+  },
+
+  /**
    * Perform Hybrid AI Search
    * @param {string} query 
    * @param {number} limit 

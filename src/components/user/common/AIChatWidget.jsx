@@ -62,34 +62,70 @@ export const AIChatWidget = () => {
     const text = textToSend || inputValue;
     if (!text.trim() || loading) return;
 
-    // Append user message
-    const newMessages = [...messages, { sender: "user", text }];
-    setMessages(newMessages);
+    // Append user message and empty bot streaming message
+    const botMessageId = Date.now();
+    setMessages((prev) => [
+      ...prev,
+      { sender: "user", text },
+      { id: botMessageId, sender: "bot", text: "", recommendedProducts: [], isStreaming: true },
+    ]);
     if (!textToSend) setInputValue("");
     setLoading(true);
 
-    try {
-      const data = await aiService.chat(text);
-      setMessages((prev) => [
-        ...prev,
-        {
-          sender: "bot",
-          text: data.reply || "Xin lỗi, hiện tại tôi chưa tìm thấy phản hồi phù hợp.",
-          recommendedProducts: data.recommended_products || [],
-        },
-      ]);
-    } catch (error) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          sender: "bot",
-          text: "Rất tiếc, hệ thống AI đang bận. Vui lòng thử lại sau!",
-          recommendedProducts: [],
-        },
-      ]);
-    } finally {
-      setLoading(false);
-    }
+    let hasReceivedChunk = false;
+
+    await aiService.chatStream(
+      text,
+      (metadata) => {
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === botMessageId
+              ? { ...msg, recommendedProducts: metadata.recommended_products || [] }
+              : msg
+          )
+        );
+      },
+      (chunk) => {
+        hasReceivedChunk = true;
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === botMessageId
+              ? { ...msg, text: msg.text + chunk }
+              : msg
+          )
+        );
+      },
+      () => {
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === botMessageId
+              ? {
+                  ...msg,
+                  text: msg.text || "Xin lỗi, hiện tại tôi chưa tìm thấy phản hồi phù hợp.",
+                  isStreaming: false,
+                }
+              : msg
+          )
+        );
+        setLoading(false);
+      },
+      (error) => {
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.id === botMessageId
+              ? {
+                  ...msg,
+                  text: hasReceivedChunk
+                    ? msg.text
+                    : "Rất tiếc, hệ thống AI đang bận. Vui lòng thử lại sau!",
+                  isStreaming: false,
+                }
+              : msg
+          )
+        );
+        setLoading(false);
+      }
+    );
   };
 
   return (
