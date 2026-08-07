@@ -76,6 +76,25 @@ export const aiService = {
   },
 
   /**
+   * Send explicit user feedback on AI response (thumbs_up / thumbs_down)
+   * @param {string} feedback ("thumbs_up" | "thumbs_down")
+   * @param {string} messageText 
+   */
+  sendFeedback: async (feedback, messageText = "") => {
+    try {
+      const response = await api.post(`${API_BASE_URL}/ai/chat/feedback`, {
+        feedback,
+        message_text: messageText,
+      });
+      return response.data;
+    } catch (error) {
+      console.error("Lỗi khi gửi phản hồi AI Chatbot:", error);
+      return null;
+    }
+  },
+
+
+  /**
    * Perform Hybrid AI Search
    * @param {string} query 
    * @param {number} limit 

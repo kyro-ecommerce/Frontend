@@ -128,6 +128,13 @@ export const AIChatWidget = () => {
     );
   };
 
+  const handleFeedback = (msgId, type, text) => {
+    setMessages((prev) =>
+      prev.map((msg) => (msg.id === msgId ? { ...msg, feedback: type } : msg))
+    );
+    aiService.sendFeedback(type, text);
+  };
+
   return (
     <div style={{ position: "fixed", bottom: "24px", right: "24px", zIndex: 9999, fontFamily: "sans-serif" }}>
       {/* Floating Toggle Button */}
@@ -207,7 +214,7 @@ export const AIChatWidget = () => {
           <div style={{ flex: 1, padding: "16px", overflowY: "auto", backgroundColor: "#f9fafb" }}>
             {messages.map((msg, index) => (
               <div
-                key={index}
+                key={msg.id || index}
                 style={{
                   display: "flex",
                   flexDirection: "column",
@@ -231,14 +238,56 @@ export const AIChatWidget = () => {
                   {renderMessageText(msg.text)}
                 </div>
 
+                {/* Feedback Buttons for Bot Messages */}
+                {msg.sender === "bot" && !msg.isStreaming && msg.text && (
+                  <div style={{ display: "flex", alignItems: "center", gap: "6px", marginTop: "4px", paddingLeft: "4px" }}>
+                    <span style={{ fontSize: "11px", color: "#9ca3af" }}>Đánh giá:</span>
+                    <button
+                      onClick={() => handleFeedback(msg.id, "thumbs_up", msg.text)}
+                      style={{
+                        background: msg.feedback === "thumbs_up" ? "#dcfce7" : "#f3f4f6",
+                        border: msg.feedback === "thumbs_up" ? "1px solid #86efac" : "1px solid #e5e7eb",
+                        borderRadius: "6px",
+                        cursor: "pointer",
+                        fontSize: "11px",
+                        padding: "2px 8px",
+                        color: msg.feedback === "thumbs_up" ? "#166534" : "#4b5563",
+                        fontWeight: "600",
+                        transition: "all 0.2s ease",
+                      }}
+                      title="Hữu ích"
+                    >
+                      👍 {msg.feedback === "thumbs_up" ? "Đã thích" : "Thích"}
+                    </button>
+                    <button
+                      onClick={() => handleFeedback(msg.id, "thumbs_down", msg.text)}
+                      style={{
+                        background: msg.feedback === "thumbs_down" ? "#fee2e2" : "#f3f4f6",
+                        border: msg.feedback === "thumbs_down" ? "1px solid #fca5a5" : "1px solid #e5e7eb",
+                        borderRadius: "6px",
+                        cursor: "pointer",
+                        fontSize: "11px",
+                        padding: "2px 8px",
+                        color: msg.feedback === "thumbs_down" ? "#991b1b" : "#4b5563",
+                        fontWeight: "600",
+                        transition: "all 0.2s ease",
+                      }}
+                      title="Chưa hữu ích"
+                    >
+                      👎 {msg.feedback === "thumbs_down" ? "Đã bỏ qua" : "Chưa tốt"}
+                    </button>
+                  </div>
+                )}
+
                 {/* Render Recommended Products if available */}
                 {msg.recommendedProducts && msg.recommendedProducts.length > 0 && (
                   <div style={{ width: "100%", marginTop: "8px", display: "flex", flexDirection: "column", gap: "8px" }}>
-                    <span style={{ fontSize: "12px", fontWeight: "700", color: "#4b5563" }}>✨ Thẻ sản phẩm gợi ý chi tiết:</span>
+                    <span style={{ fontSize: "12px", fontWeight: "700", color: "#4b5563" }}>✨ Sản phẩm tư vấn phù hợp nhất:</span>
                     {msg.recommendedProducts.map((prod) => {
                       const pid = prod.product_id || prod.id;
                       const price = prod.discounted_price || prod.discountedPrice || prod.original_price || prod.price;
                       const priceStr = typeof price === 'number' ? price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' }) : price;
+                      const rating = prod.average_rating ? `${prod.average_rating.toFixed(1)}⭐` : null;
 
                       return (
                         <a
@@ -266,9 +315,16 @@ export const AIChatWidget = () => {
                             style={{ width: "48px", height: "48px", objectFit: "contain", borderRadius: "8px", backgroundColor: "#f9fafb", padding: "2px" }}
                           />
                           <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
-                            <span style={{ fontWeight: "700", color: "#111827", fontSize: "13px", lineHeight: "1.3" }}>
-                              {prod.title}
-                            </span>
+                            <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                              <span style={{ fontWeight: "700", color: "#111827", fontSize: "13px", lineHeight: "1.3", flex: 1 }}>
+                                {prod.title}
+                              </span>
+                              {rating && (
+                                <span style={{ fontSize: "11px", backgroundColor: "#fef3c7", color: "#92400e", padding: "1px 5px", borderRadius: "6px", fontWeight: "700" }}>
+                                  {rating}
+                                </span>
+                              )}
+                            </div>
                             {prod.reason && (
                               <span style={{ fontSize: "11px", color: "#7c3aed", fontWeight: "600", marginTop: "2px" }}>
                                 ✨ {prod.reason}
@@ -278,7 +334,9 @@ export const AIChatWidget = () => {
                               {priceStr || "Xem chi tiết"}
                             </span>
                           </div>
-                          <span style={{ fontSize: "16px", color: "#2563eb", fontWeight: "bold" }}>➔</span>
+                          <span style={{ fontSize: "14px", backgroundColor: "#eff6ff", color: "#2563eb", fontWeight: "bold", padding: "4px 8px", borderRadius: "8px" }}>
+                            Xem ➔
+                          </span>
                         </a>
                       );
                     })}
@@ -288,6 +346,7 @@ export const AIChatWidget = () => {
 
               </div>
             ))}
+
             {loading && (
               <div style={{ color: "#6b7280", fontSize: "13px", fontStyle: "italic", marginBottom: "8px" }}>
                 AI đang tìm câu trả lời tốt nhất...
