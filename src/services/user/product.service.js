@@ -43,9 +43,9 @@ export const productService = {
         // Loại bỏ các key undefined
         Object.keys(params).forEach(key => params[key] === undefined && delete params[key]);
 
-        console.log("Calling API: GET /products/ with Query Params:", params);
+        console.log("Calling API: GET /products with Query Params:", params);
         // Gọi API với params trong config
-        return api.get(`${API_BASE_URL}/products/`, { params }); // Axios sẽ tự chuyển thành query string
+        return api.get(`${API_BASE_URL}/products`, { params }); // Axios sẽ tự chuyển thành query string
     },
 
 
@@ -54,4 +54,3 @@ export const productService = {
         api.get(`${API_BASE_URL}/categories/${topCategory}`)
 
 };
-
