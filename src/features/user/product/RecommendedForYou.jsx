@@ -93,19 +93,13 @@ const RecommendedForYou = () => {
       {/* Header Section with AI Badge */}
       <div className="flex flex-wrap gap-4 justify-between items-center mb-3 mt-4 max-md:max-w-full">
         <div className="flex items-center gap-3">
-          <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gradient-to-tr from-purple-600 via-blue-600 to-cyan-400 text-white shadow-md animate-pulse">
-            ✨
-          </div>
+
           <div>
             <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-              Dành Riêng Cho Bạn
-              <span className="text-xs px-2.5 py-0.5 rounded-full font-medium bg-gradient-to-r from-purple-100 to-blue-100 text-purple-800 border border-purple-200">
-                AI Personalization
-              </span>
+              Gợi Ý Sản Phẩm
+
             </h2>
-            <p className="text-xs text-gray-500 mt-0.5">
-              Gợi ý thông minh dựa trên mô hình lọc cộng tác & hành vi quan tâm
-            </p>
+
           </div>
         </div>
         <a
@@ -141,14 +135,7 @@ const RecommendedForYou = () => {
 
             return (
               <div key={pid} className="relative group">
-                {/* AI Reason Badge Overlay */}
-                {product.reason && (
-                  <div className="absolute top-3 left-3 z-10 max-w-[75%] pointer-events-none">
-                    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full bg-gradient-to-r from-purple-800 to-indigo-800 text-white shadow-md backdrop-blur-md truncate max-w-full">
-                      ✨ {product.reason}
-                    </span>
-                  </div>
-                )}
+
                 <ProductCard
                   productId={pid}
                   image={imageUrl}

@@ -95,10 +95,54 @@ const getCurrentFormattedDate = () => {
     }).format(currentDate);
 };
 
+const categoryNameMap = {
+    "Laptop": "Laptop",
+    "Phone": "Điện thoại",
+    "Mobile": "Điện thoại",
+    "Tablet": "Máy tính bảng",
+    "Desktop-Computers": "Máy tính để bàn",
+    "Desktop": "Máy tính để bàn",
+    "Accessories": "Phụ kiện",
+    "Accessory": "Phụ kiện",
+    "Smartwatch": "Đồng hồ thông minh",
+    "Watch": "Đồng hồ thông minh",
+    "Audio": "Thiết bị âm thanh",
+    "Camera": "Máy ảnh",
+    "Gaming Laptops": "Laptop Gaming",
+    "MacBook": "MacBook",
+    "Ultrabook": "Laptop Văn Phòng",
+    "iPhone": "iPhone",
+    "Samsung": "Samsung",
+    "Xiaomi": "Xiaomi",
+    "iPad": "iPad",
+    "Android Tablets": "Máy tính bảng Android",
+    "PC Gaming": "PC Gaming",
+    "PC Office": "PC Văn Phòng",
+    "Mouse": "Chuột",
+    "Keyboard": "Bàn phím",
+    "Headphone": "Tai nghe",
+    "Headphones": "Tai nghe",
+    "Charger": "Sạc & Cáp",
+    "Cable": "Cáp sạc",
+    "Uncategorized": "Chưa phân loại",
+    "Other-Products": "Khác"
+};
+
+const translateCategoryName = (name) => {
+    if (!name) return "Chưa phân loại";
+    if (categoryNameMap[name]) return categoryNameMap[name];
+    const lower = String(name).toLowerCase();
+    for (const [key, val] of Object.entries(categoryNameMap)) {
+        if (key.toLowerCase() === lower) return val;
+    }
+    return name;
+};
+
 // Xuất các hàm để sử dụng ở nơi khác
 export {
     formatCurrency,
     formatDateTime,
     formatDate,
-    getCurrentFormattedDate
+    getCurrentFormattedDate,
+    translateCategoryName
 };

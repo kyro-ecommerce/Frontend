@@ -241,31 +241,36 @@ const UserManagement = () => {
 
     return (
         <Layout>
-            <div className="p-5 md:p-8 bg-gray-50 min-h-screen">
-                {/* Hiển thị thống kê */}
-                <UserStats stats={stats} />
+            <div className="p-6 md:p-8 bg-[#F8FAFC] min-h-screen">
+                <div className="max-w-7xl mx-auto space-y-4">
+                    {/* Hiển thị thống kê */}
+                    <UserStats stats={stats} />
 
-                {/* Bộ lọc và tìm kiếm */}
-                <UserFilters
-                    onSearch={handleSearch}
-                    onRoleFilter={handleRoleFilter}
-                    selectedRole={selectedRole}
-                />
+                    {/* Container cho bộ lọc và danh sách */}
+                    <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] space-y-4">
+                        {/* Bộ lọc và tìm kiếm */}
+                        <UserFilters
+                            onSearch={handleSearch}
+                            onRoleFilter={handleRoleFilter}
+                            selectedRole={selectedRole}
+                        />
 
-                {error && <div className="text-red-500 bg-red-50 p-4 rounded-md mb-4">{error}</div>}
+                        {error && <div className="text-red-600 bg-red-50 border border-red-200 p-3.5 rounded-xl text-xs font-semibold">{error}</div>}
 
-                {/* Danh sách người dùng */}
-                <UserList
-                    users={users}
-                    isLoading={isLoading}
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={handlePageChange}
-                    onToggleStatus={handleToggleStatus}
-                    onChangeRole={handleChangeRole}
-                    onDeleteUser={handleDeleteUser}
-                    onViewDetail={handleViewDetail}
-                />
+                        {/* Danh sách người dùng */}
+                        <UserList
+                            users={users}
+                            isLoading={isLoading}
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            onPageChange={handlePageChange}
+                            onToggleStatus={handleToggleStatus}
+                            onChangeRole={handleChangeRole}
+                            onDeleteUser={handleDeleteUser}
+                            onViewDetail={handleViewDetail}
+                        />
+                    </div>
+                </div>
 
                 {/* Modal chi tiết người dùng */}
                 {selectedUser && (

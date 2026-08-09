@@ -7,8 +7,18 @@ const RecentOrders = ({ orders = [] }) => {
     const safeOrders = Array.isArray(orders) ? orders : [];
 
     return (
-        <div className="bg-white rounded-lg p-4 shadow-sm">
-            <h3 className="text-base font-semibold mb-4">Đơn hàng gần đây</h3>
+        <div className="bg-white rounded-2xl p-4 border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
+            <div className="flex justify-between items-center mb-3">
+                <div>
+                    <h3 className="text-base font-extrabold text-slate-900 tracking-tight flex items-center gap-2 m-0">
+                        Đơn hàng gần đây
+                    </h3>
+                    <p className="text-xs text-slate-400 font-medium m-0 mt-0.5">Các đơn hàng mới phát sinh gần nhất</p>
+                </div>
+                <Link to="/admin/orders" className="text-xs font-bold text-[#1D7461] hover:text-[#136050] bg-[#F2F9F7] hover:bg-[#E2F4EE] px-3 py-1.5 rounded-xl transition-all no-underline">
+                    Xem tất cả ➔
+                </Link>
+            </div>
 
             {safeOrders.length > 0 ? (
                 <table className="w-full border-collapse">
@@ -62,9 +72,9 @@ const RecentOrders = ({ orders = [] }) => {
                 </div>
             )}
 
-            <Link to="/admin/orders" className="block text-center mt-4 text-blue-600 font-medium no-underline p-2 rounded-lg hover:bg-gray-100 transition-colors">
+            {/* <Link to="/admin/orders" className="block text-center mt-4 text-blue-600 font-medium no-underline p-2 rounded-lg hover:bg-gray-100 transition-colors">
                 Xem tất cả đơn hàng
-            </Link>
+            </Link> */}
         </div>
     );
 };

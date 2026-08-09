@@ -48,7 +48,14 @@ export const useOrders = () => {
             if (response.status === 200) {
                 const responseData = response.data?.data || response.data || {};
                 const orderList = responseData.content || responseData.orders || (Array.isArray(responseData) ? responseData : []);
-                setOrders(orderList);
+                // Sort orders newest first
+                const sortedOrders = [...orderList].sort((a, b) => {
+                    const timeA = a.orderDate ? new Date(a.orderDate).getTime() : 0;
+                    const timeB = b.orderDate ? new Date(b.orderDate).getTime() : 0;
+                    if (timeA !== timeB) return timeB - timeA;
+                    return (b.id || 0) - (a.id || 0);
+                });
+                setOrders(sortedOrders);
 
                 const currentPage = responseData.number ?? responseData.currentPage ?? 0;
                 const totalPages = responseData.totalPages ?? 1;

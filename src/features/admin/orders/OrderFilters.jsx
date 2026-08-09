@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { debounce } from 'lodash';
+import {Search} from "lucide-react";
 
 const OrderFilters = ({ currentFilter, onFilterChange, onSearch }) => {
     const [searchTerm, setSearchTerm] = useState("");
@@ -30,80 +31,70 @@ const OrderFilters = ({ currentFilter, onFilterChange, onSearch }) => {
         onSearch("", "", "");
     };
 
+    const filterTabs = [
+        { key: "all", label: "Tất cả" },
+        { key: "pending", label: "Chờ xử lý" },
+        { key: "confirmed", label: "Đã xác nhận" },
+        { key: "shipped", label: "Đang vận chuyển" },
+        { key: "delivered", label: "Đã giao" },
+        { key: "cancelled", label: "Đã hủy" }
+    ];
+
     return (
-        <div className="mb-6">
-            <div className="flex overflow-x-auto border-b border-gray-200 mb-5 pb-1 gap-1 md:gap-0 scrollbar-hide">
-                <button
-                    className={`py-2.5 px-4 bg-transparent border-none text-[15px] font-medium cursor-pointer border-b-2 transition-colors whitespace-nowrap ${currentFilter === "all" ? "text-blue-600 border-blue-600" : "text-gray-500 border-transparent hover:text-gray-800"}`}
-                    onClick={() => onFilterChange("all")}
-                >
-                    Tất cả
-                </button>
-                <button
-                    className={`py-2.5 px-4 bg-transparent border-none text-[15px] font-medium cursor-pointer border-b-2 transition-colors whitespace-nowrap ${currentFilter === "pending" ? "text-blue-600 border-blue-600" : "text-gray-500 border-transparent hover:text-gray-800"}`}
-                    onClick={() => onFilterChange("pending")}
-                >
-                    Chờ xác nhận
-                </button>
-                <button
-                    className={`py-2.5 px-4 bg-transparent border-none text-[15px] font-medium cursor-pointer border-b-2 transition-colors whitespace-nowrap ${currentFilter === "confirmed" ? "text-blue-600 border-blue-600" : "text-gray-500 border-transparent hover:text-gray-800"}`}
-                    onClick={() => onFilterChange("confirmed")}
-                >
-                    Đã xác nhận
-                </button>
-                <button
-                    className={`py-2.5 px-4 bg-transparent border-none text-[15px] font-medium cursor-pointer border-b-2 transition-colors whitespace-nowrap ${currentFilter === "shipped" ? "text-blue-600 border-blue-600" : "text-gray-500 border-transparent hover:text-gray-800"}`}
-                    onClick={() => onFilterChange("shipped")}
-                >
-                    Đang giao
-                </button>
-                <button
-                    className={`py-2.5 px-4 bg-transparent border-none text-[15px] font-medium cursor-pointer border-b-2 transition-colors whitespace-nowrap ${currentFilter === "delivered" ? "text-blue-600 border-blue-600" : "text-gray-500 border-transparent hover:text-gray-800"}`}
-                    onClick={() => onFilterChange("delivered")}
-                >
-                    Đã giao
-                </button>
-                <button
-                    className={`py-2.5 px-4 bg-transparent border-none text-[15px] font-medium cursor-pointer border-b-2 transition-colors whitespace-nowrap ${currentFilter === "cancelled" ? "text-blue-600 border-blue-600" : "text-gray-500 border-transparent hover:text-gray-800"}`}
-                    onClick={() => onFilterChange("cancelled")}
-                >
-                    Đã hủy
-                </button>
+        <div className="space-y-4">
+            {/* Segmented Filter Pills */}
+            <div className="flex items-center gap-1.5 overflow-x-auto p-1.5 bg-slate-50 border border-slate-200/80 rounded-2xl scrollbar-hide">
+                {filterTabs.map((tab) => {
+                    const isActive = currentFilter === tab.key;
+                    return (
+                        <button
+                            key={tab.key}
+                            className={`py-2 px-3.5 rounded-xl text-xs font-extrabold transition-all duration-200 cursor-pointer whitespace-nowrap border-none ${
+                                isActive
+                                    ? "bg-[#1D7461] text-white shadow-sm shadow-[#1D7461]/20"
+                                    : "text-slate-600 hover:text-slate-900 hover:bg-white/80"
+                            }`}
+                            onClick={() => onFilterChange(tab.key)}
+                        >
+                            {tab.label}
+                        </button>
+                    );
+                })}
             </div>
 
-            <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-3">
-                <form className="w-full max-w-full lg:max-w-100" onSubmit={handleSearchSubmit}>
-                    <div className="relative w-full">
+            {/* Search and Date Filter Controls */}
+            <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3">
+                <form className="w-full sm:max-w-xs" onSubmit={handleSearchSubmit}>
+                    <div className="relative w-full flex items-center">
+                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
                         <input
                             type="text"
                             placeholder="Tìm kiếm đơn hàng..."
                             value={searchTerm}
                             onChange={handleSearchChange}
-                            className="w-full py-2.5 px-4 pl-9 border border-gray-300 rounded text-sm outline-none focus:border-blue-500 transition-colors"
+                            className="w-full py-2.5 pr-4 pl-10 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold outline-none focus:bg-white focus:border-[#1D7461] focus:ring-2 focus:ring-[#1D7461]/20 transition-all"
                         />
-                        <button type="submit" className="absolute left-2.5 top-1/2 -translate-y-1/2 bg-transparent border-none text-gray-500 cursor-pointer">
-                            🔍
-                        </button>
                     </div>
                 </form>
 
                 <div className="flex flex-wrap gap-2 items-center">
-                    <input
-                        type="date"
-                        placeholder="Từ ngày"
-                        className="py-2.5 px-3 border border-gray-300 rounded text-sm text-gray-800 outline-none focus:border-blue-500 transition-colors"
-                        value={startDate}
-                        onChange={(e) => setStartDate(e.target.value)}
-                    />
-                    <input
-                        type="date"
-                        placeholder="Đến ngày"
-                        className="py-2.5 px-3 border border-gray-300 rounded text-sm text-gray-800 outline-none focus:border-blue-500 transition-colors"
-                        value={endDate}
-                        onChange={(e) => setEndDate(e.target.value)}
-                    />
-                    <button className="py-2.5 px-4 bg-white border border-gray-300 rounded text-sm font-medium flex items-center gap-2 cursor-pointer hover:bg-gray-50 transition-colors text-gray-700" onClick={handleDateFilter}>Lọc</button>
-                    <button className="py-2.5 px-4 bg-white border border-gray-300 rounded text-sm font-medium flex items-center gap-2 cursor-pointer hover:bg-gray-50 transition-colors text-gray-700" onClick={handleClearFilters}>Xóa bộ lọc</button>
+                    <div className="flex items-center gap-1.5 bg-slate-50 p-1 rounded-xl border border-slate-200/80">
+                        <input
+                            type="date"
+                            className="px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-[#1D7461]/20"
+                            value={startDate}
+                            onChange={(e) => setStartDate(e.target.value)}
+                        />
+                        <span className="text-slate-400 text-xs font-bold">đến</span>
+                        <input
+                            type="date"
+                            className="px-2.5 py-1.5 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-[#1D7461]/20"
+                            value={endDate}
+                            onChange={(e) => setEndDate(e.target.value)}
+                        />
+                    </div>
+                    <button className="px-3.5 py-2 bg-[#1D7461] hover:bg-[#136050] text-white rounded-xl text-xs font-bold cursor-pointer transition-all shadow-sm shadow-[#1D7461]/20 border-none" onClick={handleDateFilter}>Lọc</button>
+                    <button className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200/80 text-slate-700 rounded-xl text-xs font-bold cursor-pointer transition-all border border-slate-200/80" onClick={handleClearFilters}>Xóa bộ lọc</button>
                 </div>
             </div>
         </div>

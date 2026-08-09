@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useEffect } from "react";
 import { debounce } from 'lodash';
+import { Search } from "lucide-react";
 
 const UserFilters = ({ onSearch, onRoleFilter, selectedRole }) => {
     const [searchTerm, setSearchTerm] = useState("");
@@ -46,28 +47,26 @@ const UserFilters = ({ onSearch, onRoleFilter, selectedRole }) => {
     }, [debouncedSearch]);
 
     return (
-        <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-            <div className="flex flex-col md:flex-row min-w-75 md:min-w-150 w-full gap-4 md:gap-0 items-center">
-                <form className="flex-1 w-full max-w-full md:max-w-137.5" onSubmit={handleSearchSubmit}>
-                    <div className="relative w-full">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="flex flex-col md:flex-row min-w-75 md:min-w-150 w-full gap-3 items-center">
+                <form className="flex-1 w-full max-w-full md:max-w-md" onSubmit={handleSearchSubmit}>
+                    <div className="relative w-full flex items-center">
+                        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
                         <input
                             type="text"
                             placeholder="Tìm kiếm theo email hoặc tên..."
                             value={searchTerm}
                             onChange={handleSearchInput}
-                            className="w-full py-2.5 pr-4 pl-9 border border-gray-300 rounded text-sm font-sans outline-none focus:border-blue-500 transition-colors"
+                            className="w-full py-2.5 pr-4 pl-10 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold outline-none focus:bg-white focus:border-[#1D7461] focus:ring-2 focus:ring-[#1D7461]/20 transition-all"
                         />
-                        <button type="submit" className="absolute left-2 top-1/2 -translate-y-1/2 bg-transparent border-none text-gray-500 cursor-pointer">
-                            <span role="img" aria-label="search">🔍</span>
-                        </button>
                     </div>
                 </form>
 
-                <div className="md:ml-4 w-full md:w-auto">
+                <div className="w-full md:w-auto">
                     <select
                         value={selectedRole}
                         onChange={handleRoleChange}
-                        className="w-full md:w-auto py-2.5 px-4 border border-gray-300 rounded text-sm bg-white cursor-pointer font-sans outline-none focus:border-blue-500 transition-colors"
+                        className="w-full md:w-auto py-2.5 px-4 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 bg-white cursor-pointer outline-none focus:border-[#1D7461] focus:ring-2 focus:ring-[#1D7461]/20 transition-all"
                     >
                         <option value="">Tất cả vai trò</option>
                         <option value="CUSTOMER">Khách hàng</option>

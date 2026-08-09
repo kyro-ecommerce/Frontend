@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell } from 'recharts';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
+import { formatCurrency } from '../../../utils/admin/format.js';
 
 const CustomTooltip = ({ active, payload, label }) => {
     if (active && payload && payload.length) {
         return (
-            <div className="bg-white p-3 border border-gray-200 rounded shadow-sm">
-                <p className="font-semibold text-gray-700 mb-1 m-0">{`${label}`}</p>
-                <p className="text-blue-600 m-0">{`Doanh thu: ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(payload[0].value)}`}</p>
+            <div className="bg-slate-900/90 text-white p-3 rounded-2xl shadow-xl backdrop-blur-md border border-slate-700/50 text-xs">
+                <p className="font-medium text-slate-400 mb-1">{`Ngày: ${label}`}</p>
+                <p className="font-extrabold text-[#34D399] text-sm">{`Doanh thu: ${formatCurrency(payload[0].value)}`}</p>
             </div>
         );
     }
@@ -17,11 +18,10 @@ const CustomTooltip = ({ active, payload, label }) => {
 
 const formatDate = (date) => date.toISOString().split('T')[0];
 
-const RevenueByTime = ({ initialData = [], isLoading, onDateChange }) => {
+const RevenueByTime = ({ initialData = [], isLoading, onDateChange, orderStats = {} }) => {
     const safeData = Array.isArray(initialData) ? initialData : [];
     const [chartData, setChartData] = useState(safeData);
 
-    // State cho date picker
     const today = new Date();
     const lastWeek = new Date(today);
     lastWeek.setDate(today.getDate() - 6);
@@ -33,62 +33,84 @@ const RevenueByTime = ({ initialData = [], isLoading, onDateChange }) => {
     }, [initialData]);
 
     const handleFilterClick = () => {
-        // Gọi hàm fetch từ hook với ngày đã chọn
         onDateChange(formatDate(startDate), formatDate(endDate));
     };
 
-    const title = `Doanh thu theo khoảng thời gian`;
+    const completedRate = orderStats.totalOrders > 0
+        ? Math.round(((orderStats.completedOrders || 0) / orderStats.totalOrders) * 100)
+        : 0;
 
     return (
-        <div className="bg-white rounded-lg p-5 shadow-sm h-full">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-5 gap-3">
-                <h3 className="text-base font-semibold m-0">{title}</h3>
+        <div className="bg-white rounded-2xl p-4 border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] flex flex-col">
+            {/* Header Controls */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-2 gap-3">
+                <div>
+                    <h3 className="text-base font-extrabold text-slate-900 tracking-tight m-0">
+                        Doanh thu theo thời gian
+                    </h3>
+                    <p className="text-xs text-slate-400 font-medium m-0 mt-0.5">Biến động doanh số bán hàng theo ngày</p>
+                </div>
+
                 <div className="flex flex-wrap items-center gap-2">
-                    <DatePicker
-                        selected={startDate}
-                        onChange={(date) => setStartDate(date)}
-                        selectsStart
-                        startDate={startDate}
-                        endDate={endDate}
-                        dateFormat="dd/MM/yyyy"
-                        className="p-2 border border-gray-300 rounded text-sm w-32 outline-none focus:border-blue-500"
-                    />
-                    <span className="text-gray-500 text-sm">đến</span>
-                    <DatePicker
-                        selected={endDate}
-                        onChange={(date) => setEndDate(date)}
-                        selectsEnd
-                        startDate={startDate}
-                        endDate={endDate}
-                        minDate={startDate}
-                        dateFormat="dd/MM/yyyy"
-                        className="p-2 border border-gray-300 rounded text-sm w-32 outline-none focus:border-blue-500"
-                    />
+                    <div className="flex items-center gap-1.5 bg-slate-50 p-1 rounded-xl border border-slate-200/80">
+                        <DatePicker
+                            selected={startDate}
+                            onChange={(date) => setStartDate(date)}
+                            selectsStart
+                            startDate={startDate}
+                            endDate={endDate}
+                            dateFormat="dd/MM/yyyy"
+                            className="px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 w-28 outline-none focus:ring-2 focus:ring-[#1D7461]/20 text-center"
+                        />
+                        <span className="text-slate-400 text-xs font-bold">đến</span>
+                        <DatePicker
+                            selected={endDate}
+                            onChange={(date) => setEndDate(date)}
+                            selectsEnd
+                            startDate={startDate}
+                            endDate={endDate}
+                            minDate={startDate}
+                            dateFormat="dd/MM/yyyy"
+                            className="px-2.5 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 w-28 outline-none focus:ring-2 focus:ring-[#1D7461]/20 text-center"
+                        />
+                    </div>
                     <button 
                         onClick={handleFilterClick} 
-                        className="px-4 py-2 bg-blue-600 text-white rounded text-sm font-medium cursor-pointer hover:bg-blue-700 disabled:opacity-50 transition-colors" 
+                        className="px-3.5 py-1.5 bg-[#1D7461] hover:bg-[#136050] text-white rounded-xl text-xs font-bold cursor-pointer transition-all shadow-sm shadow-[#1D7461]/20 border-none disabled:opacity-50" 
                         disabled={isLoading}
                     >
-                        {isLoading ? 'Đang tải...' : 'Xem'}
+                        Lọc
                     </button>
                 </div>
             </div>
 
-            {isLoading ? (
-                <div className="text-center py-10 text-gray-500">Đang tải dữ liệu biểu đồ...</div>
-            ) : chartData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={300}>
-                    <AreaChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                        <YAxis tickFormatter={(value) => value >= 1000000 ? `${value / 1000000}M` : value} tick={{ fontSize: 12 }} />
-                        <Tooltip content={<CustomTooltip />} />
-                        <Area type="monotone" dataKey="revenue" stroke="#8884d8" fill="#8884d8" fillOpacity={0.3} />
-                    </AreaChart>
-                </ResponsiveContainer>
-            ) : (
-                <p className="text-center py-10 text-gray-500 m-0">Không có dữ liệu doanh thu trong khoảng thời gian này.</p>
-            )}
+            {/* Chart Area */}
+            <div className="w-full">
+                {isLoading ? (
+                    <div className="text-center py-8 text-slate-400 text-xs font-medium">Đang tải biểu đồ...</div>
+                ) : chartData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height={220}>
+                        <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+                            <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#94A3B8', fontWeight: 600 }} axisLine={false} tickLine={false} />
+                            <YAxis
+                                tickFormatter={(val) => val >= 1000000 ? `${(val / 1000000).toFixed(0)}M` : val}
+                                tick={{ fontSize: 11, fill: '#94A3B8', fontWeight: 600 }}
+                                axisLine={false}
+                                tickLine={false}
+                            />
+                            <Tooltip content={<CustomTooltip />} />
+                            <Bar dataKey="revenue" radius={[8, 8, 0, 0]} maxBarSize={48}>
+                                {chartData.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={index === chartData.length - 1 ? '#1D7461' : '#2DD4BF'} />
+                                ))}
+                            </Bar>
+                        </BarChart>
+                    </ResponsiveContainer>
+                ) : (
+                    <div className="text-center py-12 text-slate-400 text-xs font-medium">Không có dữ liệu doanh thu trong khoảng thời gian này.</div>
+                )}
+            </div>
         </div>
     );
 };

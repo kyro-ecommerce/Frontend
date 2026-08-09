@@ -93,84 +93,88 @@ const OrdersManagement = () => {
 
     return (
         <Layout>
-            <div className="p-5 md:p-8 bg-gray-50 min-h-screen">
-                {/* Order Statistics */}
-                <OrderStats stats={stats} />
+            <div className="p-6 md:p-8 bg-[#F8FAFC] min-h-screen">
+                <div className="max-w-7xl mx-auto space-y-4">
+                    {/* Order Statistics */}
+                    <OrderStats stats={stats} />
 
-                {/* Order Filters */}
-                <OrderFilters
-                    currentFilter={filter}
-                    onFilterChange={setFilter}
-                    onSearch={handleSearch}
-                />
+                    {/* Order Filters & List Container */}
+                    <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] space-y-4">
+                        <OrderFilters
+                            currentFilter={filter}
+                            onFilterChange={setFilter}
+                            onSearch={handleSearch}
+                        />
 
-                {/* Error Message */}
-                {error && <div className="text-red-500 bg-red-50 p-4 rounded-md mb-4">{error}</div>}
+                        {/* Error Message */}
+                        {error && <div className="text-red-600 bg-red-50 border border-red-200 p-3.5 rounded-xl text-xs font-semibold">{error}</div>}
 
-                {/* Order List */}
-                <OrderList
-                    orders={orders}
-                    isLoading={isLoading}
-                    onStatusChange={handleStatusChange}
-                    onDeleteOrder={handleDeleteOrder}
-                    onViewOrder={handleViewOrderWithModal}
-                />
+                        {/* Order List */}
+                        <OrderList
+                            orders={orders}
+                            isLoading={isLoading}
+                            onStatusChange={handleStatusChange}
+                            onDeleteOrder={handleDeleteOrder}
+                            onViewOrder={handleViewOrderWithModal}
+                        />
 
-                {/* Pagination */}
-                {!isLoading && orders.length > 0 && (
-                    <div className="flex flex-col md:flex-row justify-between items-center mt-6 gap-4">
-                        <div className="flex flex-wrap items-center justify-center gap-2">
-                            <button
-                                className={`px-3 py-1.5 text-sm font-medium border rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${pagination.currentPage === 0 ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
-                                onClick={() => goToPage(0)}
-                                disabled={pagination.currentPage === 0}
-                            >
-                                Trang đầu
-                            </button>
+                        {/* Pagination */}
+                        {!isLoading && orders.length > 0 && (
+                            <div className="flex flex-col md:flex-row justify-between items-center pt-2 gap-4">
+                                <div className="flex flex-wrap items-center justify-center gap-2">
+                                    <button
+                                        className={`px-3 py-2 text-xs font-bold border rounded-xl transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${pagination.currentPage === 0 ? 'bg-[#1D7461] text-white border-[#1D7461]' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'}`}
+                                        onClick={() => goToPage(0)}
+                                        disabled={pagination.currentPage === 0}
+                                    >
+                                        Trang đầu
+                                    </button>
 
-                            <button
-                                className="px-3 py-1.5 text-sm font-medium border rounded bg-white text-gray-700 border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                disabled={!pagination.hasPrevious}
-                                onClick={previousPage}
-                            >
-                                Trang Trước
-                            </button>
+                                    <button
+                                        className="px-3 py-2 text-xs font-bold border rounded-xl bg-white text-slate-700 border-slate-200 hover:bg-slate-50 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                        disabled={!pagination.hasPrevious}
+                                        onClick={previousPage}
+                                    >
+                                        Trang Trước
+                                    </button>
 
-                            <div className="flex items-center">
-                                <input
-                                    type="number"
-                                    value={pageInput}
-                                    onChange={handlePageInputChange}
-                                    onKeyPress={handlePageInputKeyPress}
-                                    placeholder={`${pagination.currentPage + 1}`}
-                                    min="1"
-                                    max={pagination.totalPages}
-                                    className="px-3 py-1.5 text-sm font-medium border rounded bg-white text-gray-700 border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-16 text-center"
-                                />
+                                    <div className="flex items-center">
+                                        <input
+                                            type="number"
+                                            value={pageInput}
+                                            onChange={handlePageInputChange}
+                                            onKeyPress={handlePageInputKeyPress}
+                                            placeholder={`${pagination.currentPage + 1}`}
+                                            min="1"
+                                            max={pagination.totalPages}
+                                            className="px-3 py-2 text-xs font-bold border rounded-xl bg-white text-slate-700 border-slate-200 outline-none focus:border-[#1D7461] w-16 text-center"
+                                        />
+                                    </div>
+
+                                    <button
+                                        className="px-3 py-2 text-xs font-bold border rounded-xl bg-white text-slate-700 border-slate-200 hover:bg-slate-50 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                                        disabled={!pagination.hasNext}
+                                        onClick={nextPage}
+                                    >
+                                        Trang kế
+                                    </button>
+
+                                    <button
+                                        className={`px-3 py-2 text-xs font-bold border rounded-xl transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${pagination.currentPage === pagination.totalPages - 1 || pagination.totalPages === 0 ? 'bg-[#1D7461] text-white border-[#1D7461]' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'}`}
+                                        onClick={() => goToPage(pagination.totalPages - 1)}
+                                        disabled={pagination.currentPage === pagination.totalPages - 1 || pagination.totalPages === 0}
+                                    >
+                                        Trang cuối
+                                    </button>
+                                </div>
+
+                                <div className="text-xs font-semibold text-slate-400">
+                                    Hiển thị {orders.length} trên {pagination.totalElements || 0} đơn hàng
+                                </div>
                             </div>
-
-                            <button
-                                className="px-3 py-1.5 text-sm font-medium border rounded bg-white text-gray-700 border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                disabled={!pagination.hasNext}
-                                onClick={nextPage}
-                            >
-                                Trang kế
-                            </button>
-
-                            <button
-                                className={`px-3 py-1.5 text-sm font-medium border rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${pagination.currentPage === pagination.totalPages - 1 || pagination.totalPages === 0 ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'}`}
-                                onClick={() => goToPage(pagination.totalPages - 1)}
-                                disabled={pagination.currentPage === pagination.totalPages - 1 || pagination.totalPages === 0}
-                            >
-                                Trang cuối
-                            </button>
-                        </div>
-
-                        <div className="text-sm text-gray-600">
-                            Hiển thị {orders.length} trên {pagination.totalElements || 0} đơn hàng
-                        </div>
+                        )}
                     </div>
-                )}
+                </div>
 
                 {/* Order Detail Modal */}
                 {isModalOpen && selectedOrder && (

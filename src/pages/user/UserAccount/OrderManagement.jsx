@@ -64,8 +64,8 @@ const OrderManagement = () => {
 
   const statusFilters = [
     { label: "Tất cả", value: "all" },
-    { label: "Đã xác nhận", value: "CONFIRMED" },
     { label: "Chờ xử lý", value: "PENDING" },
+    { label: "Đã xác nhận", value: "CONFIRMED" },
     { label: "Đang vận chuyển", value: "SHIPPED" },
     { label: "Đã giao", value: "DELIVERED" },
     { label: "Đã hủy", value: "CANCELLED" },

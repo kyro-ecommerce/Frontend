@@ -24,33 +24,38 @@ const Dashboard = () => {
 
     return (
         <Layout>
-            <div className="p-6">
+            <div className="p-6 md:p-8 bg-[#F8FAFC] min-h-screen">
                 {isLoading ? (
-                    <div className="text-center p-12 text-gray-500 text-lg">
+                    <div className="flex flex-col items-center justify-center p-20 text-slate-400 font-medium text-xs">
                         Đang tải dữ liệu dashboard...
                     </div>
                 ) : error ? (
-                    <div className="text-center p-8 text-red-500 font-medium">
+                    <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-2xl text-center font-semibold text-xs">
                         {error}
                     </div>
                 ) : (
-                    <>
-                        <DashboardStats stats={dashboardData.productStats} />
+                    <div className="max-w-7xl mx-auto space-y-4">
+                        <DashboardStats productStats={dashboardData.productStats} orderStats={dashboardData.orderStats} />
 
-                        <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-3.75 mb-3.75 items-start">
-                            <RevenueByTime
-                                initialData={dashboardData.revenueChartData}
-                                isLoading={isChartLoading}
-                                onDateChange={fetchRevenueForRange}
-                            />
-                            <RevenueByCategory data={dashboardData.categoryRevenue} />
-                        </div>
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+                            {/* Left Column */}
+                            <div className="lg:col-span-2 space-y-4">
+                                <RevenueByTime
+                                    initialData={dashboardData.revenueChartData}
+                                    isLoading={isChartLoading}
+                                    onDateChange={fetchRevenueForRange}
+                                    orderStats={dashboardData.orderStats}
+                                />
+                                <RecentOrders orders={dashboardData.recentOrders} />
+                            </div>
 
-                        <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-3.75 mb-3.75 items-start">
-                            <RecentOrders orders={dashboardData.recentOrders} />
-                            <TopSellingProducts products={dashboardData.topSellingProducts} />
+                            {/* Right Column */}
+                            <div className="lg:col-span-1 space-y-4">
+                                <RevenueByCategory data={dashboardData.categoryRevenue} />
+                                <TopSellingProducts products={dashboardData.topSellingProducts} />
+                            </div>
                         </div>
-                    </>
+                    </div>
                 )}
             </div>
         </Layout>

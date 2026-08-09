@@ -66,12 +66,19 @@ const OrderDetail = () => {
   // Tạo order history timeline
   const orderHistory = [];
   if (order) {
-    if (order.orderDate) orderHistory.push({ status: "PENDING", description: "Đơn hàng đã được đặt", date: order.orderDate });
-    if (order.paymentStatus === "COMPLETED" && order.orderStatus !== "PENDING") orderHistory.push({ status: "CONFIRMED", description: "Thanh toán đã hoàn tất", date: order.paymentDetails?.paymentDate || order.orderDate });
-    if (order.orderStatus === "SHIPPED" || order.orderStatus === "DELIVERED") orderHistory.push({ status: "SHIPPED", description: "Đơn hàng đang được vận chuyển", date: order.shippingDate || order.orderDate });
-    if (order.orderStatus === "DELIVERED" && order.deliveryDate) orderHistory.push({ status: "DELIVERED", description: "Đơn hàng đã được giao thành công", date: order.deliveryDate });
-    if (order.orderStatus === "CANCELLED" && order.cancelledDate) orderHistory.push({ status: "CANCELLED", description: "Đơn hàng đã bị hủy", date: order.cancelledDate });
-     // Sắp xếp theo ngày
+    if (order.orderDate) orderHistory.push({ status: "PENDING", description: "Đơn hàng đã được tạo thành công", date: order.orderDate });
+    if (["CONFIRMED", "SHIPPED", "DELIVERED"].includes(order.orderStatus) || order.paymentStatus === "COMPLETED") {
+      orderHistory.push({ status: "CONFIRMED", description: "Đơn hàng đã được xác nhận", date: order.paymentDetails?.paymentDate || order.orderDate });
+    }
+    if (["SHIPPED", "DELIVERED"].includes(order.orderStatus)) {
+      orderHistory.push({ status: "SHIPPED", description: "Đơn hàng đang được vận chuyển", date: order.shippingDate || order.orderDate });
+    }
+    if (order.orderStatus === "DELIVERED") {
+      orderHistory.push({ status: "DELIVERED", description: "Đơn hàng đã được giao thành công", date: order.deliveryDate || order.orderDate });
+    }
+    if (order.orderStatus === "CANCELLED") {
+      orderHistory.push({ status: "CANCELLED", description: "Đơn hàng đã bị hủy", date: order.cancelledDate || order.orderDate });
+    }
     orderHistory.sort((a, b) => new Date(a.date) - new Date(b.date));
   }
 

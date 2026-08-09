@@ -20,6 +20,13 @@ export const useDashboard = () => {
             setIsLoading(true);
             setError(null);
 
+            // Lấy thống kê đơn hàng (Doanh thu, tổng đơn, v.v.)
+            try {
+                const res = await dashboardService.getWeeklyRevenue();
+                const data = res.data?.data || res.data || {};
+                setDashboardData(prevData => ({ ...prevData, orderStats: data }));
+            } catch (e) { console.warn("Failed fetching order stats:", e); }
+
             // Lấy thống kê sản phẩm
             try {
                 const res = await dashboardService.getProductStats();

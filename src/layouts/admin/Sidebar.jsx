@@ -1,11 +1,11 @@
 // src/components/layout/Sidebar.jsx
-import React, {useState} from "react";
-import {Link, useLocation} from "react-router-dom";
-import {useAuth} from "../../hooks/admin/useAuth.jsx";
+import React, { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "../../hooks/admin/useAuth.jsx";
 
 const Sidebar = () => {
     const [showLogout, setShowLogout] = useState(false);
-    const {user, logout} = useAuth();
+    const { user, logout } = useAuth();
     const location = useLocation();
 
     const handleLogout = async (e) => {
@@ -19,81 +19,93 @@ const Sidebar = () => {
         }
     };
 
-    const toggleLogout = () => {
-        setShowLogout(!showLogout);
-    };
-
     const isActive = (path) => {
-        return location.pathname === path;
+        if (path === "/admin") return location.pathname === "/admin";
+        return location.pathname.startsWith(path);
     };
 
-    // Thêm các icon sử dụng UTF-8 characters
-    const icons = {
-        dashboard: "📊",
-        products: "📦",
-        users: "👥",
-        orders: "🛒",
-        revenue: "💰",
-    };
+    const menuItems = [
+        { path: "/admin", label: "Dashboard" },
+        { path: "/admin/products", label: "Sản phẩm" },
+        { path: "/admin/orders", label: "Đơn hàng" },
+        { path: "/admin/users", label: "Người dùng" },
+    ];
 
     return (
-        <div className="w-50 bg-[#1A2266] h-screen sticky top-0 flex flex-col text-white shadow-[2px_0_5px_rgba(0,0,0,0.1)]">
-            <div className="p-3 flex items-center border-b border-white/10">
-                <img src="https://res.cloudinary.com/dgygvrrjs/image/upload/v1745387610/ChatGPT_Image_Apr_5_2025_12_08_58_AM_ociguu.png?fbclid=IwY2xjawJ4KxJleHRuA2FlbQIxMABicmlkETFnbUszR1o2RlZrQXJ2VFRXAR7SKjjUPYQHQovx3wZg3p14ksqpKnPTakahujkwPCwl21n8F7-sQJX0fXLfRg_aem_ghKIYi2m6VITMUEzqoiUOg" alt="Logo" className="w-8 h-8 mr-2 rounded-[10%] object-cover" />
-                <h1 className="text-base font-semibold m-0">TechShop</h1>
+        <aside className="w-60 bg-white h-screen sticky top-0 flex flex-col border-r border-slate-200/80 z-40 select-none">
+            {/* Brand Logo */}
+            <div className="p-5 flex items-center gap-3 border-b border-slate-100">
+                <div className="w-9 h-9 rounded-xl bg-[#1D7461] text-white flex items-center justify-center font-black text-lg shadow-md shadow-[#1D7461]/20 shrink-0">
+                    T
+                </div>
+                <div>
+                    <h1 className="text-base font-extrabold text-slate-900 tracking-tight m-0">TechShop</h1>
+                    <span className="text-[10px] font-bold text-[#1D7461] uppercase tracking-wider block">Admin Portal</span>
+                </div>
             </div>
 
-            <div className="flex-1">
-                <ul className="list-none pt-2.5 flex flex-col p-0 m-0">
-                    <li className={`relative flex items-center p-2 px-3 hover:bg-white/10 transition-colors cursor-pointer ${isActive("/admin") ? "bg-linear-to-r from-[#4A6CF7]/20 to-[#4A6CF7]/5 text-white before:content-[''] before:absolute before:left-0 before:top-0 before:h-full before:w-0.75 before:bg-linear-to-b before:from-[#4A6CF7] before:to-[#8B5CF6]" : ""}`}>
-                        <Link to="/admin" className="flex flex-row items-center w-full h-full text-inherit no-underline">
-                            <span className="mr-2 text-sm">{icons.dashboard}</span>
-                            Dashboard
-                        </Link>
-                    </li>
-                    <li className={`relative flex items-center p-2 px-3 hover:bg-white/10 transition-colors cursor-pointer ${isActive("/admin/products") ? "bg-linear-to-r from-[#4A6CF7]/20 to-[#4A6CF7]/5 text-white before:content-[''] before:absolute before:left-0 before:top-0 before:h-full before:w-0.75 before:bg-linear-to-b before:from-[#4A6CF7] before:to-[#8B5CF6]" : ""}`}>
-                        <Link to="/admin/products" className="flex flex-row items-center w-full h-full text-inherit no-underline">
-                            <span className="mr-2 text-sm">{icons.products}</span>
-                            Sản phẩm
-                        </Link>
-                    </li>
-                    <li className={`relative flex items-center p-2 px-3 hover:bg-white/10 transition-colors cursor-pointer ${isActive("/admin/orders") ? "bg-linear-to-r from-[#4A6CF7]/20 to-[#4A6CF7]/5 text-white before:content-[''] before:absolute before:left-0 before:top-0 before:h-full before:w-0.75 before:bg-linear-to-b before:from-[#4A6CF7] before:to-[#8B5CF6]" : ""}`}>
-                        <Link to="/admin/orders" className="flex flex-row items-center w-full h-full text-inherit no-underline">
-                            <span className="mr-2 text-sm">{icons.orders}</span>
-                            Đơn hàng
-                        </Link>
-                    </li>
-                    <li className={`relative flex items-center p-2 px-3 hover:bg-white/10 transition-colors cursor-pointer ${isActive("/admin/users") ? "bg-linear-to-r from-[#4A6CF7]/20 to-[#4A6CF7]/5 text-white before:content-[''] before:absolute before:left-0 before:top-0 before:h-full before:w-0.75 before:bg-linear-to-b before:from-[#4A6CF7] before:to-[#8B5CF6]" : ""}`}>
-                        <Link to="/admin/users" className="flex flex-row items-center w-full h-full text-inherit no-underline">
-                            <span className="mr-2 text-sm">{icons.users}</span>
-                            Người dùng
-                        </Link>
-                    </li>
-                </ul>
+            {/* Menu Links */}
+            <div className="flex-1 px-3 py-4 space-y-6 overflow-y-auto">
+                <div>
+                    <div className="px-3 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                        MENU QUẢN TRỊ
+                    </div>
+                    <ul className="space-y-1.5 list-none p-0 m-0">
+                        {menuItems.map((item) => {
+                            const active = isActive(item.path);
+                            return (
+                                <li key={item.path}>
+                                    <Link
+                                        to={item.path}
+                                        className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all no-underline ${
+                                            active
+                                                ? "bg-[#1D7461] text-white shadow-md shadow-[#1D7461]/20 scale-[1.01]"
+                                                : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                                        }`}
+                                    >
+                                        <span className="text-base leading-none">{item.icon}</span>
+                                        <span>{item.label}</span>
+                                    </Link>
+                                </li>
+                            );
+                        })}
+                    </ul>
+                </div>
             </div>
 
-            <div className="mt-auto bg-white/5 border-t border-white/10 py-4 px-5 flex items-center relative cursor-pointer hover:bg-white/10 transition-colors" onClick={toggleLogout}>
-                <div className="w-9.5 h-9.5 rounded-[10%] bg-linear-to-br from-[#4A6CF7] to-[#8B5CF6] text-white mr-3 flex items-center justify-center font-semibold shadow-[0_2px_8px_rgba(0,0,0,0.3)] overflow-hidden shrink-0">
-                    <img
-                        src="https://res.cloudinary.com/dgygvrrjs/image/upload/v1745387610/ChatGPT_Image_Apr_5_2025_12_08_58_AM_ociguu.png?fbclid=IwY2xjawJ4KxJleHRuA2FlbQIxMABicmlkETFnbUszR1o2RlZrQXJ2VFRXAR7SKjjUPYQHQovx3wZg3p14ksqpKnPTakahujkwPCwl21n8F7-sQJX0fXLfRg_aem_ghKIYi2m6VITMUEzqoiUOg"
-                        alt="Avatar"
-                        className="w-full h-full object-cover"
-                    />
-                </div>
-                <div className="flex-1">
-                    <div className="font-bold text-white text-base uppercase">
-                        {user?.firstName || 'Admin'}
+            {/* User Account / Logout */}
+            <div className="p-3 border-t border-slate-100 bg-slate-50/50">
+                <div
+                    className="p-2.5 rounded-2xl bg-white border border-slate-200/60 shadow-2xs flex items-center justify-between cursor-pointer hover:border-slate-300 transition-all relative"
+                    onClick={() => setShowLogout(!showLogout)}
+                >
+                    <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-8 h-8 rounded-xl bg-linear-to-tr from-[#1D7461] to-emerald-500 text-white flex items-center justify-center font-bold text-xs shadow-xs shrink-0">
+                            {user?.firstName?.charAt(0) || 'A'}
+                        </div>
+                        <div className="truncate">
+                            <div className="font-extrabold text-slate-800 text-xs truncate">
+                                {user?.firstName || 'Admin'} {user?.lastName || ''}
+                            </div>
+                            <div className="text-[10px] font-medium text-slate-400 truncate">
+                                {user?.email || 'admin@techshop.com'}
+                            </div>
+                        </div>
                     </div>
+
+                    {showLogout && (
+                        <div className="absolute bottom-14 left-0 right-0 bg-white border border-slate-200 shadow-xl rounded-2xl p-1.5 z-50 animate-in fade-in slide-in-from-bottom-2">
+                            <button
+                                className="w-full text-left px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-50 rounded-xl transition-all border-none bg-transparent cursor-pointer flex items-center gap-2"
+                                onClick={handleLogout}
+                            >
+                                Đăng xuất
+                            </button>
+                        </div>
+                    )}
                 </div>
-                {showLogout && (
-                    <div className="absolute bottom-15 right-2.5 w-30 bg-[#1F2937] shadow-[0_4px_12px_rgba(0,0,0,0.3)] rounded-md overflow-hidden z-50">
-                        <button className="w-full py-3 px-4 text-left bg-transparent border-none text-white/80 cursor-pointer text-sm transition-colors flex items-center hover:bg-white/10 hover:text-white" onClick={handleLogout}>
-                            ⬅️ Đăng xuất
-                        </button>
-                    </div>
-                )}
             </div>
-        </div>
+        </aside>
     );
 };
 

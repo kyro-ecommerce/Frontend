@@ -54,103 +54,111 @@ const UserList = ({
     };
 
     return (
-        <div className="bg-white rounded-lg shadow-[0_2px_8px_rgba(0,0,0,0.05)] p-5 mb-5">
-            <h2 className="text-lg font-semibold mb-5">Danh sách người dùng</h2>
+        <div>
+            <div className="flex justify-between pb-3 items-center">
+                <h3 className="text-base font-extrabold text-slate-900 tracking-tight m-0">
+                    Danh sách người dùng
+                </h3>
+            </div>
 
             {isLoading ? (
-                <div className="p-10 text-center text-gray-500">Đang tải dữ liệu...</div>
+                <div className="p-12 text-center text-slate-400 text-xs font-medium">Đang tải dữ liệu người dùng...</div>
             ) : users.length === 0 ? (
-                <div className="p-10 text-center text-gray-500">Không tìm thấy người dùng nào</div>
+                <div className="p-12 text-center text-slate-400 text-xs font-medium">Không tìm thấy người dùng nào</div>
             ) : (
                 <>
-                    <table className="w-full border-collapse">
-                        <thead>
-                        <tr>
-                            <th className="p-3 px-4 text-center border-b border-gray-200 font-medium text-gray-500 text-xs">ID</th>
-                            <th className="p-3 px-4 text-center border-b border-gray-200 font-medium text-gray-500 text-xs">Email</th>
-                            <th className="p-3 px-4 text-center border-b border-gray-200 font-medium text-gray-500 text-xs">Họ tên</th>
-                            <th className="p-3 px-4 text-center border-b border-gray-200 font-medium text-gray-500 text-xs">Vai trò</th>
-                            <th className="p-3 px-4 text-center border-b border-gray-200 font-medium text-gray-500 text-xs">Ngày đăng ký</th>
-                            <th className="p-3 px-4 text-center border-b border-gray-200 font-medium text-gray-500 text-xs">Trạng thái</th>
-                            <th className="p-3 px-4 text-center border-b border-gray-200 font-medium text-gray-500 text-xs">Thao tác</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        {users.map((user) => (
-                            <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                                <td className="p-3 px-4 text-center border-b border-gray-200">{user.id}</td>
-                                <td className="p-3 px-4 text-center border-b border-gray-200">{user.email}</td>
-                                <td className="p-3 px-4 text-center border-b border-gray-200">
-                                    {user.firstName || user.lastName
-                                        ? `${user.firstName || ''} ${user.lastName || ''}`
-                                        : 'Chưa cập nhật'}
-                                </td>
-                                <td className="p-3 px-4 text-center border-b border-gray-200">
-                                    <select
-                                        value={user.role || "CUSTOMER"}
-                                        onChange={(e) => {
-                                            e.stopPropagation();
-                                            if (onChangeRole) onChangeRole(user.id, e.target.value);
-                                        }}
-                                        className={`py-1 px-2.5 rounded-full text-xs font-semibold border border-gray-200 cursor-pointer outline-none ${
-                                            user.role === "ADMIN" ? 'bg-purple-50 text-purple-600' : 'bg-blue-50 text-blue-600'
-                                        }`}
-                                    >
-                                        <option value="CUSTOMER">Khách hàng</option>
-                                        <option value="ADMIN">Quản trị viên</option>
-                                    </select>
-                                </td>
-                                <td className="p-3 px-4 text-center border-b border-gray-200">{formatDate(user.createdAt)}</td>
-                                <td className="p-3 px-4 text-center border-b border-gray-200">
-                                    <div className="cursor-pointer">
-                                        <button
-                                            className={`border-none py-1.5 px-3 rounded-full text-xs font-medium cursor-pointer transition-all ${user.banned  ? 'bg-red-50 text-red-500' : 'bg-green-50 text-green-600'}`}
-                                            onClick={(e) => {
-                                                e.stopPropagation(); // Ngăn sự kiện click lan tỏa
-                                                onToggleStatus(user.id, !user.banned);
-                                            }}
-                                        >
-                                            {user.banned  ? 'Bị khóa' : 'Hoạt động'}
-                                        </button>
-                                    </div>
-                                </td>
-                                <td className="p-3 px-4 text-center border-b border-gray-200">
-                                    <div className="flex gap-2 justify-center">
-                                        <button
-                                            className="w-8 h-8 border-none rounded bg-transparent cursor-pointer flex items-center justify-center transition-colors hover:bg-black/5"
-                                            title="Xem"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                onViewDetail(user.id)
-                                            }}
-                                        >
-                                            <img
-                                                src="https://cdn-icons-png.flaticon.com/512/159/159604.png"
-                                                alt="Xem"
-                                                width={20}
-                                                height={20}
-                                            />
-                                        </button>
-                                        <button
-                                            className="py-1.5 px-2.5 border-none rounded text-xs cursor-pointer min-w-12.5 bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
-                                            onClick={(e) => {
-                                                e.stopPropagation(); // Ngăn sự kiện click lan tỏa
-                                                onDeleteUser(user.id);
-                                            }}
-                                        >
-                                            Xóa
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                        </tbody>
-                    </table>
+                    <div className="overflow-x-auto border border-slate-100 rounded-2xl">
+                        <table className="w-full border-collapse">
+                            <thead>
+                                <tr className="border-b border-slate-100 bg-slate-50/80">
+                                    <th className="p-3.5 px-4 text-center font-extrabold text-slate-400 text-xs uppercase tracking-wider">ID</th>
+                                    <th className="p-3.5 px-4 text-left font-extrabold text-slate-400 text-xs uppercase tracking-wider">Email</th>
+                                    <th className="p-3.5 px-4 text-left font-extrabold text-slate-400 text-xs uppercase tracking-wider">Họ tên</th>
+                                    <th className="p-3.5 px-4 text-center font-extrabold text-slate-400 text-xs uppercase tracking-wider">Vai trò</th>
+                                    <th className="p-3.5 px-4 text-center font-extrabold text-slate-400 text-xs uppercase tracking-wider">Ngày đăng ký</th>
+                                    <th className="p-3.5 px-4 text-center font-extrabold text-slate-400 text-xs uppercase tracking-wider">Trạng thái</th>
+                                    <th className="p-3.5 px-4 text-center font-extrabold text-slate-400 text-xs uppercase tracking-wider">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {users.map((user) => (
+                                    <tr key={user.id} className="hover:bg-slate-50/80 transition-colors cursor-pointer" onClick={() => onViewDetail(user.id)}>
+                                        <td className="p-3.5 px-4 text-center">
+                                            <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-lg border border-slate-200/60 font-bold text-xs">#{user.id}</span>
+                                        </td>
+                                        <td className="p-3.5 px-4 text-left font-bold text-xs text-slate-800">{user.email}</td>
+                                        <td className="p-3.5 px-4 text-left font-semibold text-xs text-slate-600">
+                                            {user.firstName || user.lastName
+                                                ? `${user.firstName || ''} ${user.lastName || ''}`
+                                                : 'Chưa cập nhật'}
+                                        </td>
+                                        <td className="p-3.5 px-4 text-center" onClick={(e) => e.stopPropagation()}>
+                                            <select
+                                                value={user.role || "CUSTOMER"}
+                                                onChange={(e) => {
+                                                    e.stopPropagation();
+                                                    if (onChangeRole) onChangeRole(user.id, e.target.value);
+                                                }}
+                                                className={`py-1 px-3 rounded-full text-xs font-extrabold border cursor-pointer outline-none transition-all ${
+                                                    user.role === "ADMIN" ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-blue-50 text-blue-700 border-blue-200'
+                                                }`}
+                                            >
+                                                <option value="CUSTOMER">Khách hàng</option>
+                                                <option value="ADMIN">Quản trị viên</option>
+                                            </select>
+                                        </td>
+                                        <td className="p-3.5 px-4 text-center text-xs font-medium text-slate-500">{formatDate(user.createdAt)}</td>
+                                        <td className="p-3.5 px-4 text-center" onClick={(e) => e.stopPropagation()}>
+                                            <button
+                                                className={`py-1 px-3 rounded-full text-xs font-extrabold border cursor-pointer transition-all ${
+                                                    user.banned ? 'bg-red-50 text-red-600 border-red-200' : 'bg-[#F2F9F7] text-[#1D7461] border-[#D5EFE8]'
+                                                }`}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    onToggleStatus(user.id, !user.banned);
+                                                }}
+                                            >
+                                                {user.banned ? 'Bị khóa' : 'Hoạt động'}
+                                            </button>
+                                        </td>
+                                        <td className="p-3.5 px-4 text-center" onClick={(e) => e.stopPropagation()}>
+                                            <div className="flex gap-1.5 justify-center">
+                                                <button
+                                                    className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-600 cursor-pointer flex items-center justify-center transition-all border-none"
+                                                    title="Xem"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        onViewDetail(user.id);
+                                                    }}
+                                                >
+                                                    <img
+                                                        src="https://cdn-icons-png.flaticon.com/512/159/159604.png"
+                                                        alt="Xem"
+                                                        width={16}
+                                                        height={16}
+                                                    />
+                                                </button>
+                                                <button
+                                                    className="py-1.5 px-3 border-none rounded-xl text-xs font-bold cursor-pointer bg-red-50 text-red-600 hover:bg-red-100 transition-all"
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        onDeleteUser(user.id);
+                                                    }}
+                                                >
+                                                    Xóa
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
 
                     {/* Phân trang */}
                     <div className="flex justify-center mt-5">
                         <button
-                            className="w-9 h-9 border border-gray-200 bg-white rounded mx-1 cursor-pointer flex items-center justify-center text-sm disabled:text-gray-400 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="w-9 h-9 border border-slate-200 bg-white rounded-xl mx-1 cursor-pointer flex items-center justify-center text-xs font-bold disabled:text-slate-300 disabled:cursor-not-allowed transition-all"
                             disabled={currentPage === 0}
                             onClick={() => onPageChange(currentPage - 1)}
                         >
@@ -160,7 +168,11 @@ const UserList = ({
                         {getPageNumbers().map((page, index) => (
                             <button
                                 key={index}
-                                className={`w-9 h-9 border border-gray-200 rounded mx-1 flex items-center justify-center text-sm ${page === currentPage ? 'bg-blue-600 text-white border-blue-600 cursor-pointer' : 'bg-white cursor-pointer disabled:text-gray-400 disabled:cursor-not-allowed disabled:opacity-50'}`}
+                                className={`w-9 h-9 border rounded-xl mx-1 flex items-center justify-center text-xs font-bold transition-all ${
+                                    page === currentPage
+                                        ? 'bg-[#1D7461] text-white border-[#1D7461] shadow-sm shadow-[#1D7461]/20 cursor-pointer'
+                                        : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer disabled:text-slate-300 disabled:cursor-not-allowed'
+                                }`}
                                 onClick={() => {
                                     if (typeof page === 'number') {
                                         onPageChange(page);
@@ -173,7 +185,7 @@ const UserList = ({
                         ))}
 
                         <button
-                            className="w-9 h-9 border border-gray-200 bg-white rounded mx-1 cursor-pointer flex items-center justify-center text-sm disabled:text-gray-400 disabled:cursor-not-allowed disabled:opacity-50"
+                            className="w-9 h-9 border border-slate-200 bg-white rounded-xl mx-1 cursor-pointer flex items-center justify-center text-xs font-bold disabled:text-slate-300 disabled:cursor-not-allowed transition-all"
                             disabled={currentPage === totalPages - 1}
                             onClick={() => onPageChange(currentPage + 1)}
                         >

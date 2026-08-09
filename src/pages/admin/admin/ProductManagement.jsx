@@ -8,6 +8,7 @@ import ProductList from "../../../features/admin/products/ProductList";
 import {useProducts} from "../../../hooks/admin/useProducts";
 import {ToastProvider, useToast} from "../../../store/admin/ToastContext";
 import ProductDetailModal from "../../../features/admin/products/ProductDetailModal";
+import { translateCategoryName } from "../../../utils/admin/format.js";
 
 // Wrapper component to use toast in main component
 const ProductManagementContent = () => {
@@ -178,28 +179,23 @@ const ProductManagementContent = () => {
 
     return (
         <Layout>
-            <div className="w-full">
-                <div className="bg-white rounded-lg shadow-sm mb-5 border border-gray-200">
-                    <div className="p-5">
-                        {/* Filters Section - Exact same as Product.jsx */}
+            <div className="p-6 md:p-8 bg-[#F8FAFC] min-h-screen">
+                <div className="max-w-7xl mx-auto space-y-4">
+                    <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
+                        {/* Filters Section */}
                         <div className="flex flex-col gap-4 mb-4 items-start justify-center w-full">
                             <div className="flex items-center gap-4 w-full max-w-md relative">
-                                <Search className="absolute left-3 text-gray-400 w-5 h-5" />
+                                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                                 <input
                                     type="search"
-                                    className="w-full py-2 pr-3 pl-10 rounded-md border border-gray-300 text-sm outline-none focus:border-blue-500"
+                                    className="w-full py-2.5 pr-4 pl-10 rounded-xl border border-slate-200 text-xs font-semibold outline-none focus:border-[#1D7461] focus:ring-2 focus:ring-[#1D7461]/20 transition-all"
                                     placeholder="Tìm kiếm sản phẩm..."
                                     value={filters.keyword || ''}
                                     onChange={(e) => {
-                                        // Update local state immediately for UI responsiveness
                                         const value = e.target.value;
-
-                                        // Clear previous timeout
                                         if (searchTimeout.current) {
                                             clearTimeout(searchTimeout.current);
                                         }
-
-                                        // Set new timeout for API call
                                         searchTimeout.current = setTimeout(() => {
                                             updateFilters({ keyword: value });
                                         }, 50);
@@ -208,47 +204,47 @@ const ProductManagementContent = () => {
                             </div>
                             <div className="w-full flex">
                                 <div className="w-full flex">
-                                    <div className="flex flex-row items-end gap-6 flex-wrap w-full">
-                                        <div className="flex flex-row gap-5 flex-wrap">
-                                            <div className="flex flex-col gap-2 items-start">
-                                                <label className="text-sm font-medium text-gray-700">Danh mục</label>
+                                    <div className="flex flex-row items-end gap-4 flex-wrap w-full">
+                                        <div className="flex flex-row gap-4 flex-wrap">
+                                            <div className="flex flex-col gap-1.5 items-start">
+                                                <label className="text-xs font-bold text-slate-600">Danh mục</label>
                                                 <select
                                                     value={localFilterState.topLevelCategory}
                                                     onChange={(e) => setLocalFilterState(prev => ({
                                                         ...prev,
                                                         topLevelCategory: e.target.value,
-                                                        secondLevelCategory: '' // Reset subcategory when main category changes
+                                                        secondLevelCategory: ''
                                                     }))}
-                                                    className="rounded-md border border-gray-300 text-sm p-2 outline-none focus:border-blue-500 min-w-40 h-10"
+                                                    className="rounded-xl border border-slate-200 text-xs font-semibold p-2.5 outline-none focus:border-[#1D7461] min-w-40 h-10 bg-white"
                                                 >
                                                     <option value="">Tất cả</option>
                                                     {categories?.topLevel?.map(cat => (
-                                                        <option key={cat} value={cat}>{cat}</option>
+                                                        <option key={cat} value={cat}>{translateCategoryName(cat)}</option>
                                                     )) || []}
                                                 </select>
                                             </div>
 
-                                            <div className="flex flex-col gap-2 items-start">
-                                                <label className="text-sm font-medium text-gray-700">Danh mục con</label>
+                                            <div className="flex flex-col gap-1.5 items-start">
+                                                <label className="text-xs font-bold text-slate-600">Danh mục con</label>
                                                 <select
                                                     value={localFilterState.secondLevelCategory}
                                                     onChange={(e) => setLocalFilterState(prev => ({
                                                         ...prev,
                                                         secondLevelCategory: e.target.value
                                                     }))}
-                                                    className="rounded-md border border-gray-300 text-sm p-2 outline-none focus:border-blue-500 min-w-40 h-10"
+                                                    className="rounded-xl border border-slate-200 text-xs font-semibold p-2.5 outline-none focus:border-[#1D7461] min-w-40 h-10 bg-white disabled:opacity-50"
                                                     disabled={!localFilterState.topLevelCategory}
                                                 >
                                                     <option value="">Tất cả</option>
                                                     {localFilterState.topLevelCategory && categories?.secondLevel?.[localFilterState.topLevelCategory] &&
                                                         categories.secondLevel[localFilterState.topLevelCategory].map(subcat => (
-                                                            <option key={subcat} value={subcat}>{subcat}</option>
+                                                            <option key={subcat} value={subcat}>{translateCategoryName(subcat)}</option>
                                                         ))}
                                                 </select>
                                             </div>
 
-                                            <div className="flex flex-col gap-2 items-start">
-                                                <label className="text-sm font-medium text-gray-700">Khoảng giá</label>
+                                            <div className="flex flex-col gap-1.5 items-start">
+                                                <label className="text-xs font-bold text-slate-600">Khoảng giá</label>
                                                 <div className="flex items-center gap-2">
                                                     <input
                                                         type="number"
@@ -258,9 +254,9 @@ const ProductManagementContent = () => {
                                                             ...prev,
                                                             minPrice: e.target.value
                                                         }))}
-                                                        className="rounded-md border border-gray-300 text-sm p-2 text-center h-10 w-25 outline-none focus:border-blue-500"
+                                                        className="rounded-xl border border-slate-200 text-xs font-semibold p-2 text-center h-10 w-24 outline-none focus:border-[#1D7461] bg-white"
                                                     />
-                                                    <span className="text-gray-500"> - </span>
+                                                    <span className="text-slate-400 font-bold text-xs">-</span>
                                                     <input
                                                         type="number"
                                                         placeholder="Đến"
@@ -269,20 +265,20 @@ const ProductManagementContent = () => {
                                                             ...prev,
                                                             maxPrice: e.target.value
                                                         }))}
-                                                        className="rounded-md border border-gray-300 text-sm p-2 text-center h-10 w-25 outline-none focus:border-blue-500"
+                                                        className="rounded-xl border border-slate-200 text-xs font-semibold p-2 text-center h-10 w-24 outline-none focus:border-[#1D7461] bg-white"
                                                     />
                                                 </div>
                                             </div>
 
-                                            <div className="flex flex-col gap-2 items-start">
-                                                <label className="text-sm font-medium text-gray-700">Trạng thái</label>
+                                            <div className="flex flex-col gap-1.5 items-start">
+                                                <label className="text-xs font-bold text-slate-600">Trạng thái</label>
                                                 <select
                                                     value={localFilterState.status}
                                                     onChange={(e) => setLocalFilterState(prev => ({
                                                         ...prev,
                                                         status: e.target.value
                                                     }))}
-                                                    className="rounded-md border border-gray-300 text-sm p-2 outline-none focus:border-blue-500 min-w-30 h-10"
+                                                    className="rounded-xl border border-slate-200 text-xs font-semibold p-2.5 outline-none focus:border-[#1D7461] min-w-30 h-10 bg-white"
                                                 >
                                                     <option value="all">Tất cả</option>
                                                     <option value="inStock">Còn hàng</option>
@@ -290,12 +286,12 @@ const ProductManagementContent = () => {
                                                 </select>
                                             </div>
 
-                                            <div className="flex flex-col gap-2 items-start">
-                                                <label className="text-sm font-medium text-gray-700">Sắp xếp theo</label>
+                                            <div className="flex flex-col gap-1.5 items-start">
+                                                <label className="text-xs font-bold text-slate-600">Sắp xếp theo</label>
                                                 <select
                                                     value={sortBy}
                                                     onChange={(e) => handleSort(e.target.value)}
-                                                    className="rounded-md border border-gray-300 text-sm p-2 outline-none focus:border-blue-500 min-w-35 h-10"
+                                                    className="rounded-xl border border-slate-200 text-xs font-semibold p-2.5 outline-none focus:border-[#1D7461] min-w-35 h-10 bg-white"
                                                 >
                                                     <option value="createdAt">Ngày thêm</option>
                                                     <option value="id">ID</option>
@@ -305,10 +301,10 @@ const ProductManagementContent = () => {
                                                 </select>
                                             </div>
 
-                                            <div className="flex flex-col gap-2 items-start">
-                                                <label className="text-sm font-medium text-gray-700">Thứ tự</label>
+                                            <div className="flex flex-col gap-1.5 items-start">
+                                                <label className="text-xs font-bold text-slate-600">Thứ tự</label>
                                                 <button
-                                                    className="bg-white border border-gray-300 rounded-md flex items-center justify-center cursor-pointer hover:bg-gray-100 h-10 w-10 transition-colors"
+                                                    className="bg-white border border-slate-200 rounded-xl flex items-center justify-center cursor-pointer hover:bg-slate-50 h-10 w-10 transition-colors font-bold text-slate-700"
                                                     onClick={() => handleSort(sortBy)}
                                                 >
                                                     {sortOrder === 'asc' ? '↑' : '↓'}
@@ -316,15 +312,15 @@ const ProductManagementContent = () => {
                                             </div>
                                         </div>
 
-                                        <div className="flex flex-row gap-3 items-end ml-auto">
+                                        <div className="flex flex-row gap-2.5 items-end ml-auto">
                                             <button
-                                                className="px-4 py-2 bg-transparent border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-md text-sm font-medium transition-colors"
+                                                className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200/80 border border-slate-200/80 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer"
                                                 onClick={handleClearFilters}
                                             >
                                                 Xóa bộ lọc
                                             </button>
                                             <button
-                                                className="px-4 py-2 bg-blue-600 text-white border-none hover:bg-blue-700 rounded-md text-sm font-medium transition-colors"
+                                                className="px-4 py-2.5 bg-[#1D7461] hover:bg-[#136050] text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm shadow-[#1D7461]/20 border-none"
                                                 onClick={handleApplyFilters}
                                             >
                                                 Lọc
@@ -335,7 +331,7 @@ const ProductManagementContent = () => {
                             </div>
                         </div>
 
-                        {error && <div className="text-red-500 my-4 bg-red-50 p-3 rounded-md">{error}</div>}
+                        {error && <div className="text-red-600 my-4 bg-red-50 border border-red-200 p-3 rounded-xl text-xs font-semibold">{error}</div>}
 
                         {/* Product List */}
                         <ProductList
@@ -354,7 +350,7 @@ const ProductManagementContent = () => {
                         <div className="flex flex-col items-center mt-6 gap-3">
                             <div className="flex flex-wrap justify-center items-center gap-2">
                                 <button
-                                    className={`px-3 py-2 rounded-md text-sm font-medium inline-flex items-center justify-center gap-2 cursor-pointer transition-colors border max-w-fit disabled:opacity-50 disabled:cursor-not-allowed ${pagination.currentPage === 0 ? 'bg-blue-600 text-white border-blue-600' : 'bg-transparent border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+                                    className={`px-3 py-2 rounded-xl text-xs font-bold inline-flex items-center justify-center gap-2 cursor-pointer transition-all border disabled:opacity-50 disabled:cursor-not-allowed ${pagination.currentPage === 0 ? 'bg-[#1D7461] text-white border-[#1D7461]' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'}`}
                                     onClick={() => goToPage(0)}
                                     disabled={pagination.currentPage === 0}
                                 >
@@ -362,7 +358,7 @@ const ProductManagementContent = () => {
                                 </button>
 
                                 <button
-                                    className="px-3 py-2 rounded-md text-sm font-medium inline-flex items-center justify-center gap-2 cursor-pointer transition-colors border border-gray-300 bg-transparent text-gray-700 hover:bg-gray-50 max-w-fit disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="px-3 py-2 rounded-xl text-xs font-bold inline-flex items-center justify-center gap-2 cursor-pointer transition-all border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
                                     disabled={!pagination.hasPrevious}
                                     onClick={previousPage}
                                 >
@@ -378,12 +374,12 @@ const ProductManagementContent = () => {
                                         placeholder={`${pagination.currentPage + 1}`}
                                         min="1"
                                         max={pagination.totalPages}
-                                        className="px-3 py-2 rounded-md text-sm font-medium text-center border border-gray-300 w-16 outline-none focus:border-blue-500"
+                                        className="px-3 py-2 rounded-xl text-xs font-bold text-center border border-slate-200 w-16 outline-none focus:border-[#1D7461] bg-white"
                                     />
                                 </div>
 
                                 <button
-                                    className="px-3 py-2 rounded-md text-sm font-medium inline-flex items-center justify-center gap-2 cursor-pointer transition-colors border border-gray-300 bg-transparent text-gray-700 hover:bg-gray-50 max-w-fit disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="px-3 py-2 rounded-xl text-xs font-bold inline-flex items-center justify-center gap-2 cursor-pointer transition-all border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
                                     disabled={!pagination.hasNext}
                                     onClick={nextPage}
                                 >
@@ -391,7 +387,7 @@ const ProductManagementContent = () => {
                                 </button>
 
                                 <button
-                                    className={`px-3 py-2 rounded-md text-sm font-medium inline-flex items-center justify-center gap-2 cursor-pointer transition-colors border max-w-fit disabled:opacity-50 disabled:cursor-not-allowed ${pagination.currentPage === pagination.totalPages - 1 || pagination.totalPages === 0 ? 'bg-blue-600 text-white border-blue-600' : 'bg-transparent border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+                                    className={`px-3 py-2 rounded-xl text-xs font-bold inline-flex items-center justify-center gap-2 cursor-pointer transition-all border disabled:opacity-50 disabled:cursor-not-allowed ${pagination.currentPage === pagination.totalPages - 1 || pagination.totalPages === 0 ? 'bg-[#1D7461] text-white border-[#1D7461]' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'}`}
                                     onClick={() => goToPage(pagination.totalPages - 1)}
                                     disabled={pagination.currentPage === pagination.totalPages - 1 || pagination.totalPages === 0}
                                 >
@@ -399,13 +395,12 @@ const ProductManagementContent = () => {
                                 </button>
                             </div>
 
-                            <div className="text-sm text-gray-500">
+                            <div className="text-xs font-semibold text-slate-400">
                                 Hiển thị {products?.length || 0} trên {pagination?.totalElements || 0} sản phẩm
                             </div>
                         </div>
                     </div>
                 </div>
-
             </div>
             {isDetailModalOpen && selectedProduct && (
                 <ProductDetailModal

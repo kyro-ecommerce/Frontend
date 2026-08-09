@@ -39,8 +39,8 @@ const Home = () => {
 
       {/* Main Content Sections */}
       <div className="flex flex-col items-center mx-auto mt-8 w-full max-w-screen-xl px-4">
-        <FlashSale />
         <RecommendedForYou />
+        <FlashSale />
         <TopSale />
         <LatestTop />
       </div>

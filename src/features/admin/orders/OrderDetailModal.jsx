@@ -203,9 +203,9 @@ const OrderDetailModal = ({ order, onClose, onStatusChange, onDeleteOrder }) => 
                                 order.orderStatus === 'CANCELLED' ? 'bg-red-50 text-red-600 border-red-200' : 'bg-gray-50 text-gray-600 border-gray-200'
                             }`}
                         >
-                            <option value="PENDING">Chờ xác nhận</option>
+                            <option value="PENDING">Chờ xử lý</option>
                             <option value="CONFIRMED">Đã xác nhận</option>
-                            <option value="SHIPPED">Đang giao</option>
+                            <option value="SHIPPED">Đang vận chuyển</option>
                             <option value="DELIVERED">Đã giao</option>
                             <option value="CANCELLED">Đã hủy</option>
                         </select>
