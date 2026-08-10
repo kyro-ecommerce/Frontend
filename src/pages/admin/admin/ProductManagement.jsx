@@ -1,13 +1,13 @@
-// src/pages/admin/ProductManagement.jsx - Updated to use AddProduct and EditProduct pages
 import React, {useEffect, useRef, useState} from "react";
 import {Navigate, useNavigate} from "react-router-dom";
-import {Search} from "lucide-react";
+import {Search, Plus} from "lucide-react";
 import Layout from "../../../layouts/admin/Layout";
 import {useAuth} from "../../../hooks/admin/useAuth.jsx";
 import ProductList from "../../../features/admin/products/ProductList";
 import {useProducts} from "../../../hooks/admin/useProducts";
 import {ToastProvider, useToast} from "../../../store/admin/ToastContext";
 import ProductDetailModal from "../../../features/admin/products/ProductDetailModal";
+import ProductFormModal from "../../../features/admin/products/ProductFormModal";
 import { translateCategoryName } from "../../../utils/admin/format.js";
 
 // Wrapper component to use toast in main component
@@ -19,6 +19,8 @@ const ProductManagementContent = () => {
     // State for managing modal
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+    const [isFormModalOpen, setIsFormModalOpen] = useState(false);
+    const [editingProduct, setEditingProduct] = useState(null);
     const searchTimeout = useRef(null);
 
     // Filter and search state
@@ -54,8 +56,44 @@ const ProductManagementContent = () => {
         handlePageChange,
         updateFilters,
         clearFilters,
-        refreshProducts
+        refreshProducts,
+        handleAddProduct,
+        handleUpdateProduct
     } = useProducts();
+
+    // Modal handlers for add / edit product
+    const handleOpenAddModal = () => {
+        setEditingProduct(null);
+        setIsFormModalOpen(true);
+    };
+
+    const handleOpenEditModal = (product) => {
+        setEditingProduct(product);
+        setIsFormModalOpen(true);
+        setIsDetailModalOpen(false);
+    };
+
+    const handleSaveProduct = async (productData) => {
+        try {
+            let result;
+            if (editingProduct) {
+                result = await handleUpdateProduct(editingProduct.id, productData);
+            } else {
+                result = await handleAddProduct(productData);
+            }
+
+            if (result.success) {
+                toast.success(editingProduct ? "Cập nhật sản phẩm thành công!" : "Thêm sản phẩm mới thành công!");
+                setIsFormModalOpen(false);
+                setEditingProduct(null);
+                refreshProducts();
+            } else {
+                toast.error(result.error || "Thao tác thất bại!");
+            }
+        } catch (err) {
+            toast.error(`Đã xảy ra lỗi: ${err.message}`);
+        }
+    };
 
     useEffect(() => {
         return () => {
@@ -182,25 +220,33 @@ const ProductManagementContent = () => {
             <div className="p-6 md:p-8 bg-[#F8FAFC] min-h-screen">
                 <div className="max-w-7xl mx-auto space-y-4">
                     <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
-                        {/* Filters Section */}
+                        {/* Filters & Action Section */}
                         <div className="flex flex-col gap-4 mb-4 items-start justify-center w-full">
-                            <div className="flex items-center gap-4 w-full max-w-md relative">
-                                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
-                                <input
-                                    type="search"
-                                    className="w-full py-2.5 pr-4 pl-10 rounded-xl border border-slate-200 text-xs font-semibold outline-none focus:border-[#1D7461] focus:ring-2 focus:ring-[#1D7461]/20 transition-all"
-                                    placeholder="Tìm kiếm sản phẩm..."
-                                    value={filters.keyword || ''}
-                                    onChange={(e) => {
-                                        const value = e.target.value;
-                                        if (searchTimeout.current) {
-                                            clearTimeout(searchTimeout.current);
-                                        }
-                                        searchTimeout.current = setTimeout(() => {
-                                            updateFilters({ keyword: value });
-                                        }, 50);
-                                    }}
-                                />
+                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 w-full">
+                                <div className="flex items-center gap-4 w-full max-w-md relative">
+                                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+                                    <input
+                                        type="search"
+                                        className="w-full py-2.5 pr-4 pl-10 rounded-xl border border-slate-200 text-xs font-semibold outline-none focus:border-[#1D7461] focus:ring-2 focus:ring-[#1D7461]/20 transition-all"
+                                        placeholder="Tìm kiếm sản phẩm..."
+                                        value={filters.keyword || ''}
+                                        onChange={(e) => {
+                                            const value = e.target.value;
+                                            if (searchTimeout.current) {
+                                                clearTimeout(searchTimeout.current);
+                                            }
+                                            searchTimeout.current = setTimeout(() => {
+                                                updateFilters({ keyword: value });
+                                            }, 50);
+                                        }}
+                                    />
+                                </div>
+                                <button
+                                    onClick={handleOpenAddModal}
+                                    className="px-4 py-2.5 bg-[#1D7461] hover:bg-[#136050] text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm shadow-[#1D7461]/20 border-none flex items-center justify-center gap-1.5 shrink-0"
+                                >
+                                    <Plus className="w-4 h-4" /> Thêm sản phẩm
+                                </button>
                             </div>
                             <div className="w-full flex">
                                 <div className="w-full flex">
@@ -344,6 +390,8 @@ const ProductManagementContent = () => {
                             sortBy={sortBy}
                             sortOrder={sortOrder}
                             onView={handleViewProduct}
+                            onEdit={handleOpenEditModal}
+                            onAddProduct={handleOpenAddModal}
                             onDelete={handleDelete}
                         />
 
@@ -402,6 +450,8 @@ const ProductManagementContent = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Product Detail Modal */}
             {isDetailModalOpen && selectedProduct && (
                 <ProductDetailModal
                     product={selectedProduct}
@@ -410,9 +460,21 @@ const ProductManagementContent = () => {
                         setSelectedProduct(null);
                     }}
                     onEdit={(product) => {
-                        // Handle edit functionality if needed
-                        console.log("Edit product:", product);
+                        handleOpenEditModal(product);
                     }}
+                />
+            )}
+
+            {/* Product Form Modal (Add / Edit) */}
+            {isFormModalOpen && (
+                <ProductFormModal
+                    product={editingProduct}
+                    categories={categories}
+                    onClose={() => {
+                        setIsFormModalOpen(false);
+                        setEditingProduct(null);
+                    }}
+                    onSave={handleSaveProduct}
                 />
             )}
         </Layout>

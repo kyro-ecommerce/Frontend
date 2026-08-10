@@ -1,10 +1,10 @@
 // src/hooks/useOrders.jsx
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { orderService } from "../../services/admin/index.js";
 
 export const useOrders = () => {
     // State management
-    const [orders, setOrders] = useState([]);
+    const [rawOrders, setRawOrders] = useState([]);
     const [pagination, setPagination] = useState({
         currentPage: 0,
         pageSize: 10,
@@ -27,6 +27,12 @@ export const useOrders = () => {
     const [searchTerm, setSearchTerm] = useState("");
     const [dateRange, setDateRange] = useState({ start: "", end: "" });
 
+    // Additional client-side filters
+    const [paymentMethodFilter, setPaymentMethodFilter] = useState("all");
+    const [paymentStatusFilter, setPaymentStatusFilter] = useState("all");
+    const [priceRangeFilter, setPriceRangeFilter] = useState("all");
+    const [sortBy, setSortBy] = useState("newest");
+
     // Fetch orders with backend filtering
     const fetchOrders = useCallback(async (page = 0, size = 10) => {
         try {
@@ -48,14 +54,7 @@ export const useOrders = () => {
             if (response.status === 200) {
                 const responseData = response.data?.data || response.data || {};
                 const orderList = responseData.content || responseData.orders || (Array.isArray(responseData) ? responseData : []);
-                // Sort orders newest first
-                const sortedOrders = [...orderList].sort((a, b) => {
-                    const timeA = a.orderDate ? new Date(a.orderDate).getTime() : 0;
-                    const timeB = b.orderDate ? new Date(b.orderDate).getTime() : 0;
-                    if (timeA !== timeB) return timeB - timeA;
-                    return (b.id || 0) - (a.id || 0);
-                });
-                setOrders(sortedOrders);
+                setRawOrders(orderList);
 
                 const currentPage = responseData.number ?? responseData.currentPage ?? 0;
                 const totalPages = responseData.totalPages ?? 1;
@@ -76,11 +75,67 @@ export const useOrders = () => {
         } catch (err) {
             console.error("Error loading orders:", err);
             setError("Cannot load orders. Please try again.");
-            setOrders([]);
+            setRawOrders([]);
         } finally {
             setIsLoading(false);
         }
     }, [filter, searchTerm, dateRange, pagination.pageSize]);
+
+    // Apply client-side filters & sorting
+    const orders = useMemo(() => {
+        let result = [...rawOrders];
+
+        // 1. Filter by Payment Method (COD, VNPAY)
+        if (paymentMethodFilter && paymentMethodFilter !== "all") {
+            result = result.filter(order =>
+                order.paymentMethod?.toUpperCase() === paymentMethodFilter.toUpperCase()
+            );
+        }
+
+        // 2. Filter by Payment Status (PENDING, COMPLETED, FAILED, REFUNDED)
+        if (paymentStatusFilter && paymentStatusFilter !== "all") {
+            result = result.filter(order =>
+                order.paymentStatus?.toUpperCase() === paymentStatusFilter.toUpperCase()
+            );
+        }
+
+        // 3. Filter by Price Range
+        if (priceRangeFilter && priceRangeFilter !== "all") {
+            result = result.filter(order => {
+                const price = order.totalDiscountedPrice ?? order.originalPrice ?? 0;
+                if (priceRangeFilter === "under_1m") return price < 1000000;
+                if (priceRangeFilter === "1m_5m") return price >= 1000000 && price <= 5000000;
+                if (priceRangeFilter === "5m_20m") return price > 5000000 && price <= 20000000;
+                if (priceRangeFilter === "above_20m") return price > 20000000;
+                return true;
+            });
+        }
+
+        // 4. Sort By
+        result.sort((a, b) => {
+            const timeA = a.orderDate ? new Date(a.orderDate).getTime() : 0;
+            const timeB = b.orderDate ? new Date(b.orderDate).getTime() : 0;
+            const priceA = a.totalDiscountedPrice ?? a.originalPrice ?? 0;
+            const priceB = b.totalDiscountedPrice ?? b.originalPrice ?? 0;
+
+            if (sortBy === "oldest") {
+                if (timeA !== timeB) return timeA - timeB;
+                return (a.id || 0) - (b.id || 0);
+            } else if (sortBy === "price_desc") {
+                if (priceA !== priceB) return priceB - priceA;
+                return timeB - timeA;
+            } else if (sortBy === "price_asc") {
+                if (priceA !== priceB) return priceA - priceB;
+                return timeB - timeA;
+            } else {
+                // Default: newest
+                if (timeA !== timeB) return timeB - timeA;
+                return (b.id || 0) - (a.id || 0);
+            }
+        });
+
+        return result;
+    }, [rawOrders, paymentMethodFilter, paymentStatusFilter, priceRangeFilter, sortBy]);
 
     // Fetch stats separately for more accurate data
     const fetchStats = useCallback(async () => {
@@ -105,20 +160,29 @@ export const useOrders = () => {
     }, [fetchStats]);
 
     const handleSearch = useCallback((term, startDate, endDate) => {
-        setSearchTerm(term || ""); // Ensure empty string instead of undefined
+        setSearchTerm(term || "");
         setDateRange({
             start: startDate || "",
             end: endDate || ""
         });
-
-        // Reset to first page when searching/clearing
         setPagination(prev => ({ ...prev, currentPage: 0 }));
-    }, [fetchOrders, pagination.pageSize]);
+    }, []);
 
     // Handle pagination
     const handlePageChange = useCallback((newPage) => {
         fetchOrders(newPage, pagination.pageSize);
     }, [fetchOrders]);
+
+    // Reset all filters to default
+    const resetAllFilters = useCallback(() => {
+        setFilter("all");
+        setSearchTerm("");
+        setDateRange({ start: "", end: "" });
+        setPaymentMethodFilter("all");
+        setPaymentStatusFilter("all");
+        setPriceRangeFilter("all");
+        setSortBy("newest");
+    }, []);
 
     // Handle status change
     const handleStatusChange = useCallback(async (orderId, actionOrStatus) => {
@@ -165,7 +229,6 @@ export const useOrders = () => {
         try {
             const response = await orderService.deleteOrder(orderId);
             if (response.status === 200 || response.status === 204) {
-                // Refresh current page to get updated data
                 fetchOrders(pagination.currentPage, pagination.pageSize);
                 fetchStats();
                 return true;
@@ -181,15 +244,14 @@ export const useOrders = () => {
     // View order details
     const handleViewOrder = useCallback(async (orderId) => {
         try {
-            // Find order in current list or fetch from API if needed
-            const orderToView = orders.find(order => order.id === orderId);
+            const orderToView = rawOrders.find(order => order.id === orderId);
             return orderToView;
         } catch (err) {
             console.error("Error viewing order details:", err);
             setError("Cannot load order details. Please try again.");
             return null;
         }
-    }, [orders]);
+    }, [rawOrders]);
 
     return {
         // State
@@ -202,6 +264,16 @@ export const useOrders = () => {
         searchTerm,
         dateRange,
 
+        // Additional Filter States
+        paymentMethodFilter,
+        setPaymentMethodFilter,
+        paymentStatusFilter,
+        setPaymentStatusFilter,
+        priceRangeFilter,
+        setPriceRangeFilter,
+        sortBy,
+        setSortBy,
+
         // Actions
         setFilter,
         handleSearch,
@@ -209,6 +281,7 @@ export const useOrders = () => {
         handleDeleteOrder,
         handleViewOrder,
         handlePageChange,
+        resetAllFilters,
 
         // Utilities
         refreshOrders: () => fetchOrders(pagination.currentPage, pagination.pageSize)

@@ -26,7 +26,16 @@ const OrdersManagement = () => {
         handleStatusChange,
         handleDeleteOrder,
         handleViewOrder,
-        handlePageChange
+        handlePageChange,
+        paymentMethodFilter,
+        setPaymentMethodFilter,
+        paymentStatusFilter,
+        setPaymentStatusFilter,
+        priceRangeFilter,
+        setPriceRangeFilter,
+        sortBy,
+        setSortBy,
+        resetAllFilters
     } = useOrders();
 
     // Local UI state
@@ -104,6 +113,15 @@ const OrdersManagement = () => {
                             currentFilter={filter}
                             onFilterChange={setFilter}
                             onSearch={handleSearch}
+                            paymentMethodFilter={paymentMethodFilter}
+                            onPaymentMethodChange={setPaymentMethodFilter}
+                            paymentStatusFilter={paymentStatusFilter}
+                            onPaymentStatusChange={setPaymentStatusFilter}
+                            priceRangeFilter={priceRangeFilter}
+                            onPriceRangeChange={setPriceRangeFilter}
+                            sortBy={sortBy}
+                            onSortByChange={setSortBy}
+                            onResetAllFilters={resetAllFilters}
                         />
 
                         {/* Error Message */}

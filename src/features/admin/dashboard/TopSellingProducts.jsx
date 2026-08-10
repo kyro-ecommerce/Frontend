@@ -30,7 +30,7 @@ const TopSellingProducts = ({ products = [] }) => {
                 {safeProducts.length > 0 ? (
                     <div className="space-y-3">
                         {safeProducts.map((product, index) => {
-                            const img = product.imageUrl || product.imageUrls?.[0]?.imageUrl || product.imageUrls?.[0]?.downloadUrl;
+                            const img = product.imageUrl || product.imageUrls?.[0]?.imageUrl || product.imageUrls?.[0]?.downloadUrl || product.images?.[0]?.downloadUrl || product.images?.[0]?.url;
                             const title = product.title || product.name;
                             const discountedPrice = product.discountedPrice ?? product.discounted_price;
                             const price = product.price || 0;

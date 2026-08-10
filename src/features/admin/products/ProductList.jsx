@@ -11,7 +11,9 @@ const ProductList = ({
                          sortBy,
                          sortOrder,
                          onView,
+                         onEdit,
                          onDelete,
+                         onAddProduct,
                          onMultipleDelete
                      }) => {
 
@@ -59,11 +61,10 @@ const ProductList = ({
                                         <td className="p-3.5 px-5">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-12 h-12 rounded-xl bg-slate-100 overflow-hidden shrink-0 border border-slate-200/60 p-0.5">
-                                                    {product.imageUrls && product.imageUrls.length > 0 ? (
-                                                        <img className="w-full h-full object-cover rounded-lg" src={product.imageUrls[0].downloadUrl} alt={product.title} />
-                                                    ) : (
-                                                        <div className="w-full h-full flex items-center justify-center text-[10px] text-slate-400">N/A</div>
-                                                    )}
+                                                    {(() => {
+                                                        const img = product.imageUrls?.[0]?.downloadUrl || product.imageUrls?.[0]?.url || (typeof product.imageUrls?.[0] === 'string' ? product.imageUrls[0] : null) || product.images?.[0]?.downloadUrl || product.imageUrl || 'https://picsum.photos/seed/product/200/200';
+                                                        return <img className="w-full h-full object-cover rounded-lg" src={img} alt={product.title} />;
+                                                    })()}
                                                 </div>
                                                 <div className="text-left">
                                                     <div className="font-bold text-xs text-slate-800 line-clamp-1">{product.title}</div>
@@ -103,13 +104,30 @@ const ProductList = ({
                                                         onView(product);
                                                     }}
                                                 >
-                                            <img
-                                                src="https://cdn-icons-png.flaticon.com/512/159/159604.png"
-                                                alt="Xem"
-                                                width={20}
-                                                height={20}
-                                            />
+                                                    <img
+                                                        src="https://cdn-icons-png.flaticon.com/512/159/159604.png"
+                                                        alt="Xem"
+                                                        width={16}
+                                                        height={16}
+                                                    />
                                                 </button>
+                                                {onEdit && (
+                                                    <button
+                                                        className="w-8 h-8 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-600 cursor-pointer flex items-center justify-center transition-all border-none"
+                                                        title="Sửa"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            onEdit(product);
+                                                        }}
+                                                    >
+                                                        <img
+                                                            src="https://cdn-icons-png.flaticon.com/512/1828/1828911.png"
+                                                            alt="Sửa"
+                                                            width={16}
+                                                            height={16}
+                                                        />
+                                                    </button>
+                                                )}
                                                 <button
                                                     className="w-8 h-8 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 cursor-pointer flex items-center justify-center transition-all border-none"
                                                     title="Xóa"

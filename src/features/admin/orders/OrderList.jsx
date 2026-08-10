@@ -92,8 +92,12 @@ const OrderList = ({ orders = [], isLoading, onStatusChange, onDeleteOrder, onVi
                                     </td>
                                     <td className="p-3.5 px-4 text-left">
                                         <div className="flex flex-col">
-                                            <span className="font-bold text-xs text-slate-800">{order.user?.firstName} {order.user?.lastName}</span>
-                                            <span className="text-[11px] font-medium text-slate-400 mt-0.5">{order.user?.email}</span>
+                                            <span className="font-bold text-xs text-slate-800">
+                                                {order.user ? `${order.user.firstName || ''} ${order.user.lastName || ''}`.trim() : (order.shippingAddress?.fullName || order.userEmail || "Khách hàng")}
+                                            </span>
+                                            <span className="text-[11px] font-medium text-slate-400 mt-0.5">
+                                                {order.user?.email || order.userEmail || (order.shippingAddress?.phoneNumber ? `SĐT: ${order.shippingAddress.phoneNumber}` : "N/A")}
+                                            </span>
                                         </div>
                                     </td>
                                     <td className="p-3.5 px-4 text-center text-xs font-medium text-slate-500 hidden md:table-cell">{formatDateTime(order.orderDate)}</td>

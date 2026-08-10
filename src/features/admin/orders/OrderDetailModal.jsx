@@ -70,16 +70,16 @@ const OrderDetailModal = ({ order, onClose, onStatusChange, onDeleteOrder }) => 
                             <div className="flex flex-col md:flex-row mb-3">
                                 <div className="w-full md:w-37.5 text-sm text-gray-500 mb-1 md:mb-0">Tên khách hàng:</div>
                                 <div className="text-sm font-medium text-gray-800">
-                                    {(order.user?.firstName || '') + ' ' + (order.user?.lastName || '')}
+                                    {order.user ? `${order.user.firstName || ''} ${order.user.lastName || ''}`.trim() : (order.shippingAddress?.fullName || order.userEmail || "Khách hàng")}
                                 </div>
                             </div>
                             <div className="flex flex-col md:flex-row mb-3">
                                 <div className="w-full md:w-37.5 text-sm text-gray-500 mb-1 md:mb-0">Email:</div>
-                                <div className="text-sm font-medium text-gray-800">{order.user?.email || 'N/A'}</div>
+                                <div className="text-sm font-medium text-gray-800">{order.user?.email || order.userEmail || 'N/A'}</div>
                             </div>
                             <div className="flex flex-col md:flex-row mb-3">
                                 <div className="w-full md:w-37.5 text-sm text-gray-500 mb-1 md:mb-0">Số điện thoại:</div>
-                                <div className="text-sm font-medium text-gray-800">{order.user?.mobile || 'Không có'}</div>
+                                <div className="text-sm font-medium text-gray-800">{order.user?.mobile || order.shippingAddress?.phoneNumber || 'Không có'}</div>
                             </div>
                         </div>
                     </div>
