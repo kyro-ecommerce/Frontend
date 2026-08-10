@@ -36,63 +36,18 @@ export const getAllProducts = (params = {}) => {
 export const getProductById = (productId) => api.get(`/admin/products/${productId}`);
 
 export const createProduct = (productData) => {
-    // Handle FormData for images
-    if (productData.images && productData.images.length > 0) {
-        const formData = new FormData();
-
-        // Add product data
-        Object.keys(productData).forEach(key => {
-            if (key !== 'images') {
-                if (typeof productData[key] === 'object') {
-                    formData.append(key, JSON.stringify(productData[key]));
-                } else {
-                    formData.append(key, productData[key]);
-                }
-            }
-        });
-
-        // Add image files
-        productData.images.forEach((image, index) => {
-            formData.append(`images`, image);
-        });
-
-        return api.post("/admin/products", formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            }
-        });
-    }
-
-    return api.post("/admin/products", productData);
+    // Clean payload for CreateProductRequest (remove 'images' and 'id' which don't exist on CreateProductRequest)
+    const { images, id, ...postPayload } = productData;
+    return api.post("/admin/products", postPayload);
 };
 
 export const updateProduct = (productId, productData) => {
-    // Handle FormData for images
-    if (productData.images && productData.images.length > 0) {
-        const formData = new FormData();
-
-        Object.keys(productData).forEach(key => {
-            if (key !== 'images') {
-                if (typeof productData[key] === 'object') {
-                    formData.append(key, JSON.stringify(productData[key]));
-                } else {
-                    formData.append(key, productData[key]);
-                }
-            }
-        });
-
-        productData.images.forEach((image, index) => {
-            formData.append(`images`, image);
-        });
-
-        return api.put(`/admin/products/${productId}`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data'
-            }
-        });
+    // Clean payload for Product entity (remove CreateProductRequest specific fields)
+    const { imageUrls, topLevelCategory, secondLevelCategory, ...putPayload } = productData;
+    if (!putPayload.images && imageUrls) {
+        putPayload.images = imageUrls;
     }
-
-    return api.put(`/admin/products/${productId}`, productData);
+    return api.put(`/admin/products/${productId}`, putPayload);
 };
 
 export const deleteProduct = (productId) => api.delete(`/admin/products/${productId}`);

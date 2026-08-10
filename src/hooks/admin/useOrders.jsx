@@ -106,13 +106,11 @@ export const useOrders = () => {
     }, [fetchStats]);
 
     const handleSearch = useCallback((term, startDate, endDate) => {
-        setSearchTerm(term || ""); // Ensure empty string instead of undefined
+        setSearchTerm(term || "");
         setDateRange({
             start: startDate || "",
             end: endDate || ""
         });
-
-        // Reset to first page when searching/clearing
         setPagination(prev => ({ ...prev, currentPage: 0 }));
     }, []);
 
@@ -121,11 +119,22 @@ export const useOrders = () => {
         fetchOrders(newPage, pagination.pageSize);
     }, [fetchOrders, pagination.pageSize]);
 
-    const handleSort = useCallback((field) => {
-        setSortDir(current => sortBy === field && current === "desc" ? "asc" : "desc");
+    const handleSort = useCallback((field, direction) => {
+        setSortDir(current => direction || (sortBy === field && current === "desc" ? "asc" : "desc"));
         setSortBy(field);
         setPagination(prev => ({ ...prev, currentPage: 0 }));
     }, [sortBy]);
+
+    // Reset all filters to default
+    const resetAllFilters = useCallback(() => {
+        setFilter("all");
+        setSearchTerm("");
+        setDateRange({ start: "", end: "" });
+        setPaymentMethod("all");
+        setPaymentStatus("all");
+        setSortBy("orderDate");
+        setSortDir("desc");
+    }, []);
 
     // Handle status change
     const handleStatusChange = useCallback(async (orderId, actionOrStatus) => {
@@ -172,7 +181,6 @@ export const useOrders = () => {
         try {
             const response = await orderService.deleteOrder(orderId);
             if (response.status === 200 || response.status === 204) {
-                // Refresh current page to get updated data
                 fetchOrders(pagination.currentPage, pagination.pageSize);
                 fetchStats();
                 return true;
@@ -188,7 +196,6 @@ export const useOrders = () => {
     // View order details
     const handleViewOrder = useCallback(async (orderId) => {
         try {
-            // Find order in current list or fetch from API if needed
             const orderToView = orders.find(order => order.id === orderId);
             return orderToView;
         } catch (err) {
@@ -223,6 +230,7 @@ export const useOrders = () => {
         handleDeleteOrder,
         handleViewOrder,
         handlePageChange,
+        resetAllFilters,
 
         // Utilities
         refreshOrders: () => fetchOrders(pagination.currentPage, pagination.pageSize)

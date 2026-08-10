@@ -35,7 +35,7 @@ const RecentOrders = ({ orders = [] }) => {
                     {safeOrders.map((order) => {
                         const firstItem = order.orderItems?.[0];
                         const trackingNo = order.trackingNo || (order.id ? `ORD-${order.id}` : 'N/A');
-                        const productImg = firstItem?.imageUrl || order.productImg;
+                        const productImg = firstItem?.imageUrl || firstItem?.productImageUrl || firstItem?.image || firstItem?.images?.[0]?.downloadUrl || order.productImg || order.imageUrl;
                         const mainTitle = firstItem?.productTitle || firstItem?.productName || order.productName || 'Đơn hàng';
                         const extraCount = (order.orderItems?.length || 1) - 1;
                         const productName = extraCount > 0 ? `${mainTitle} (+${extraCount})` : mainTitle;
@@ -50,7 +50,16 @@ const RecentOrders = ({ orders = [] }) => {
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-lg bg-gray-100 overflow-hidden shrink-0">
                                             {productImg ? (
-                                                <img className="w-full h-full object-cover" src={productImg} alt={productName} />
+                                                <img
+                                                    className="w-full h-full object-cover"
+                                                    src={productImg}
+                                                    alt={productName}
+                                                    onError={(e) => {
+                                                        e.target.onerror = null;
+                                                        e.target.style.display = 'none';
+                                                        e.target.nextSibling ? e.target.nextSibling.style.display = 'flex' : null;
+                                                    }}
+                                                />
                                             ) : (
                                                 <div className="flex items-center justify-center w-full h-full text-xs text-gray-400">No image</div>
                                             )}

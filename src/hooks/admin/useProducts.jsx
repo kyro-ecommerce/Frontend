@@ -184,16 +184,17 @@ export const useProducts = () => {
         try {
             setError(null);
             const response = await productService.createProduct(productData);
-            if (response.status === 200) {
+            if (response.status === 200 || response.status === 201) {
                 // Refresh current page to show updated data
                 await fetchProducts(pagination.currentPage, pagination.pageSize);
-                return { success: true, data: response.data?.data };
+                return { success: true, data: response.data?.data || response.data };
             }
             return { success: false, error: "Cannot add product" };
         } catch (err) {
             console.error("Error adding product:", err);
-            setError("Cannot add product. Please try again.");
-            return { success: false, error: err.message || "Unknown error" };
+            const errorMsg = err.response?.data?.message || err.message || "Unknown error";
+            setError(`Không thể thêm sản phẩm: ${errorMsg}`);
+            return { success: false, error: errorMsg };
         }
     }, [fetchProducts, pagination.currentPage, pagination.pageSize]);
 
@@ -202,16 +203,17 @@ export const useProducts = () => {
         try {
             setError(null);
             const response = await productService.updateProduct(productId, productData);
-            if (response.status === 200) {
+            if (response.status === 200 || response.status === 201) {
                 // Refresh current page to show updated data
                 await fetchProducts(pagination.currentPage, pagination.pageSize);
-                return { success: true, data: response.data?.data };
+                return { success: true, data: response.data?.data || response.data };
             }
             return { success: false, error: "Cannot update product" };
         } catch (err) {
             console.error("Error updating product:", err);
-            setError("Cannot update product. Please try again.");
-            return { success: false, error: err.message || "Unknown error" };
+            const errorMsg = err.response?.data?.message || err.message || "Unknown error";
+            setError(`Không thể cập nhật sản phẩm: ${errorMsg}`);
+            return { success: false, error: errorMsg };
         }
     }, [fetchProducts, pagination.currentPage, pagination.pageSize]);
 

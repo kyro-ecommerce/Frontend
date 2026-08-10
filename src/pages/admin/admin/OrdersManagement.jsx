@@ -33,7 +33,8 @@ const OrdersManagement = () => {
         handleStatusChange,
         handleDeleteOrder,
         handleViewOrder,
-        handlePageChange
+        handlePageChange,
+        resetAllFilters
     } = useOrders();
 
     // Local UI state
@@ -115,6 +116,10 @@ const OrdersManagement = () => {
                             onPaymentMethodChange={setPaymentMethod}
                             paymentStatus={paymentStatus}
                             onPaymentStatusChange={setPaymentStatus}
+                            sortBy={sortBy}
+                            sortDir={sortDir}
+                            onSortChange={handleSort}
+                            onResetAllFilters={resetAllFilters}
                         />
 
                         {/* Error Message */}

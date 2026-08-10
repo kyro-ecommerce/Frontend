@@ -2,17 +2,17 @@
 import React, { useState } from "react";
 
 const FormHeader = ({ title }) => {
-  return <h2 className="text-black mb-6 text-xl font-semibold">{title}</h2>;
+  return <h2 className="text-base font-extrabold text-slate-900 tracking-tight mb-4">{title}</h2>;
 };
 
 const FormField = ({ label, value, onChange, placeholder, type = "text" }) => {
   return (
     <div className="mb-4">
-      <label className="text-black mb-2 text-sm font-semibold block">{label}</label>
+      <label className="block mb-1.5 text-xs font-extrabold text-slate-700">{label}</label>
       <input
         type={type}
         placeholder={placeholder}
-        className="bg-white border border-gray-200 rounded w-full h-10 px-4 text-black outline-none focus:border-blue-500"
+        className="w-full py-2.5 px-3.5 bg-slate-50 border border-slate-200/80 rounded-xl text-xs font-semibold text-slate-800 outline-none focus:bg-white focus:border-[#1D7461] focus:ring-2 focus:ring-[#1D7461]/20 transition-all"
         value={value || ""}
         onChange={onChange}
       />
@@ -23,29 +23,29 @@ const FormField = ({ label, value, onChange, placeholder, type = "text" }) => {
 
 const ErrorMessage = ({ message, show }) => {
   if (!show) return null;
-  return <p className="text-red-500 mb-4 text-xs">{message}</p>;
+  return <p className="text-red-500 mb-3 text-[11px] font-semibold">{message}</p>;
 };
 
 
 const ParentCategorySelect = ({ value, onChange, categories }) => {
   return (
-    <div className="mb-6">
-      <label className="text-black mb-2 text-sm font-semibold block">Parent</label>
+    <div className="mb-5">
+      <label className="block mb-1.5 text-xs font-extrabold text-slate-700">Danh mục cha (Tùy chọn)</label>
       <div className="relative">
         <select
-          className="bg-white border border-gray-200 rounded w-full h-10 px-4 text-black appearance-none outline-none focus:border-blue-500"
+          className="w-full py-2.5 px-3.5 bg-slate-50 border border-slate-200/80 rounded-xl text-xs font-bold text-slate-700 outline-none focus:bg-white focus:border-[#1D7461] transition-all cursor-pointer appearance-none"
           value={value || ""}
           onChange={onChange}
         >
-          <option value="">Chọn parent category</option>
+          <option value="">Không chọn (Tạo danh mục gốc)</option>
           {categories?.map((category, index) => (
             <option key={index} value={category}>
               {category}
             </option>
           ))}
         </select>
-        <div className="absolute top-1/2 right-4 -translate-y-1/2 pointer-events-none text-gray-500">
-            <svg className="w-4 h-4 fill-current" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+        <div className="absolute top-1/2 right-3.5 -translate-y-1/2 pointer-events-none text-slate-400 text-[10px]">
+            ▼
         </div>
       </div>
     </div>
@@ -55,12 +55,12 @@ const ParentCategorySelect = ({ value, onChange, categories }) => {
 
 const ActionButtons = ({ onCancel, onSave }) => {
   return (
-    <div className="flex justify-end gap-4 mt-auto pt-4">
-      <button className="text-blue-600 bg-white border border-blue-600 rounded py-2 px-6 text-sm font-semibold cursor-pointer hover:bg-blue-50 transition-colors" onClick={onCancel}>
+    <div className="flex justify-end gap-3 mt-auto pt-4 border-t border-slate-100">
+      <button className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-700 text-xs font-bold transition-all cursor-pointer border border-slate-200/80" onClick={onCancel}>
         Hủy
       </button>
-      <button className="text-white bg-blue-600 border border-blue-600 rounded py-2 px-6 text-sm font-semibold cursor-pointer hover:bg-blue-700 transition-colors" onClick={onSave}>
-        Lưu
+      <button className="px-5 py-2.5 rounded-xl bg-[#1D7461] hover:bg-[#136050] text-white text-xs font-bold transition-all cursor-pointer shadow-sm shadow-[#1D7461]/20 border-none" onClick={onSave}>
+        Lưu danh mục
       </button>
     </div>
   );
