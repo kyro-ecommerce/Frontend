@@ -26,6 +26,10 @@ export const useOrders = () => {
     const [filter, setFilter] = useState("all");
     const [searchTerm, setSearchTerm] = useState("");
     const [dateRange, setDateRange] = useState({ start: "", end: "" });
+    const [paymentMethod, setPaymentMethod] = useState("all");
+    const [paymentStatus, setPaymentStatus] = useState("all");
+    const [sortBy, setSortBy] = useState("orderDate");
+    const [sortDir, setSortDir] = useState("desc");
 
     // Fetch orders with backend filtering
     const fetchOrders = useCallback(async (page = 0, size = 10) => {
@@ -42,20 +46,17 @@ export const useOrders = () => {
                 searchTerm,
                 apiStatus,
                 dateRange.start,
-                dateRange.end
+                dateRange.end,
+                paymentMethod,
+                paymentStatus,
+                sortBy,
+                sortDir
             );
 
             if (response.status === 200) {
                 const responseData = response.data?.data || response.data || {};
                 const orderList = responseData.content || responseData.orders || (Array.isArray(responseData) ? responseData : []);
-                // Sort orders newest first
-                const sortedOrders = [...orderList].sort((a, b) => {
-                    const timeA = a.orderDate ? new Date(a.orderDate).getTime() : 0;
-                    const timeB = b.orderDate ? new Date(b.orderDate).getTime() : 0;
-                    if (timeA !== timeB) return timeB - timeA;
-                    return (b.id || 0) - (a.id || 0);
-                });
-                setOrders(sortedOrders);
+                setOrders(orderList);
 
                 const currentPage = responseData.number ?? responseData.currentPage ?? 0;
                 const totalPages = responseData.totalPages ?? 1;
@@ -80,7 +81,7 @@ export const useOrders = () => {
         } finally {
             setIsLoading(false);
         }
-    }, [filter, searchTerm, dateRange, pagination.pageSize]);
+    }, [filter, searchTerm, dateRange, paymentMethod, paymentStatus, sortBy, sortDir]);
 
     // Fetch stats separately for more accurate data
     const fetchStats = useCallback(async () => {
@@ -98,7 +99,7 @@ export const useOrders = () => {
     // Effects for data fetching
     useEffect(() => {
         fetchOrders(0, pagination.pageSize);
-    }, [filter, searchTerm, dateRange]);
+    }, [fetchOrders, pagination.pageSize]);
 
     useEffect(() => {
         fetchStats();
@@ -113,12 +114,18 @@ export const useOrders = () => {
 
         // Reset to first page when searching/clearing
         setPagination(prev => ({ ...prev, currentPage: 0 }));
-    }, [fetchOrders, pagination.pageSize]);
+    }, []);
 
     // Handle pagination
     const handlePageChange = useCallback((newPage) => {
         fetchOrders(newPage, pagination.pageSize);
-    }, [fetchOrders]);
+    }, [fetchOrders, pagination.pageSize]);
+
+    const handleSort = useCallback((field) => {
+        setSortDir(current => sortBy === field && current === "desc" ? "asc" : "desc");
+        setSortBy(field);
+        setPagination(prev => ({ ...prev, currentPage: 0 }));
+    }, [sortBy]);
 
     // Handle status change
     const handleStatusChange = useCallback(async (orderId, actionOrStatus) => {
@@ -201,9 +208,16 @@ export const useOrders = () => {
         filter,
         searchTerm,
         dateRange,
+        paymentMethod,
+        paymentStatus,
+        sortBy,
+        sortDir,
 
         // Actions
         setFilter,
+        setPaymentMethod,
+        setPaymentStatus,
+        handleSort,
         handleSearch,
         handleStatusChange,
         handleDeleteOrder,

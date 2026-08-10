@@ -16,7 +16,18 @@ export const getOrderStats = (startDate, endDate) => {
     return api.get(`/admin/orders/stats?${params.toString()}`);
 };
 
-export const getAllOrders = (page = 0, size = 10, search = '', status = '', startDate = '', endDate = '') => {
+export const getAllOrders = (
+    page = 0,
+    size = 10,
+    search = '',
+    status = '',
+    startDate = '',
+    endDate = '',
+    paymentMethod = '',
+    paymentStatus = '',
+    sortBy = 'orderDate',
+    sortDir = 'desc'
+) => {
     const params = new URLSearchParams();
 
     params.append('page', page.toString());
@@ -26,6 +37,10 @@ export const getAllOrders = (page = 0, size = 10, search = '', status = '', star
     if (status && status !== 'all') params.append('status', status.toUpperCase());
     if (startDate) params.append('startDate', startDate);
     if (endDate) params.append('endDate', endDate);
+    if (paymentMethod && paymentMethod !== 'all') params.append('paymentMethod', paymentMethod.toUpperCase());
+    if (paymentStatus && paymentStatus !== 'all') params.append('paymentStatus', paymentStatus.toUpperCase());
+    params.append('sortBy', sortBy);
+    params.append('sortDir', sortDir);
 
     return api.get(`/admin/orders?${params.toString()}`);
 };
