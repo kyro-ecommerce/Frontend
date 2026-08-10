@@ -1,7 +1,9 @@
 import React from "react";
 import { formatCurrency, formatDateTime } from "../../../utils/admin/format.js";
 
-const OrderList = ({ orders = [], isLoading, onStatusChange, onDeleteOrder, onViewOrder }) => {
+const OrderList = ({ orders = [], isLoading, onStatusChange, onDeleteOrder, onViewOrder, sortBy, sortDir, onSort }) => {
+
+    const sortLabel = (field, label) => `${label}${sortBy === field ? (sortDir === "desc" ? " ↓" : " ↑") : ""}`;
 
     const handleStatusSelectChange = async (e, orderId) => {
         e.stopPropagation();
@@ -75,10 +77,22 @@ const OrderList = ({ orders = [], isLoading, onStatusChange, onDeleteOrder, onVi
                     <table className="w-full border-collapse">
                         <thead>
                             <tr className="border-b border-slate-100 bg-slate-50/80">
-                                <th className="p-3.5 px-4 text-center font-extrabold text-slate-400 text-xs uppercase tracking-wider">Mã đơn</th>
+                                <th className="p-3.5 px-4 text-center font-extrabold text-slate-400 text-xs uppercase tracking-wider">
+                                    <button type="button" onClick={() => onSort("id")} className="bg-transparent border-none text-inherit font-inherit uppercase cursor-pointer">
+                                        {sortLabel("id", "Mã đơn")}
+                                    </button>
+                                </th>
                                 <th className="p-3.5 px-4 text-left font-extrabold text-slate-400 text-xs uppercase tracking-wider">Khách hàng</th>
-                                <th className="p-3.5 px-4 text-center font-extrabold text-slate-400 text-xs uppercase tracking-wider hidden md:table-cell">Ngày đặt</th>
-                                <th className="p-3.5 px-4 text-center font-extrabold text-slate-400 text-xs uppercase tracking-wider">Tổng tiền</th>
+                                <th className="p-3.5 px-4 text-center font-extrabold text-slate-400 text-xs uppercase tracking-wider hidden md:table-cell">
+                                    <button type="button" onClick={() => onSort("orderDate")} className="bg-transparent border-none text-inherit font-inherit uppercase cursor-pointer">
+                                        {sortLabel("orderDate", "Ngày đặt")}
+                                    </button>
+                                </th>
+                                <th className="p-3.5 px-4 text-center font-extrabold text-slate-400 text-xs uppercase tracking-wider">
+                                    <button type="button" onClick={() => onSort("totalDiscountedPrice")} className="bg-transparent border-none text-inherit font-inherit uppercase cursor-pointer">
+                                        {sortLabel("totalDiscountedPrice", "Tổng tiền")}
+                                    </button>
+                                </th>
                                 <th className="p-3.5 px-4 text-center font-extrabold text-slate-400 text-xs uppercase tracking-wider">Trạng thái đơn</th>
                                 <th className="p-3.5 px-4 text-center font-extrabold text-slate-400 text-xs uppercase tracking-wider">Thanh toán</th>
                                 <th className="p-3.5 px-4 text-center font-extrabold text-slate-400 text-xs uppercase tracking-wider">Thao tác</th>
@@ -92,8 +106,8 @@ const OrderList = ({ orders = [], isLoading, onStatusChange, onDeleteOrder, onVi
                                     </td>
                                     <td className="p-3.5 px-4 text-left">
                                         <div className="flex flex-col">
-                                            <span className="font-bold text-xs text-slate-800">{order.user?.firstName} {order.user?.lastName}</span>
-                                            <span className="text-[11px] font-medium text-slate-400 mt-0.5">{order.user?.email}</span>
+                                            <span className="font-bold text-xs text-slate-800">{order.shippingAddress?.fullName || `Khách hàng #${order.userId}`}</span>
+                                            <span className="text-[11px] font-medium text-slate-400 mt-0.5">{order.shippingAddress?.phoneNumber}</span>
                                         </div>
                                     </td>
                                     <td className="p-3.5 px-4 text-center text-xs font-medium text-slate-500 hidden md:table-cell">{formatDateTime(order.orderDate)}</td>

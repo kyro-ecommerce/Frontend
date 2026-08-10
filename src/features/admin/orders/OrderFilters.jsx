@@ -1,8 +1,15 @@
-import { useEffect, useState, useCallback } from "react";
-import { debounce } from 'lodash';
+import { useState } from "react";
 import {Search} from "lucide-react";
 
-const OrderFilters = ({ currentFilter, onFilterChange, onSearch }) => {
+const OrderFilters = ({
+    currentFilter,
+    onFilterChange,
+    onSearch,
+    paymentMethod,
+    onPaymentMethodChange,
+    paymentStatus,
+    onPaymentStatusChange
+}) => {
     const [searchTerm, setSearchTerm] = useState("");
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
@@ -28,6 +35,9 @@ const OrderFilters = ({ currentFilter, onFilterChange, onSearch }) => {
         setSearchTerm("");
         setStartDate("");
         setEndDate("");
+        onFilterChange("all");
+        onPaymentMethodChange("all");
+        onPaymentStatusChange("all");
         onSearch("", "", "");
     };
 
@@ -78,6 +88,27 @@ const OrderFilters = ({ currentFilter, onFilterChange, onSearch }) => {
                 </form>
 
                 <div className="flex flex-wrap gap-2 items-center">
+                    <select
+                        value={paymentMethod}
+                        onChange={(e) => onPaymentMethodChange(e.target.value)}
+                        className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-[#1D7461]/20"
+                    >
+                        <option value="all">Mọi phương thức</option>
+                        <option value="COD">COD</option>
+                        <option value="VNPAY">VNPAY</option>
+                    </select>
+                    <select
+                        value={paymentStatus}
+                        onChange={(e) => onPaymentStatusChange(e.target.value)}
+                        className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-[#1D7461]/20"
+                    >
+                        <option value="all">Mọi thanh toán</option>
+                        <option value="PENDING">Chờ thanh toán</option>
+                        <option value="COMPLETED">Đã thanh toán</option>
+                        <option value="FAILED">Thanh toán thất bại</option>
+                        <option value="CANCELLED">Đã hủy thanh toán</option>
+                        <option value="REFUNDED">Đã hoàn tiền</option>
+                    </select>
                     <div className="flex items-center gap-1.5 bg-slate-50 p-1 rounded-xl border border-slate-200/80">
                         <input
                             type="date"

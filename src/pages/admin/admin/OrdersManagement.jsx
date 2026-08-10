@@ -21,7 +21,14 @@ const OrdersManagement = () => {
         isLoading,
         error,
         filter,
+        paymentMethod,
+        paymentStatus,
+        sortBy,
+        sortDir,
         setFilter,
+        setPaymentMethod,
+        setPaymentStatus,
+        handleSort,
         handleSearch,
         handleStatusChange,
         handleDeleteOrder,
@@ -104,6 +111,10 @@ const OrdersManagement = () => {
                             currentFilter={filter}
                             onFilterChange={setFilter}
                             onSearch={handleSearch}
+                            paymentMethod={paymentMethod}
+                            onPaymentMethodChange={setPaymentMethod}
+                            paymentStatus={paymentStatus}
+                            onPaymentStatusChange={setPaymentStatus}
                         />
 
                         {/* Error Message */}
@@ -116,6 +127,9 @@ const OrdersManagement = () => {
                             onStatusChange={handleStatusChange}
                             onDeleteOrder={handleDeleteOrder}
                             onViewOrder={handleViewOrderWithModal}
+                            sortBy={sortBy}
+                            sortDir={sortDir}
+                            onSort={handleSort}
                         />
 
                         {/* Pagination */}
