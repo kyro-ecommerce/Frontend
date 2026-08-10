@@ -21,20 +21,19 @@ const OrdersManagement = () => {
         isLoading,
         error,
         filter,
+        paymentMethod,
+        paymentStatus,
+        sortBy,
+        sortDir,
         setFilter,
+        setPaymentMethod,
+        setPaymentStatus,
+        handleSort,
         handleSearch,
         handleStatusChange,
         handleDeleteOrder,
         handleViewOrder,
         handlePageChange,
-        paymentMethodFilter,
-        setPaymentMethodFilter,
-        paymentStatusFilter,
-        setPaymentStatusFilter,
-        priceRangeFilter,
-        setPriceRangeFilter,
-        sortBy,
-        setSortBy,
         resetAllFilters
     } = useOrders();
 
@@ -113,14 +112,13 @@ const OrdersManagement = () => {
                             currentFilter={filter}
                             onFilterChange={setFilter}
                             onSearch={handleSearch}
-                            paymentMethodFilter={paymentMethodFilter}
-                            onPaymentMethodChange={setPaymentMethodFilter}
-                            paymentStatusFilter={paymentStatusFilter}
-                            onPaymentStatusChange={setPaymentStatusFilter}
-                            priceRangeFilter={priceRangeFilter}
-                            onPriceRangeChange={setPriceRangeFilter}
+                            paymentMethod={paymentMethod}
+                            onPaymentMethodChange={setPaymentMethod}
+                            paymentStatus={paymentStatus}
+                            onPaymentStatusChange={setPaymentStatus}
                             sortBy={sortBy}
-                            onSortByChange={setSortBy}
+                            sortDir={sortDir}
+                            onSortChange={handleSort}
                             onResetAllFilters={resetAllFilters}
                         />
 
@@ -134,6 +132,9 @@ const OrdersManagement = () => {
                             onStatusChange={handleStatusChange}
                             onDeleteOrder={handleDeleteOrder}
                             onViewOrder={handleViewOrderWithModal}
+                            sortBy={sortBy}
+                            sortDir={sortDir}
+                            onSort={handleSort}
                         />
 
                         {/* Pagination */}

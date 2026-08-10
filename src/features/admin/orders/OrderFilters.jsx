@@ -1,18 +1,17 @@
 import { useState } from "react";
-import { Search, CreditCard, DollarSign, Filter, ArrowUpDown, RotateCcw } from "lucide-react";
+import { Search, CreditCard, DollarSign, ArrowUpDown, RotateCcw } from "lucide-react";
 
 const OrderFilters = ({
     currentFilter,
     onFilterChange,
     onSearch,
-    paymentMethodFilter = "all",
+    paymentMethod = "all",
     onPaymentMethodChange,
-    paymentStatusFilter = "all",
+    paymentStatus = "all",
     onPaymentStatusChange,
-    priceRangeFilter = "all",
-    onPriceRangeChange,
-    sortBy = "newest",
-    onSortByChange,
+    sortBy = "orderDate",
+    sortDir = "desc",
+    onSortChange,
     onResetAllFilters
 }) => {
     const [searchTerm, setSearchTerm] = useState("");
@@ -40,11 +39,7 @@ const OrderFilters = ({
         setSearchTerm("");
         setStartDate("");
         setEndDate("");
-        if (onResetAllFilters) {
-            onResetAllFilters();
-        } else {
-            onSearch("", "", "");
-        }
+        onResetAllFilters();
     };
 
     const filterTabs = [
@@ -78,13 +73,13 @@ const OrderFilters = ({
                 })}
             </div>
 
-            {/* Sub-Filters Row: Payment Method, Payment Status, Price Range, Sort By */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
+            {/* Sub-Filters Row */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                 {/* PTTT Filter */}
                 <div className="relative flex items-center">
                     <CreditCard className="absolute left-3 w-4 h-4 text-slate-400 pointer-events-none" />
                     <select
-                        value={paymentMethodFilter}
+                        value={paymentMethod}
                         onChange={(e) => onPaymentMethodChange && onPaymentMethodChange(e.target.value)}
                         className="w-full py-2 pr-7 pl-9 bg-slate-50 border border-slate-200/80 rounded-xl text-xs font-bold text-slate-700 outline-none focus:bg-white focus:border-[#1D7461] transition-all cursor-pointer appearance-none"
                     >
@@ -99,7 +94,7 @@ const OrderFilters = ({
                 <div className="relative flex items-center">
                     <DollarSign className="absolute left-3 w-4 h-4 text-slate-400 pointer-events-none" />
                     <select
-                        value={paymentStatusFilter}
+                        value={paymentStatus}
                         onChange={(e) => onPaymentStatusChange && onPaymentStatusChange(e.target.value)}
                         className="w-full py-2 pr-7 pl-9 bg-slate-50 border border-slate-200/80 rounded-xl text-xs font-bold text-slate-700 outline-none focus:bg-white focus:border-[#1D7461] transition-all cursor-pointer appearance-none"
                     >
@@ -107,24 +102,8 @@ const OrderFilters = ({
                         <option value="PENDING">Chờ thanh toán (PENDING)</option>
                         <option value="COMPLETED">Đã thanh toán (COMPLETED)</option>
                         <option value="FAILED">Thanh toán thất bại (FAILED)</option>
+                        <option value="CANCELLED">Đã hủy thanh toán (CANCELLED)</option>
                         <option value="REFUNDED">Đã hoàn tiền (REFUNDED)</option>
-                    </select>
-                    <span className="absolute right-2.5 text-slate-400 text-[10px] pointer-events-none">▼</span>
-                </div>
-
-                {/* Khoảng giá Filter */}
-                <div className="relative flex items-center">
-                    <Filter className="absolute left-3 w-4 h-4 text-slate-400 pointer-events-none" />
-                    <select
-                        value={priceRangeFilter}
-                        onChange={(e) => onPriceRangeChange && onPriceRangeChange(e.target.value)}
-                        className="w-full py-2 pr-7 pl-9 bg-slate-50 border border-slate-200/80 rounded-xl text-xs font-bold text-slate-700 outline-none focus:bg-white focus:border-[#1D7461] transition-all cursor-pointer appearance-none"
-                    >
-                        <option value="all">Giá: Tất cả khoảng giá</option>
-                        <option value="under_1m">Dưới 1 triệu</option>
-                        <option value="1m_5m">1 triệu - 5 triệu</option>
-                        <option value="5m_20m">5 triệu - 20 triệu</option>
-                        <option value="above_20m">Trên 20 triệu</option>
                     </select>
                     <span className="absolute right-2.5 text-slate-400 text-[10px] pointer-events-none">▼</span>
                 </div>
@@ -133,14 +112,14 @@ const OrderFilters = ({
                 <div className="relative flex items-center">
                     <ArrowUpDown className="absolute left-3 w-4 h-4 text-slate-400 pointer-events-none" />
                     <select
-                        value={sortBy}
-                        onChange={(e) => onSortByChange && onSortByChange(e.target.value)}
+                        value={`${sortBy}:${sortDir}`}
+                        onChange={(e) => onSortChange(...e.target.value.split(":"))}
                         className="w-full py-2 pr-7 pl-9 bg-slate-50 border border-slate-200/80 rounded-xl text-xs font-bold text-slate-700 outline-none focus:bg-white focus:border-[#1D7461] transition-all cursor-pointer appearance-none"
                     >
-                        <option value="newest">Sắp xếp: Mới nhất</option>
-                        <option value="oldest">Sắp xếp: Cũ nhất</option>
-                        <option value="price_desc">Giá: Cao ➔ Thấp</option>
-                        <option value="price_asc">Giá: Thấp ➔ Cao</option>
+                        <option value="orderDate:desc">Sắp xếp: Mới nhất</option>
+                        <option value="orderDate:asc">Sắp xếp: Cũ nhất</option>
+                        <option value="totalDiscountedPrice:desc">Giá: Cao ➔ Thấp</option>
+                        <option value="totalDiscountedPrice:asc">Giá: Thấp ➔ Cao</option>
                     </select>
                     <span className="absolute right-2.5 text-slate-400 text-[10px] pointer-events-none">▼</span>
                 </div>

@@ -40,35 +40,52 @@ export const aiService = {
       const reader = response.body.getReader();
       const decoder = new TextDecoder("utf-8");
       let buffer = "";
+      let isCompleted = false;
+
+      const finishStream = () => {
+        if (!isCompleted) {
+          isCompleted = true;
+          if (onDone) onDone();
+        }
+      };
+
+      const parseSseLine = (line) => {
+        const trimmed = line.trim();
+        if (trimmed.startsWith("data: ")) {
+          const rawJson = trimmed.slice(6);
+          try {
+            const evt = JSON.parse(rawJson);
+            if (evt.type === "metadata") {
+              if (onMetadata) onMetadata(evt);
+            } else if (evt.type === "chunk") {
+              if (onChunk) onChunk(evt.content);
+            } else if (evt.type === "done") {
+              finishStream();
+            }
+          } catch (err) {
+            console.error("Failed to parse SSE line:", rawJson, err);
+          }
+        }
+      };
 
       while (true) {
         const { value, done } = await reader.read();
-        if (done) break;
+        if (done) {
+          if (buffer.trim()) {
+            parseSseLine(buffer);
+          }
+          break;
+        }
 
         buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split("\n\n");
+        const lines = buffer.split(/\r?\n/);
         buffer = lines.pop() || "";
 
         for (const line of lines) {
-          const trimmed = line.trim();
-          if (trimmed.startsWith("data: ")) {
-            const rawJson = trimmed.slice(6);
-            try {
-              const evt = JSON.parse(rawJson);
-              if (evt.type === "metadata") {
-                if (onMetadata) onMetadata(evt);
-              } else if (evt.type === "chunk") {
-                if (onChunk) onChunk(evt.content);
-              } else if (evt.type === "done") {
-                if (onDone) onDone();
-              }
-            } catch (err) {
-              console.error("Failed to parse SSE line:", rawJson, err);
-            }
-          }
+          parseSseLine(line);
         }
       }
-      if (onDone) onDone();
+      finishStream();
     } catch (error) {
       console.error("Lỗi khi stream AI Chatbot:", error);
       if (onError) onError(error);

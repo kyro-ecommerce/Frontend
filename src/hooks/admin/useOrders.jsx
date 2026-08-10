@@ -1,10 +1,10 @@
 // src/hooks/useOrders.jsx
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { orderService } from "../../services/admin/index.js";
 
 export const useOrders = () => {
     // State management
-    const [rawOrders, setRawOrders] = useState([]);
+    const [orders, setOrders] = useState([]);
     const [pagination, setPagination] = useState({
         currentPage: 0,
         pageSize: 10,
@@ -26,12 +26,10 @@ export const useOrders = () => {
     const [filter, setFilter] = useState("all");
     const [searchTerm, setSearchTerm] = useState("");
     const [dateRange, setDateRange] = useState({ start: "", end: "" });
-
-    // Additional client-side filters
-    const [paymentMethodFilter, setPaymentMethodFilter] = useState("all");
-    const [paymentStatusFilter, setPaymentStatusFilter] = useState("all");
-    const [priceRangeFilter, setPriceRangeFilter] = useState("all");
-    const [sortBy, setSortBy] = useState("newest");
+    const [paymentMethod, setPaymentMethod] = useState("all");
+    const [paymentStatus, setPaymentStatus] = useState("all");
+    const [sortBy, setSortBy] = useState("orderDate");
+    const [sortDir, setSortDir] = useState("desc");
 
     // Fetch orders with backend filtering
     const fetchOrders = useCallback(async (page = 0, size = 10) => {
@@ -48,13 +46,17 @@ export const useOrders = () => {
                 searchTerm,
                 apiStatus,
                 dateRange.start,
-                dateRange.end
+                dateRange.end,
+                paymentMethod,
+                paymentStatus,
+                sortBy,
+                sortDir
             );
 
             if (response.status === 200) {
                 const responseData = response.data?.data || response.data || {};
                 const orderList = responseData.content || responseData.orders || (Array.isArray(responseData) ? responseData : []);
-                setRawOrders(orderList);
+                setOrders(orderList);
 
                 const currentPage = responseData.number ?? responseData.currentPage ?? 0;
                 const totalPages = responseData.totalPages ?? 1;
@@ -75,67 +77,11 @@ export const useOrders = () => {
         } catch (err) {
             console.error("Error loading orders:", err);
             setError("Cannot load orders. Please try again.");
-            setRawOrders([]);
+            setOrders([]);
         } finally {
             setIsLoading(false);
         }
-    }, [filter, searchTerm, dateRange, pagination.pageSize]);
-
-    // Apply client-side filters & sorting
-    const orders = useMemo(() => {
-        let result = [...rawOrders];
-
-        // 1. Filter by Payment Method (COD, VNPAY)
-        if (paymentMethodFilter && paymentMethodFilter !== "all") {
-            result = result.filter(order =>
-                order.paymentMethod?.toUpperCase() === paymentMethodFilter.toUpperCase()
-            );
-        }
-
-        // 2. Filter by Payment Status (PENDING, COMPLETED, FAILED, REFUNDED)
-        if (paymentStatusFilter && paymentStatusFilter !== "all") {
-            result = result.filter(order =>
-                order.paymentStatus?.toUpperCase() === paymentStatusFilter.toUpperCase()
-            );
-        }
-
-        // 3. Filter by Price Range
-        if (priceRangeFilter && priceRangeFilter !== "all") {
-            result = result.filter(order => {
-                const price = order.totalDiscountedPrice ?? order.originalPrice ?? 0;
-                if (priceRangeFilter === "under_1m") return price < 1000000;
-                if (priceRangeFilter === "1m_5m") return price >= 1000000 && price <= 5000000;
-                if (priceRangeFilter === "5m_20m") return price > 5000000 && price <= 20000000;
-                if (priceRangeFilter === "above_20m") return price > 20000000;
-                return true;
-            });
-        }
-
-        // 4. Sort By
-        result.sort((a, b) => {
-            const timeA = a.orderDate ? new Date(a.orderDate).getTime() : 0;
-            const timeB = b.orderDate ? new Date(b.orderDate).getTime() : 0;
-            const priceA = a.totalDiscountedPrice ?? a.originalPrice ?? 0;
-            const priceB = b.totalDiscountedPrice ?? b.originalPrice ?? 0;
-
-            if (sortBy === "oldest") {
-                if (timeA !== timeB) return timeA - timeB;
-                return (a.id || 0) - (b.id || 0);
-            } else if (sortBy === "price_desc") {
-                if (priceA !== priceB) return priceB - priceA;
-                return timeB - timeA;
-            } else if (sortBy === "price_asc") {
-                if (priceA !== priceB) return priceA - priceB;
-                return timeB - timeA;
-            } else {
-                // Default: newest
-                if (timeA !== timeB) return timeB - timeA;
-                return (b.id || 0) - (a.id || 0);
-            }
-        });
-
-        return result;
-    }, [rawOrders, paymentMethodFilter, paymentStatusFilter, priceRangeFilter, sortBy]);
+    }, [filter, searchTerm, dateRange, paymentMethod, paymentStatus, sortBy, sortDir]);
 
     // Fetch stats separately for more accurate data
     const fetchStats = useCallback(async () => {
@@ -153,7 +99,7 @@ export const useOrders = () => {
     // Effects for data fetching
     useEffect(() => {
         fetchOrders(0, pagination.pageSize);
-    }, [filter, searchTerm, dateRange]);
+    }, [fetchOrders, pagination.pageSize]);
 
     useEffect(() => {
         fetchStats();
@@ -171,17 +117,23 @@ export const useOrders = () => {
     // Handle pagination
     const handlePageChange = useCallback((newPage) => {
         fetchOrders(newPage, pagination.pageSize);
-    }, [fetchOrders]);
+    }, [fetchOrders, pagination.pageSize]);
+
+    const handleSort = useCallback((field, direction) => {
+        setSortDir(current => direction || (sortBy === field && current === "desc" ? "asc" : "desc"));
+        setSortBy(field);
+        setPagination(prev => ({ ...prev, currentPage: 0 }));
+    }, [sortBy]);
 
     // Reset all filters to default
     const resetAllFilters = useCallback(() => {
         setFilter("all");
         setSearchTerm("");
         setDateRange({ start: "", end: "" });
-        setPaymentMethodFilter("all");
-        setPaymentStatusFilter("all");
-        setPriceRangeFilter("all");
-        setSortBy("newest");
+        setPaymentMethod("all");
+        setPaymentStatus("all");
+        setSortBy("orderDate");
+        setSortDir("desc");
     }, []);
 
     // Handle status change
@@ -244,14 +196,14 @@ export const useOrders = () => {
     // View order details
     const handleViewOrder = useCallback(async (orderId) => {
         try {
-            const orderToView = rawOrders.find(order => order.id === orderId);
+            const orderToView = orders.find(order => order.id === orderId);
             return orderToView;
         } catch (err) {
             console.error("Error viewing order details:", err);
             setError("Cannot load order details. Please try again.");
             return null;
         }
-    }, [rawOrders]);
+    }, [orders]);
 
     return {
         // State
@@ -263,19 +215,16 @@ export const useOrders = () => {
         filter,
         searchTerm,
         dateRange,
-
-        // Additional Filter States
-        paymentMethodFilter,
-        setPaymentMethodFilter,
-        paymentStatusFilter,
-        setPaymentStatusFilter,
-        priceRangeFilter,
-        setPriceRangeFilter,
+        paymentMethod,
+        paymentStatus,
         sortBy,
-        setSortBy,
+        sortDir,
 
         // Actions
         setFilter,
+        setPaymentMethod,
+        setPaymentStatus,
+        handleSort,
         handleSearch,
         handleStatusChange,
         handleDeleteOrder,

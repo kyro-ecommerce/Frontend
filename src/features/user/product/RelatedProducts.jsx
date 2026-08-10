@@ -47,10 +47,15 @@ const RelatedProducts = ({ productId }) => {
             const id = item.id || item.product_id || item.productId;
             const img = item.imageUrl || item.image_url || item.image || (Array.isArray(item.images) ? item.images[0] : null) || "/Placeholder2.png";
             const title = item.productTitle || item.title || item.name || "Sản phẩm";
-            const price = Number(item.discountedPrice || item.discounted_price || item.price || 0);
-            const origPrice = Number(item.originalPrice || item.original_price || item.price || 0);
+            const origPrice = Number(item.original_price || item.originalPrice || item.price || 0);
+            const discPrice = Number(item.discounted_price || item.discountedPrice || 0);
+            const price = discPrice > 0 ? discPrice : (origPrice > 0 ? origPrice : Number(item.price || 0));
+            const originalPrice = discPrice > 0 && origPrice > discPrice ? origPrice : null;
+            let discount = Number(item.discount_percent || item.discountPercent || 0);
+            if (!discount && origPrice > 0 && discPrice > 0 && origPrice > discPrice) {
+              discount = Math.round(((origPrice - discPrice) / origPrice) * 100);
+            }
             const rating = Number(item.averageRating || item.average_rating || 5);
-            const discount = Number(item.discountPercent || item.discount_percent || 0);
 
             return (
               <ProductCard
@@ -59,7 +64,7 @@ const RelatedProducts = ({ productId }) => {
                 image={img}
                 title={title}
                 price={price}
-                originalPrice={origPrice > price ? origPrice : null}
+                originalPrice={originalPrice}
                 ratingImage={rating}
                 discountPercent={discount}
               />

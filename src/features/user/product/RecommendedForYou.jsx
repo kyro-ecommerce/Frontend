@@ -129,23 +129,28 @@ const RecommendedForYou = () => {
         ) : (
           products.map((product) => {
             const pid = product.product_id || product.id;
-            const price = product.discounted_price || product.discountedPrice || product.original_price || product.price;
-            const origPrice = product.original_price || product.price;
+            const origPrice = Number(product.original_price || product.originalPrice || product.price || 0);
+            const discPrice = Number(product.discounted_price || product.discountedPrice || 0);
+            const price = discPrice > 0 ? discPrice : (origPrice > 0 ? origPrice : Number(product.price || 0));
+            const originalPrice = discPrice > 0 && origPrice > discPrice ? origPrice : null;
+            let discountPercent = Number(product.discount_percent || product.discountPercent || 0);
+            if (!discountPercent && origPrice > 0 && discPrice > 0 && origPrice > discPrice) {
+              discountPercent = Math.round(((origPrice - discPrice) / origPrice) * 100);
+            }
             const imageUrl = extractImageUrl(product);
 
             return (
               <div key={pid} className="relative group">
-
                 <ProductCard
                   productId={pid}
                   image={imageUrl}
                   stockStatus="in stock"
                   title={product.title}
-                  price={formatPrice(price)}
-                  originalPrice={origPrice && origPrice > price ? formatPrice(origPrice) : ""}
+                  price={price}
+                  originalPrice={originalPrice}
                   reviewCount={product.num_ratings || product.numRatings || 0}
                   ratingImage={product.average_rating || product.averageRating || 5.0}
-                  discountPercent={product.discount_percent || product.discountPercent || 0}
+                  discountPercent={discountPercent}
                 />
               </div>
             );

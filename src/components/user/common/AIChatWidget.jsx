@@ -39,9 +39,11 @@ export const AIChatWidget = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
     {
+      id: "welcome-1",
       sender: "bot",
       text: "Xin chào! Tôi là Trợ lý AI Tư vấn Mua sắm Kyro. Bạn cần tìm sản phẩm hay tư vấn thiết bị công nghệ nào?",
       recommendedProducts: [],
+      isStreaming: false,
     },
   ]);
   const [inputValue, setInputValue] = useState("");
@@ -66,7 +68,7 @@ export const AIChatWidget = () => {
     const botMessageId = Date.now();
     setMessages((prev) => [
       ...prev,
-      { sender: "user", text },
+      { id: `user-${botMessageId}`, sender: "user", text },
       { id: botMessageId, sender: "bot", text: "", recommendedProducts: [], isStreaming: true },
     ]);
     if (!textToSend) setInputValue("");
@@ -79,7 +81,7 @@ export const AIChatWidget = () => {
       (metadata) => {
         setMessages((prev) =>
           prev.map((msg) =>
-            msg.id === botMessageId
+            String(msg.id) === String(botMessageId)
               ? { ...msg, recommendedProducts: metadata.recommended_products || [] }
               : msg
           )
@@ -89,7 +91,7 @@ export const AIChatWidget = () => {
         hasReceivedChunk = true;
         setMessages((prev) =>
           prev.map((msg) =>
-            msg.id === botMessageId
+            String(msg.id) === String(botMessageId)
               ? { ...msg, text: msg.text + chunk }
               : msg
           )
@@ -98,7 +100,7 @@ export const AIChatWidget = () => {
       () => {
         setMessages((prev) =>
           prev.map((msg) =>
-            msg.id === botMessageId
+            String(msg.id) === String(botMessageId)
               ? {
                   ...msg,
                   text: msg.text || "Xin lỗi, hiện tại tôi chưa tìm thấy phản hồi phù hợp.",
@@ -112,7 +114,7 @@ export const AIChatWidget = () => {
       (error) => {
         setMessages((prev) =>
           prev.map((msg) =>
-            msg.id === botMessageId
+            String(msg.id) === String(botMessageId)
               ? {
                   ...msg,
                   text: hasReceivedChunk
@@ -130,10 +132,11 @@ export const AIChatWidget = () => {
 
   const handleFeedback = (msgId, type, text) => {
     setMessages((prev) =>
-      prev.map((msg) => (msg.id === msgId ? { ...msg, feedback: type } : msg))
+      prev.map((msg) => (String(msg.id) === String(msgId) ? { ...msg, feedback: type } : msg))
     );
     aiService.sendFeedback(type, text);
   };
+
 
   return (
     <div style={{ position: "fixed", bottom: "24px", right: "24px", zIndex: 9999, fontFamily: "sans-serif" }}>
