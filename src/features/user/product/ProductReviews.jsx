@@ -35,12 +35,12 @@ const ProductReviews = ({ productId, onRatingUpdate, initialAverageRating, initi
     if (!productId) return { averageRating: 0, totalReviews: 0 };
     try {
       const response = await reviewService.getReviewsByProduct(productId);
-      const result = response.data;
+      const result = response.data?.data ?? response.data;
 
       if (isAuthenticated()) {
         try {
           const tempp = await reviewService.canReview(productId);
-          setCanReview(Boolean(tempp?.data?.data));
+          setCanReview(Boolean(tempp?.data?.data ?? tempp?.data));
         } catch (err) {
           setCanReview(false);
         }
@@ -48,8 +48,8 @@ const ProductReviews = ({ productId, onRatingUpdate, initialAverageRating, initi
         setCanReview(false);
       }
 
-      if (result.data) {
-        const { reviews: fetchedReviews = [], averageRating: avgRating = 0, ratingDistribution = {}, productName: fetchedProductName = "", totalReviews: total = 0 } = result.data;
+      if (result) {
+        const { reviews: fetchedReviews = [], averageRating: avgRating = 0, ratingDistribution = {}, productName: fetchedProductName = "", totalReviews: total = 0 } = result;
 
         const formattedReviews = fetchedReviews
           .map(review => ({
@@ -191,6 +191,8 @@ const ProductReviews = ({ productId, onRatingUpdate, initialAverageRating, initi
     return review.userId === currentUserId && currentUserId !== "";
   };
 
+  const hasReviewed = reviews.some(review => String(review.userId) === String(currentUserId));
+
   const indexOfLastReview = currentPage * reviewsPerPage;
   const indexOfFirstReview = indexOfLastReview - reviewsPerPage;
   const currentReviews = reviews.slice(indexOfFirstReview, indexOfLastReview);
@@ -298,7 +300,7 @@ const ProductReviews = ({ productId, onRatingUpdate, initialAverageRating, initi
           ) : (
             <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200/80 text-amber-800 text-xs sm:text-sm font-semibold py-3 px-5 rounded-2xl shadow-2xs">
               <LockOutlinedIcon fontSize="small" className="text-amber-600" />
-              <span>Bạn cần mua sản phẩm này trước khi đánh giá</span>
+              <span>{hasReviewed ? "Bạn đã đánh giá sản phẩm này" : "Bạn cần mua sản phẩm này trước khi đánh giá"}</span>
             </div>
           )}
         </div>
