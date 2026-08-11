@@ -52,12 +52,6 @@ export const updateProduct = (productId, productData) => {
 
 export const deleteProduct = (productId) => api.delete(`/admin/products/${productId}`);
 
-export const deleteMultipleProducts = (productIds) => {
-    return api.delete(`/admin/products/delete-multiple`, {
-        data: { ids: productIds }
-    });
-};
-
 export const getTopSellingProducts = (limit = 10) => api.get(`/admin/products/top-selling?limit=${limit}`);
 
 export const getProductCategories = () => api.get(`/admin/products/categories`);

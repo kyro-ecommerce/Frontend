@@ -288,6 +288,7 @@ const ProductFormModal = ({ product, categories, onClose, onSave }) => {
 
                 {showCategoryForm ? (
                     <ProductNewCategory
+                        categories={categories?.topLevel || []}
                         onSave={handleCategoryCreated}
                         onCancel={() => setShowCategoryForm(false)}
                     />

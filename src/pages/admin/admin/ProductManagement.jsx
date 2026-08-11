@@ -52,7 +52,6 @@ const ProductManagementContent = () => {
         handleCategoryFilter,
         handleSort,
         handleDeleteProduct,
-        handleDeleteMultipleProducts,
         handlePageChange,
         updateFilters,
         clearFilters,

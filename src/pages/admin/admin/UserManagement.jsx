@@ -106,12 +106,7 @@ const UserManagement = () => {
                 await userService.updateUser(updatedUser.id, {
                     firstName: updatedUser.firstName,
                     lastName: updatedUser.lastName,
-                    mobile: updatedUser.mobile
-                });
-            }
-            if (updatedUser.role !== currentUser.role) {
-                await userService.changeUserRole(updatedUser.id, {
-                    role: updatedUser.role
+                    phoneNumber: updatedUser.mobile
                 });
             }
             fetchUsers();
@@ -120,7 +115,7 @@ const UserManagement = () => {
                 // Fetch lại thông tin chi tiết để đảm bảo dữ liệu mới nhất
                 const response = await userService.getUserDetails(updatedUser.id);
                 if (response.status === 200) {
-                    setSelectedUser(response.data.data);
+                    setSelectedUser(response.data);
                 }
             }
         } catch (err) {
@@ -214,7 +209,7 @@ const UserManagement = () => {
             setIsLoading(true);
             const response = await userService.getUserDetails(userId);
             if (response.status === 200) {
-                setSelectedUser(response.data.data);
+                setSelectedUser(response.data);
             }
         } catch (err) {
             console.error("Lỗi khi lấy chi tiết người dùng:", err);
