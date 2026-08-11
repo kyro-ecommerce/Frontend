@@ -11,7 +11,7 @@ const Header = () => {
                     Welcome, {user?.firstName || 'Admin'}!
                 </h1>
                 <p className="text-xs text-slate-400 font-medium m-0 mt-0.5">
-                    Hệ thống quản lý bán hàng & phân tích dữ liệu TechShop
+                    Hệ thống quản lý bán hàng & phân tích dữ liệu Kyro Store
                 </p>
             </div>
 

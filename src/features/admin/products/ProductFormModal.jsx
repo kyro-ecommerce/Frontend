@@ -1,6 +1,6 @@
-// src/components/features/products/ProductFormModal.jsx
 import React, { useState, useEffect } from "react";
 import ProductNewCategory from "./ProductNewCategory";
+import { translateCategoryName } from "../../../utils/admin/format.js";
 
 const ProductFormModal = ({ product, categories, onClose, onSave }) => {
     const isEditing = !!product;
@@ -398,10 +398,9 @@ const ProductFormModal = ({ product, categories, onClose, onSave }) => {
                                                 className="w-full py-2.5 px-3 bg-slate-50 border border-slate-200/80 rounded-xl text-xs font-bold text-slate-700 outline-none focus:bg-white focus:border-[#1D7461] transition-all cursor-pointer"
                                             >
                                                 <option value="">Chọn danh mục chính</option>
-                                                <option value="add-new">+ Thêm danh mục mới</option>
                                                 {categories?.topLevel?.map((categoryName, index) => (
                                                     <option key={index} value={categoryName}>
-                                                        {categoryName}
+                                                        {translateCategoryName(categoryName)}
                                                     </option>
                                                 ))}
                                             </select>
@@ -416,15 +415,14 @@ const ProductFormModal = ({ product, categories, onClose, onSave }) => {
                                                 name="secondLevelCategory"
                                                 value={formData.secondLevelCategory}
                                                 onChange={handleSubCategoryChange}
-                                                disabled={!formData.topLevelCategory || formData.topLevelCategory === 'add-new'}
+                                                disabled={!formData.topLevelCategory}
                                                 className="w-full py-2.5 px-3 bg-slate-50 border border-slate-200/80 rounded-xl text-xs font-bold text-slate-700 outline-none focus:bg-white focus:border-[#1D7461] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                             >
                                                 <option value="">Chọn danh mục con (tùy chọn)</option>
-                                                <option value="add-new">+ Thêm danh mục con</option>
                                                 {formData.topLevelCategory &&
                                                     categories?.secondLevel?.[formData.topLevelCategory]?.map((subCategory, index) => (
                                                         <option key={index} value={subCategory}>
-                                                            {subCategory}
+                                                            {translateCategoryName(subCategory)}
                                                         </option>
                                                     ))}
                                             </select>

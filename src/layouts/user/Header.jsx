@@ -167,7 +167,7 @@ const Header = () => {
           <img
             src="/ShopIcon.png"
             className="object-contain h-10 w-auto"
-            alt="Tech Shop"
+            alt="Kyro Store"
           />
         </Link>
 

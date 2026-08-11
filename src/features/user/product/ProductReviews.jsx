@@ -4,12 +4,14 @@ import { reviewService } from "../../../services/user/review.service";
 import { authService } from "../../../services/user/auth.service";
 import { isAuthenticated } from "../../../services/user/util";
 import { useToast } from "../../../store/user/ToastContext.jsx";
+import { useConfirm } from "../../../context/ConfirmContext.jsx";
 import StarIcon from '@mui/icons-material/Star';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import RateReviewOutlinedIcon from '@mui/icons-material/RateReviewOutlined';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 
 const ProductReviews = ({ productId, onRatingUpdate, initialAverageRating, initialTotalReviews }) => {
+  const confirm = useConfirm();
   const [reviews, setReviews] = useState([]);
   const [averageRating, setAverageRating] = useState(initialAverageRating || 0);
   const [totalReviews, setTotalReviews] = useState(initialTotalReviews || 0);
@@ -158,7 +160,14 @@ const ProductReviews = ({ productId, onRatingUpdate, initialAverageRating, initi
   };
 
   const handleDeleteReview = async (reviewId) => {
-     if (window.confirm("Bạn có chắc chắn muốn xóa đánh giá này không?")) {
+     const isConfirmed = await confirm({
+       title: "Xóa đánh giá",
+       message: "Bạn có chắc chắn muốn xóa đánh giá này không?",
+       confirmText: "Xóa đánh giá",
+       cancelText: "Hủy",
+       type: "danger"
+     });
+     if (isConfirmed) {
         setIsDeleting(true);
         try {
            await reviewService.deleteReview(reviewId);

@@ -5,7 +5,7 @@ import { aiService } from "../../../services/user/ai.service";
 
 const ChatBot = () => {
   const [messages, setMessages] = useState([
-    { sender: "bot", content: "Xin chào! Tôi là trợ lý Tech Shop AI. Tôi có thể giúp gì cho bạn?" }
+    { sender: "bot", content: "Xin chào! Tôi là trợ lý Kyro Store AI. Tôi có thể giúp gì cho bạn?" }
   ]);
   const [inputValue, setInputValue] = useState("");
   const [isOpen, setIsOpen] = useState(false);
@@ -31,11 +31,11 @@ const ChatBot = () => {
         if (Array.isArray(parsedMessages) && parsedMessages.length > 0) {
             setMessages(parsedMessages);
         } else {
-            setMessages([ { sender: "bot", content: "Xin chào! Tôi là trợ lý Tech Shop AI. Tôi có thể giúp gì cho bạn?" }]);
+            setMessages([ { sender: "bot", content: "Xin chào! Tôi là trợ lý Kyro Store AI. Tôi có thể giúp gì cho bạn?" }]);
         }
       } catch (error) {
         console.error("Lỗi phân tích lịch sử chat đã lưu:", error);
-        setMessages([ { sender: "bot", content: "Xin chào! Tôi là trợ lý Tech Shop AI. Tôi có thể giúp gì cho bạn?" }]);
+        setMessages([ { sender: "bot", content: "Xin chào! Tôi là trợ lý Kyro Store AI. Tôi có thể giúp gì cho bạn?" }]);
       }
     }
   }, []);
@@ -107,7 +107,7 @@ const ChatBot = () => {
   const clearChatHistory = () => {
     Cookies.remove('tech_shop_rasa_chat_history');
     setMessages([
-      { sender: "bot", content: "Xin chào! Tôi là trợ lý Tech Shop AI. Tôi có thể giúp gì cho bạn?" }
+      { sender: "bot", content: "Xin chào! Tôi là trợ lý Kyro Store AI. Tôi có thể giúp gì cho bạn?" }
     ]);
   };
   

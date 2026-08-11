@@ -6,6 +6,7 @@ import { useAuth } from "../../hooks/admin/useAuth.jsx";
 // Import các pages
 import Dashboard from "../../pages/admin/admin/Dashboard";
 import ProductManagement from "../../pages/admin/admin/ProductManagement";
+import CategoryManagement from "../../pages/admin/admin/CategoryManagement";
 import Login from "../../pages/admin/auth/Login";
 import NotFound from "../../pages/admin/auth/NotFound";
 import UserManagement from "../../pages/admin/admin/UserManagement";
@@ -30,6 +31,7 @@ const AppRouter = () => {
             {/* Protected admin routes */}
             <Route path="/admin" element={<ProtectedRoute element={<Dashboard />} requiredRole="ADMIN" />} />
             <Route path="/admin/products" element={<ProtectedRoute element={<ProductManagement />} requiredRole="ADMIN" />} />
+            <Route path="/admin/categories" element={<ProtectedRoute element={<CategoryManagement />} requiredRole="ADMIN" />} />
             <Route path="/admin/orders" element={<ProtectedRoute element={<OrdersManagement />} requiredRole="ADMIN" />} />
             <Route path="/admin/users" element={<ProtectedRoute element={<UserManagement />} requiredRole="ADMIN" />} />
 

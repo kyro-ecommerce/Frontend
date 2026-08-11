@@ -7,6 +7,7 @@ import * as dashboardService from './dashboardService';
 import * as orderService from './orderService';
 import * as productService from './productService';
 import * as userService from './userService';
+import * as categoryService from './categoryService';
 
 export {
     api,
@@ -15,4 +16,5 @@ export {
     orderService,
     productService,
     userService,
+    categoryService,
 };

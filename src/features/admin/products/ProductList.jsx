@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { formatCurrency, formatDate, translateCategoryName } from "../../../utils/admin/format.js";
+import { useConfirm } from "../../../context/ConfirmContext.jsx";
 
 const ProductList = ({
                          products,
@@ -16,6 +17,7 @@ const ProductList = ({
                          onAddProduct,
                          onMultipleDelete
                      }) => {
+    const confirm = useConfirm();
 
     // Xác định trạng thái tồn kho
     const getStockStatus = (quantity) => {
@@ -131,8 +133,15 @@ const ProductList = ({
                                                 <button
                                                     className="w-8 h-8 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 cursor-pointer flex items-center justify-center transition-all border-none"
                                                     title="Xóa"
-                                                    onClick={() => {
-                                                        if (window.confirm(`Bạn có chắc chắn muốn xóa sản phẩm "${product.title}"?`)) {
+                                                    onClick={async () => {
+                                                        const isConfirmed = await confirm({
+                                                            title: "Xóa sản phẩm",
+                                                            message: `Bạn có chắc chắn muốn xóa sản phẩm "${product.title}" không?`,
+                                                            confirmText: "Xóa sản phẩm",
+                                                            cancelText: "Hủy",
+                                                            type: "danger"
+                                                        });
+                                                        if (isConfirmed) {
                                                             onDelete(product.id);
                                                         }
                                                     }}

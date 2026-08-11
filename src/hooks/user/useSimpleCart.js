@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-hot-toast";
 
 // Hook quản lý giỏ hàng đơn giản với localStorage
 export const useSimpleCart = () => {
@@ -82,10 +83,10 @@ export const useSimpleCart = () => {
       });
       
       // Hiển thị thông báo thành công
-      alert("Đã thêm vào giỏ hàng!");
+      toast.success("Đã thêm vào giỏ hàng!");
     } catch (error) {
       console.error("Error adding to cart:", error);
-      alert("Có lỗi xảy ra khi thêm vào giỏ hàng");
+      toast.error("Có lỗi xảy ra khi thêm vào giỏ hàng");
     } finally {
       setIsLoading(false);
     }
@@ -115,9 +116,10 @@ export const useSimpleCart = () => {
           totalDiscountedPrice
         };
       });
+      toast.success("Đã xóa sản phẩm khỏi giỏ hàng!");
     } catch (error) {
       console.error("Error removing from cart:", error);
-      alert("Có lỗi xảy ra khi xóa sản phẩm");
+      toast.error("Có lỗi xảy ra khi xóa sản phẩm");
     } finally {
       setIsLoading(false);
     }
@@ -159,7 +161,7 @@ export const useSimpleCart = () => {
       });
     } catch (error) {
       console.error("Error updating cart item:", error);
-      alert("Có lỗi xảy ra khi cập nhật giỏ hàng");
+      toast.error("Có lỗi xảy ra khi cập nhật giỏ hàng");
     } finally {
       setIsLoading(false);
     }
@@ -188,7 +190,7 @@ export const useSimpleCart = () => {
   // Chuyển đến trang thanh toán
   const checkout = () => {
     if (cart.items.length === 0) {
-      alert("Giỏ hàng của bạn đang trống!");
+      toast.error("Giỏ hàng của bạn đang trống!");
       return;
     }
     

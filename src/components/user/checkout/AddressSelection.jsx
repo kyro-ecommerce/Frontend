@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from 'react-hot-toast';
 
 // Dữ liệu mẫu cho tỉnh/thành phố
 const provincesData = [
@@ -118,7 +119,7 @@ const AddressSelection = ({ onAddressSelect, onProceed }) => {
     // Kiểm tra các trường bắt buộc
     if (!newAddress.fullName || !newAddress.province || !newAddress.district || 
         !newAddress.ward || !newAddress.streetAddress || !newAddress.mobile) {
-      alert('Vui lòng điền đầy đủ thông tin địa chỉ');
+      toast.error('Vui lòng điền đầy đủ thông tin địa chỉ');
       return;
     }
 
@@ -156,7 +157,7 @@ const AddressSelection = ({ onAddressSelect, onProceed }) => {
   // Xử lý khi người dùng chọn giao hàng đến địa chỉ đã chọn
   const handleProceed = () => {
     if (!selectedAddressId) {
-      alert('Vui lòng chọn địa chỉ giao hàng');
+      toast.error('Vui lòng chọn địa chỉ giao hàng');
       return;
     }
     

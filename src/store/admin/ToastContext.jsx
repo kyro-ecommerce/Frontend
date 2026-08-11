@@ -1,41 +1,27 @@
-// src/contexts/ToastContext.jsx
-import React, { createContext, useContext, useState } from 'react';
-import ToastContainer from '../../components/admin/common/ToastContainer';
+import React, { createContext, useContext } from 'react';
+import { toast as hotToast } from 'react-hot-toast';
 
-// Tạo context cho toast
 const ToastContext = createContext();
 
-// Custom hook để sử dụng toast
 export const useToast = () => {
     return useContext(ToastContext);
 };
 
-// Provider component
 export const ToastProvider = ({ children }) => {
-    const [toasts, setToasts] = useState([]);
-
-    // Thêm một toast mới
-    const addToast = (message, type = "success", duration = 3000) => {
-        const id = Date.now().toString();
-        setToasts(prev => [...prev, { id, message, type, duration }]);
-        return id;
+    const success = (message) => hotToast.success(message);
+    const error = (message) => hotToast.error(message);
+    const warning = (message) => hotToast(message, { icon: '⚠️' });
+    const info = (message) => hotToast(message, { icon: 'ℹ️' });
+    const addToast = (message, type = "success") => {
+        if (type === "success") success(message);
+        else if (type === "error") error(message);
+        else if (type === "warning") warning(message);
+        else info(message);
     };
 
-    // Xóa một toast
-    const removeToast = (id) => {
-        setToasts(prev => prev.filter(toast => toast.id !== id));
-    };
-
-    // Các helper function
-    const success = (message, duration) => addToast(message, "success", duration);
-    const error = (message, duration) => addToast(message, "error", duration);
-    const warning = (message, duration) => addToast(message, "warning", duration);
-    const info = (message, duration) => addToast(message, "info", duration);
-
-    // Giá trị context
     const contextValue = {
         addToast,
-        removeToast,
+        removeToast: () => {},
         success,
         error,
         warning,
@@ -45,7 +31,6 @@ export const ToastProvider = ({ children }) => {
     return (
         <ToastContext.Provider value={contextValue}>
             {children}
-            <ToastContainer toasts={toasts} removeToast={removeToast} />
         </ToastContext.Provider>
     );
 };

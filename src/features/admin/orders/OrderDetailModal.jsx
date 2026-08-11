@@ -1,7 +1,9 @@
 import React from "react";
 import { formatCurrency, formatDateTime } from "../../../utils/admin/format.js";
+import { useConfirm } from "../../../context/ConfirmContext.jsx";
 
 const OrderDetailModal = ({ order, onClose, onStatusChange, onDeleteOrder }) => {
+    const confirm = useConfirm();
     if (!order) return null;
 
     const handleStatusSelect = async (e) => {
@@ -12,11 +14,16 @@ const OrderDetailModal = ({ order, onClose, onStatusChange, onDeleteOrder }) => 
     };
 
     const handleDelete = async () => {
-        if (window.confirm(`Bạn có chắc chắn muốn xóa đơn hàng #${order.id}?`)) {
-            if (onDeleteOrder) {
-                await onDeleteOrder(order.id);
-                onClose();
-            }
+        const isConfirmed = await confirm({
+            title: "Xóa đơn hàng",
+            message: `Bạn có chắc chắn muốn xóa đơn hàng #${order.id} không? Thao tác này không thể hoàn tác.`,
+            confirmText: "Xóa đơn hàng",
+            cancelText: "Hủy",
+            type: "danger"
+        });
+        if (isConfirmed && onDeleteOrder) {
+            await onDeleteOrder(order.id);
+            onClose();
         }
     };
 

@@ -104,16 +104,27 @@ const categoryNameMap = {
     "Desktop": "Máy tính để bàn",
     "Accessories": "Phụ kiện",
     "Accessory": "Phụ kiện",
+    "accessories": "Phụ kiện",
+    "accessory": "Phụ kiện",
     "Smartwatch": "Đồng hồ thông minh",
     "Watch": "Đồng hồ thông minh",
     "Audio": "Thiết bị âm thanh",
     "Camera": "Máy ảnh",
     "Gaming Laptops": "Laptop Gaming",
+    "Gaming": "Gaming",
+    "2-in-1": "Laptop 2-trong-1",
     "MacBook": "MacBook",
     "Ultrabook": "Laptop Văn Phòng",
     "iPhone": "iPhone",
     "Samsung": "Samsung",
     "Xiaomi": "Xiaomi",
+    "OPPO": "OPPO",
+    "OnePlus": "OnePlus",
+    "Acer": "Acer",
+    "ASUS": "ASUS",
+    "Dell": "Dell",
+    "HP": "HP",
+    "Apple": "Apple",
     "iPad": "iPad",
     "Android Tablets": "Máy tính bảng Android",
     "PC Gaming": "PC Gaming",
@@ -125,17 +136,19 @@ const categoryNameMap = {
     "Charger": "Sạc & Cáp",
     "Cable": "Cáp sạc",
     "Uncategorized": "Chưa phân loại",
-    "Other-Products": "Khác"
+    "Other-Products": "Sản phẩm khác",
+    "other-products": "Sản phẩm khác"
 };
 
 const translateCategoryName = (name) => {
     if (!name) return "Chưa phân loại";
-    if (categoryNameMap[name]) return categoryNameMap[name];
-    const lower = String(name).toLowerCase();
+    const str = String(name).trim();
+    if (categoryNameMap[str]) return categoryNameMap[str];
+    const normalized = str.toLowerCase().replace(/[-_]/g, ' ');
     for (const [key, val] of Object.entries(categoryNameMap)) {
-        if (key.toLowerCase() === lower) return val;
+        if (key.toLowerCase().replace(/[-_]/g, ' ') === normalized) return val;
     }
-    return name;
+    return str;
 };
 
 // Xuất các hàm để sử dụng ở nơi khác

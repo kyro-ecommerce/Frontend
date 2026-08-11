@@ -38,7 +38,7 @@ const Login = () => {
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-100">
             <div className="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
-                <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">ADMIN - TECHSHOP</h2>
+                <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">ADMIN - KYRO STORE</h2>
                 {error && <div className="bg-red-100 text-red-600 p-3 rounded mb-4 text-sm text-center">{error}</div>}
 
                 <form onSubmit={handleSubmit} className="flex flex-col gap-4">

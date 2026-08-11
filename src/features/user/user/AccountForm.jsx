@@ -5,6 +5,7 @@ import { useAuthContext } from "../../../store/user/AuthContext";
 import { authService } from "../../../services/user/auth.service";
 import { orderService } from "../../../services/user/order.service";
 import { useToast } from "../../../store/user/ToastContext";
+import { useConfirm } from "../../../context/ConfirmContext.jsx";
 import { Dialog, DialogContent, CircularProgress } from "@mui/material";
 import CloseIcon from '@mui/icons-material/Close';
 import AddIcon from '@mui/icons-material/Add';
@@ -313,7 +314,14 @@ const AccountForm = () => {
   };
 
   const handleDeleteAddress = async (addressId) => {
-    if (!window.confirm("Bạn có chắc chắn muốn xóa địa chỉ này?")) return;
+    const isConfirmed = await confirm({
+      title: "Xóa địa chỉ",
+      message: "Bạn có chắc chắn muốn xóa địa chỉ này không?",
+      confirmText: "Xóa địa chỉ",
+      cancelText: "Hủy",
+      type: "danger"
+    });
+    if (!isConfirmed) return;
 
     try {
       await orderService.deleteAddress(addressId);

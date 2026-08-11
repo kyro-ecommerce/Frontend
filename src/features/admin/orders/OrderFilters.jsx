@@ -1,22 +1,14 @@
-import { useState } from "react";
-import { Search, CreditCard, DollarSign, ArrowUpDown, RotateCcw } from "lucide-react";
+import React, { useState } from "react";
+import { Search, Calendar, RotateCcw, Filter } from "lucide-react";
 
 const OrderFilters = ({
-    currentFilter,
-    onFilterChange,
     onSearch,
-    paymentMethod = "all",
-    onPaymentMethodChange,
-    paymentStatus = "all",
-    onPaymentStatusChange,
-    sortBy = "orderDate",
-    sortDir = "desc",
-    onSortChange,
     onResetAllFilters
 }) => {
     const [searchTerm, setSearchTerm] = useState("");
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
+    const [activePreset, setActivePreset] = useState("all");
 
     // Handle search submit
     const handleSearchSubmit = (e) => {
@@ -24,13 +16,37 @@ const OrderFilters = ({
         onSearch(searchTerm, startDate, endDate);
     };
 
-    // Handle search input change
-    const handleSearchChange = (e) => {
-        setSearchTerm(e.target.value);
+    // Apply quick date preset
+    const handlePresetSelect = (presetKey) => {
+        setActivePreset(presetKey);
+        const today = new Date();
+        let start = "";
+        let end = today.toISOString().split("T")[0];
+
+        if (presetKey === "7days") {
+            const d = new Date();
+            d.setDate(d.getDate() - 7);
+            start = d.toISOString().split("T")[0];
+        } else if (presetKey === "30days") {
+            const d = new Date();
+            d.setDate(d.getDate() - 30);
+            start = d.toISOString().split("T")[0];
+        } else if (presetKey === "thisMonth") {
+            const d = new Date(today.getFullYear(), today.getMonth(), 1);
+            start = d.toISOString().split("T")[0];
+        } else if (presetKey === "all") {
+            start = "";
+            end = "";
+        }
+
+        setStartDate(start);
+        setEndDate(end);
+        onSearch(searchTerm, start, end);
     };
 
-    // Handle date filter
-    const handleDateFilter = () => {
+    // Manual date filter click
+    const handleManualDateFilter = () => {
+        setActivePreset("custom");
         onSearch(searchTerm, startDate, endDate);
     };
 
@@ -39,131 +55,109 @@ const OrderFilters = ({
         setSearchTerm("");
         setStartDate("");
         setEndDate("");
+        setActivePreset("all");
         onResetAllFilters();
     };
 
-    const filterTabs = [
-        { key: "all", label: "Tất cả" },
-        { key: "pending", label: "Chờ xử lý" },
-        { key: "confirmed", label: "Đã xác nhận" },
-        { key: "shipped", label: "Đang vận chuyển" },
-        { key: "delivered", label: "Đã giao" },
-        { key: "cancelled", label: "Đã hủy" }
+    const datePresets = [
+        { key: "all", label: "Tất cả thời gian" },
+        { key: "7days", label: "7 ngày qua" },
+        { key: "30days", label: "30 ngày qua" },
+        { key: "thisMonth", label: "Tháng này" },
     ];
 
     return (
-        <div className="space-y-3.5">
-            {/* Segmented Filter Pills */}
-            <div className="flex items-center gap-1.5 overflow-x-auto p-1.5 bg-slate-50 border border-slate-200/80 rounded-2xl scrollbar-hide">
-                {filterTabs.map((tab) => {
-                    const isActive = currentFilter === tab.key;
-                    return (
-                        <button
-                            key={tab.key}
-                            className={`py-2 px-3.5 rounded-xl text-xs font-extrabold transition-all duration-200 cursor-pointer whitespace-nowrap border-none ${
-                                isActive
-                                    ? "bg-[#1D7461] text-white shadow-sm shadow-[#1D7461]/20"
-                                    : "text-slate-600 hover:text-slate-900 hover:bg-white/80"
-                            }`}
-                            onClick={() => onFilterChange(tab.key)}
-                        >
-                            {tab.label}
-                        </button>
-                    );
-                })}
-            </div>
-
-            {/* Sub-Filters Row */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                {/* PTTT Filter */}
-                <div className="relative flex items-center">
-                    <CreditCard className="absolute left-3 w-4 h-4 text-slate-400 pointer-events-none" />
-                    <select
-                        value={paymentMethod}
-                        onChange={(e) => onPaymentMethodChange && onPaymentMethodChange(e.target.value)}
-                        className="w-full py-2 pr-7 pl-9 bg-slate-50 border border-slate-200/80 rounded-xl text-xs font-bold text-slate-700 outline-none focus:bg-white focus:border-[#1D7461] transition-all cursor-pointer appearance-none"
-                    >
-                        <option value="all">PTTT: Tất cả</option>
-                        <option value="COD">COD (Thanh toán khi nhận)</option>
-                        <option value="VNPAY">VNPAY (Ví / Thẻ)</option>
-                    </select>
-                    <span className="absolute right-2.5 text-slate-400 text-[10px] pointer-events-none">▼</span>
-                </div>
-
-                {/* Trạng thái Thanh toán Filter */}
-                <div className="relative flex items-center">
-                    <DollarSign className="absolute left-3 w-4 h-4 text-slate-400 pointer-events-none" />
-                    <select
-                        value={paymentStatus}
-                        onChange={(e) => onPaymentStatusChange && onPaymentStatusChange(e.target.value)}
-                        className="w-full py-2 pr-7 pl-9 bg-slate-50 border border-slate-200/80 rounded-xl text-xs font-bold text-slate-700 outline-none focus:bg-white focus:border-[#1D7461] transition-all cursor-pointer appearance-none"
-                    >
-                        <option value="all">Thanh toán: Tất cả</option>
-                        <option value="PENDING">Chờ thanh toán (PENDING)</option>
-                        <option value="COMPLETED">Đã thanh toán (COMPLETED)</option>
-                        <option value="FAILED">Thanh toán thất bại (FAILED)</option>
-                        <option value="CANCELLED">Đã hủy thanh toán (CANCELLED)</option>
-                        <option value="REFUNDED">Đã hoàn tiền (REFUNDED)</option>
-                    </select>
-                    <span className="absolute right-2.5 text-slate-400 text-[10px] pointer-events-none">▼</span>
-                </div>
-
-                {/* Sắp xếp Sort By */}
-                <div className="relative flex items-center">
-                    <ArrowUpDown className="absolute left-3 w-4 h-4 text-slate-400 pointer-events-none" />
-                    <select
-                        value={`${sortBy}:${sortDir}`}
-                        onChange={(e) => onSortChange(...e.target.value.split(":"))}
-                        className="w-full py-2 pr-7 pl-9 bg-slate-50 border border-slate-200/80 rounded-xl text-xs font-bold text-slate-700 outline-none focus:bg-white focus:border-[#1D7461] transition-all cursor-pointer appearance-none"
-                    >
-                        <option value="orderDate:desc">Sắp xếp: Mới nhất</option>
-                        <option value="orderDate:asc">Sắp xếp: Cũ nhất</option>
-                        <option value="totalDiscountedPrice:desc">Giá: Cao ➔ Thấp</option>
-                        <option value="totalDiscountedPrice:asc">Giá: Thấp ➔ Cao</option>
-                    </select>
-                    <span className="absolute right-2.5 text-slate-400 text-[10px] pointer-events-none">▼</span>
-                </div>
-            </div>
-
-            {/* Search and Date Filter Controls */}
-            <div className="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 pt-1">
-                <form className="w-full sm:max-w-xs" onSubmit={handleSearchSubmit}>
-                    <div className="relative w-full flex items-center">
+        <div className="bg-slate-50/70 p-4 rounded-2xl border border-slate-200/80 space-y-3.5">
+            {/* Top Row: Search input + Segmented Date Presets */}
+            <div className="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-3">
+                {/* Search Bar */}
+                <form className="flex-1 max-w-xl" onSubmit={handleSearchSubmit}>
+                    <div className="relative flex items-center">
                         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
                         <input
                             type="text"
-                            placeholder="Tìm kiếm mã đơn, email..."
+                            placeholder="Tìm kiếm mã đơn (#101), tên khách hàng, số điện thoại..."
                             value={searchTerm}
-                            onChange={handleSearchChange}
-                            className="w-full py-2 pr-4 pl-10 bg-slate-50 border border-slate-200/80 rounded-xl text-xs font-semibold outline-none focus:bg-white focus:border-[#1D7461] focus:ring-2 focus:ring-[#1D7461]/20 transition-all"
+                            onChange={(e) => {
+                                setSearchTerm(e.target.value);
+                            }}
+                            className="w-full py-2.5 pr-9 pl-10 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-800 outline-none focus:border-[#1D7461] focus:ring-2 focus:ring-[#1D7461]/20 transition-all placeholder-slate-400 shadow-2xs"
                         />
+                        {searchTerm && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setSearchTerm("");
+                                    onSearch("", startDate, endDate);
+                                }}
+                                className="absolute right-3 text-slate-400 hover:text-slate-600 text-xs border-none bg-transparent cursor-pointer p-1"
+                            >
+                                ✕
+                            </button>
+                        )}
                     </div>
                 </form>
 
-                <div className="flex flex-wrap gap-2 items-center">
-                    <div className="flex items-center gap-1.5 bg-slate-50 p-1 rounded-xl border border-slate-200/80">
+                {/* Quick Date Presets Segmented Pills */}
+                <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-200 shadow-2xs overflow-x-auto">
+                    {datePresets.map((preset) => (
+                        <button
+                            key={preset.key}
+                            type="button"
+                            onClick={() => handlePresetSelect(preset.key)}
+                            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border-none cursor-pointer whitespace-nowrap ${
+                                activePreset === preset.key
+                                    ? "bg-[#1D7461] text-white shadow-sm shadow-[#1D7461]/20"
+                                    : "text-slate-600 hover:text-slate-900 hover:bg-slate-50"
+                            }`}
+                        >
+                            {preset.label}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            {/* Bottom Row: Custom Date Range Picker & Action Buttons */}
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-1 border-t border-slate-200/60">
+                <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-slate-600">
+                    <span className="flex items-center gap-1.5 text-slate-500 font-extrabold uppercase text-[11px] tracking-wider">
+                        <Calendar className="w-3.5 h-3.5 text-[#1D7461]" />
+                        <span>Khoảng ngày:</span>
+                    </span>
+                    <div className="flex items-center gap-1.5 bg-white px-2.5 py-1.5 rounded-xl border border-slate-200 shadow-2xs">
                         <input
                             type="date"
-                            className="px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-[#1D7461]/20"
                             value={startDate}
                             onChange={(e) => setStartDate(e.target.value)}
+                            className="text-xs font-semibold text-slate-700 border-none outline-none bg-transparent cursor-pointer"
                         />
-                        <span className="text-slate-400 text-xs font-bold">đến</span>
+                        <span className="text-slate-400 font-bold">→</span>
                         <input
                             type="date"
-                            className="px-2 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700 outline-none focus:ring-2 focus:ring-[#1D7461]/20"
                             value={endDate}
                             onChange={(e) => setEndDate(e.target.value)}
+                            className="text-xs font-semibold text-slate-700 border-none outline-none bg-transparent cursor-pointer"
                         />
                     </div>
-                    <button className="px-3.5 py-1.5 bg-[#1D7461] hover:bg-[#136050] text-white rounded-xl text-xs font-bold cursor-pointer transition-all shadow-sm shadow-[#1D7461]/20 border-none flex items-center gap-1" onClick={handleDateFilter}>
-                        Lọc
-                    </button>
-                    <button className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200/80 text-slate-700 rounded-xl text-xs font-bold cursor-pointer transition-all border border-slate-200/80 flex items-center gap-1" onClick={handleClearFilters}>
-                        <RotateCcw className="w-3.5 h-3.5" />
-                        Xóa bộ lọc
+                    <button
+                        type="button"
+                        onClick={handleManualDateFilter}
+                        className="px-3.5 py-1.5 bg-[#1D7461] hover:bg-[#155a4b] text-white rounded-xl text-xs font-bold border-none cursor-pointer transition-all shadow-xs flex items-center gap-1"
+                    >
+                        <Filter className="w-3 h-3" />
+                        <span>Lọc ngày</span>
                     </button>
                 </div>
+
+                {/* Reset Filters */}
+                <button
+                    type="button"
+                    onClick={handleClearFilters}
+                    className="px-3.5 py-1.5 bg-white hover:bg-slate-100 text-slate-600 rounded-xl text-xs font-bold cursor-pointer transition-all border border-slate-200 shadow-2xs flex items-center gap-1.5 ml-auto"
+                >
+                    <RotateCcw className="w-3.5 h-3.5 text-slate-400" />
+                    <span>Đặt lại bộ lọc</span>
+                </button>
             </div>
         </div>
     );

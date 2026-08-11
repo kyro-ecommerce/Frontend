@@ -634,7 +634,7 @@ const Checkout = () => {
                     <h2 className="text-2xl sm:text-3xl font-bold mb-2 text-gray-800">
                         {vnpayStatus === 'success' ? "Thanh toán VNPAY thành công!" : "Đặt hàng thành công!"}
                     </h2>
-                    <p className="text-lg text-gray-600 mb-6">Cảm ơn bạn đã đặt hàng tại Tech Shop.</p>
+                    <p className="text-lg text-gray-600 mb-6">Cảm ơn bạn đã đặt hàng tại Kyro Store.</p>
                     <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 mb-6 text-left space-y-3 text-sm sm:text-base">
                         <h3 className="text-xl font-semibold mb-3 text-gray-700 flex justify-between items-center">
                             <span>Thông tin đơn hàng #{orderIdToDisplay}</span>

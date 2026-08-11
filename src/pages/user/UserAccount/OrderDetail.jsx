@@ -5,12 +5,14 @@ import BreadcrumbNav from "../../../layouts/user/BreadcrumbNav";
 import AccountSidebar from "../../../features/user/user/AccountSidebar";
 import { useOrderContext } from "../../../store/user/OrderContext"; // THÊM
 import { useToast } from "../../../store/user/ToastContext";
+import { useConfirm } from "../../../context/ConfirmContext.jsx";
 import { CircularProgress, Typography, Button as MuiButton, Box, Paper, Chip, Alert } from '@mui/material'; // THÊM MUI
 
 const OrderDetail = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
   const { showToast } = useToast();
+  const confirm = useConfirm();
   const {
     currentOrder: order, // Đổi tên để sử dụng trực tiếp
     isLoading,
@@ -51,12 +53,19 @@ const OrderDetail = () => {
   };
 
   const handleCancelOrder = async () => {
-    if (window.confirm("Bạn có chắc chắn muốn hủy đơn hàng này không?")) {
+    const isConfirmed = await confirm({
+      title: "Hủy đơn hàng",
+      message: "Bạn có chắc chắn muốn hủy đơn hàng này không?",
+      confirmText: "Hủy đơn hàng",
+      cancelText: "Không",
+      type: "warning"
+    });
+
+    if (isConfirmed) {
       try {
         await cancelUserOrder(orderId);
         showToast("Đơn hàng đã được hủy thành công", "success");
-        fetchOrderById(orderId); // Fetch lại để cập nhật trạng thái trên UI
-        // navigate('/my-order'); // Có thể không cần navigate nếu chỉ cập nhật trạng thái
+        fetchOrderById(orderId);
       } catch (err) {
         showToast(err.message || "Có lỗi xảy ra khi hủy đơn hàng.", "error");
       }

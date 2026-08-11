@@ -1,20 +1,23 @@
-// src/components/features/user/AccountSidebar.jsx
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-// Xóa: import { useDispatch } from "react-redux";
-// Xóa: import { logout } from "../../../State/Auth/Action";
-import { useAuthContext } from "../../../store/user/AuthContext"; // THAY ĐỔI
+import { useAuthContext } from "../../../store/user/AuthContext";
+import { useConfirm } from "../../../context/ConfirmContext.jsx";
 
 const AccountSidebar = () => {
   const location = useLocation();
-
-  // Xóa: const dispatch = useDispatch();
   const { logout: contextLogout } = useAuthContext();
+  const confirm = useConfirm();
 
-  const handleLogout = () => {
-    if (window.confirm("Bạn có chắc chắn muốn đăng xuất?")) {
-      // Xóa: dispatch(logout());
-      contextLogout(); // THAY ĐỔI: Gọi hàm logout từ AuthContext
+  const handleLogout = async () => {
+    const isConfirmed = await confirm({
+      title: "Đăng xuất",
+      message: "Bạn có chắc chắn muốn đăng xuất khỏi tài khoản?",
+      confirmText: "Đăng xuất",
+      cancelText: "Hủy",
+      type: "warning"
+    });
+    if (isConfirmed) {
+      contextLogout();
     }
   };
 

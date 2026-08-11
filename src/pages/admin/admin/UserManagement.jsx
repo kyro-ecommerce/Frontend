@@ -6,10 +6,12 @@ import { userService } from "../../../services/admin/index.js";
 import UserList from "../../../features/admin/users/UserList";
 import UserFilters from "../../../features/admin/users/UserFilters";
 import UserStats from "../../../features/admin/users/UserStats";
-import UserDetailModal from "../../../features/admin/users/UserDetailModal"; // Đảm bảo import component mới
+import UserDetailModal from "../../../features/admin/users/UserDetailModal";
+import { useConfirm } from "../../../context/ConfirmContext.jsx";
 
 
 const UserManagement = () => {
+    const confirm = useConfirm();
     const { user, loading, isAdmin } = useAuth();
     const [users, setUsers] = useState([]);
     const [stats, setStats] = useState({});
@@ -182,9 +184,15 @@ const UserManagement = () => {
 
     // Xử lý xóa người dùng
     const handleDeleteUser = async (userId) => {
-        if (!window.confirm("Bạn có chắc chắn muốn xóa người dùng này?")) {
-            return;
-        }
+        const isConfirmed = await confirm({
+            title: "Xóa người dùng",
+            message: "Bạn có chắc chắn muốn xóa tài khoản người dùng này không?",
+            confirmText: "Xóa người dùng",
+            cancelText: "Hủy",
+            type: "danger"
+        });
+
+        if (!isConfirmed) return;
 
         try {
             const response = await userService.deleteUser(userId);
