@@ -1,6 +1,6 @@
 // src/hooks/useProducts.jsx - Updated with proper filter integration
 import { useState, useEffect, useCallback } from "react";
-import { productService } from "../../services/admin/index.js";
+import { categoryService, productService } from "../../services/admin/index.js";
 
 export const useProducts = () => {
     const [products, setProducts] = useState([]);
@@ -47,8 +47,13 @@ export const useProducts = () => {
     // Fetch categories
     const fetchCategories = useCallback(async () => {
         try {
-            const response = await productService.getProductCategories();
-            const catData = response.data?.data || response.data || { topLevel: [], secondLevel: {} };
+            const tree = await categoryService.getAllCategories();
+            const catData = {
+                topLevel: tree.map(category => category.name),
+                secondLevel: Object.fromEntries(
+                    tree.map(category => [category.name, (category.subCategories || []).map(sub => sub.name)])
+                )
+            };
             setCategories(catData);
             return catData;
         } catch (err) {

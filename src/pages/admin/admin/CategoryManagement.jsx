@@ -13,6 +13,7 @@ const CategoryManagement = () => {
         parentCategories,
         stats,
         isLoading,
+        error,
         searchTerm,
         setSearchTerm,
         selectedLevel,
@@ -54,6 +55,8 @@ const CategoryManagement = () => {
 
                 {/* Metric Summary Cards */}
                 <CategoryStats stats={stats} />
+
+                {error && <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs font-bold text-red-700">{error}</div>}
 
                 {/* Filter and Control Bar */}
                 <CategoryFilters

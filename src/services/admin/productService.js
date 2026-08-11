@@ -36,19 +36,24 @@ export const getAllProducts = (params = {}) => {
 export const getProductById = (productId) => api.get(`/admin/products/${productId}`);
 
 export const createProduct = (productData) => {
-    // Clean payload for CreateProductRequest (remove 'images' and 'id' which don't exist on CreateProductRequest)
-    const { images, id, ...postPayload } = productData;
+    const { images, imageUrls, id, ...postPayload } = productData;
     return api.post("/admin/products", postPayload);
 };
 
 export const updateProduct = (productId, productData) => {
-    // Clean payload for Product entity (remove CreateProductRequest specific fields)
-    const { imageUrls, topLevelCategory, secondLevelCategory, ...putPayload } = productData;
-    if (!putPayload.images && imageUrls) {
-        putPayload.images = imageUrls;
-    }
+    const { images, imageUrls, ...putPayload } = productData;
     return api.put(`/admin/products/${productId}`, putPayload);
 };
+
+export const uploadProductImage = (productId, file) => {
+    const body = new FormData();
+    body.append("image", file);
+    return api.post(`/images/upload/${productId}`, body, { headers: { "Content-Type": "multipart/form-data" } });
+};
+
+export const addProductImageUrl = (productId, url) => api.post(`/images/url/${productId}`, { url });
+
+export const deleteProductImage = (imageId) => api.delete(`/images/delete/${imageId}`);
 
 export const deleteProduct = (productId) => api.delete(`/admin/products/${productId}`);
 

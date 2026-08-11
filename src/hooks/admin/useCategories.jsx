@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { categoryService } from "../../services/admin/index.js";
+import { getErrorMessage } from "../../utils/errorUtils.js";
 
 export const useCategories = () => {
     const [categories, setCategories] = useState([]);
@@ -22,7 +23,7 @@ export const useCategories = () => {
             setCategories(data || []);
         } catch (err) {
             console.error("Lỗi khi tải danh sách danh mục:", err);
-            setError("Không thể tải danh mục sản phẩm");
+            setError(getErrorMessage(err, "Không thể tải danh mục sản phẩm"));
         } finally {
             setIsLoading(false);
         }
@@ -138,7 +139,7 @@ export const useCategories = () => {
             return { success: true };
         } catch (err) {
             console.error("Lỗi khi lưu danh mục:", err);
-            return { success: false, error: err.message };
+            return { success: false, error: getErrorMessage(err) };
         }
     };
 
@@ -151,7 +152,11 @@ export const useCategories = () => {
             return { success: true };
         } catch (err) {
             console.error("Lỗi khi xóa danh mục:", err);
-            return { success: false, error: err.message };
+            return {
+                success: false,
+                error: getErrorMessage(err),
+                blockedCategories: err.response?.data?.blockedCategories || err.response?.data?.properties?.blockedCategories || []
+            };
         }
     };
 

@@ -8,6 +8,7 @@ const CategoryDeleteModal = ({
     category
 }) => {
     const [isDeleting, setIsDeleting] = useState(false);
+    const [deleteError, setDeleteError] = useState(null);
 
     if (!isOpen || !category) return null;
 
@@ -15,8 +16,10 @@ const CategoryDeleteModal = ({
 
     const handleDelete = async () => {
         setIsDeleting(true);
+        setDeleteError(null);
         try {
-            await onConfirmDelete(category.categoryId);
+            const result = await onConfirmDelete(category.categoryId);
+            if (!result.success) setDeleteError(result);
         } catch (err) {
             console.error("Lỗi xóa danh mục:", err);
         } finally {
@@ -55,6 +58,19 @@ const CategoryDeleteModal = ({
                         <span>
                             Danh mục này có chứa <strong>{category.subCategories.length} danh mục con</strong>. Khi xóa danh mục cha, các danh mục con liên quan cũng sẽ bị ảnh hưởng.
                         </span>
+                    </div>
+                )}
+
+                {deleteError && (
+                    <div className="p-3 mb-4 bg-red-50 border border-red-200 rounded-xl text-left text-xs text-red-700">
+                        <strong>{deleteError.error}</strong>
+                        {deleteError.blockedCategories?.length > 0 && (
+                            <ul className="mt-2 mb-0 pl-4">
+                                {deleteError.blockedCategories.map(blocked => (
+                                    <li key={blocked.categoryId}>{blocked.name}: {blocked.productCount} sản phẩm</li>
+                                ))}
+                            </ul>
+                        )}
                     </div>
                 )}
 

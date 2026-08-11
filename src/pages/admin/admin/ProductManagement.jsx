@@ -83,14 +83,14 @@ const ProductManagementContent = () => {
 
             if (result.success) {
                 toast.success(editingProduct ? "Cập nhật sản phẩm thành công!" : "Thêm sản phẩm mới thành công!");
-                setIsFormModalOpen(false);
-                setEditingProduct(null);
                 refreshProducts();
             } else {
                 toast.error(result.error || "Thao tác thất bại!");
             }
+            return result;
         } catch (err) {
             toast.error(`Đã xảy ra lỗi: ${err.message}`);
+            return { success: false, error: err.message };
         }
     };
 
