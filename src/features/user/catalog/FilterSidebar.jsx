@@ -169,8 +169,8 @@ const FilterSidebar = ({ topCategory }) => {
                     <span className="text-sm font-medium text-gray-700">Tất cả {topCategory}</span>
                   </label>
                 )}
-                {!categoryLoading && !categoryError && categoryData?.data?.length > 0 && (
-                  categoryData.data.map((category) => {
+                {!categoryLoading && !categoryError && categoryData?.length > 0 && (
+                  categoryData.map((category) => {
                     const categorySlug = category.name.toLowerCase().replace(/\s+/g, '-');
                     const isChecked = secondLevelCategoryFromUrl?.toLowerCase() === categorySlug;
                     const inputId = `category-${categorySlug}-${category.id}`;

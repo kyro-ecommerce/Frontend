@@ -32,16 +32,10 @@ export const cartService = {
         }
     },
 
-    updateCartItem: async (productId, quantity) => {
+    updateCartItem: async (itemId, quantity) => {
         try {
-            let pId = productId;
-            let qVal = quantity;
-            if (typeof productId === 'object' && productId !== null) {
-                pId = productId.productId || quantity;
-                qVal = productId.quantity;
-            }
-            const response = await api.put(`/carts/items`, null, {
-                params: { productId: pId, quantity: qVal }
+            const response = await api.put(`/carts/items/${itemId}`, null, {
+                params: { quantity }
             });
             return response;
         } catch (error) {

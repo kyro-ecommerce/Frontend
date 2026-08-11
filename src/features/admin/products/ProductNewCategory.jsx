@@ -66,14 +66,11 @@ const ActionButtons = ({ onCancel, onSave }) => {
   );
 };
 
-function ProductNewCategory({ onSave, onCancel }) {
+function ProductNewCategory({ onSave, onCancel, categories = [] }) {
 
   const [categoryName, setCategoryName] = useState("");
   const [showError, setShowError] = useState(false);
   const [selectedParent, setSelectedParent] = useState("");
-  const [categories, setCategories] = useState([]);
-
-
   const handleCategoryNameChange = (event) => {
     setCategoryName(event.target.value);
     if (event.target.value) {

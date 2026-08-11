@@ -1,6 +1,6 @@
 import axios from "axios";
 import { authService } from "../../services/user/auth.service";
-import { getTokenFromLocalStorage, removeTokenFromLocalStorage } from "../../services/user/util";
+import { getTokenFromLocalStorage, removeTokenFromLocalStorage, saveTokenToLocalStorage } from "../../services/user/util";
 import { getErrorMessage, getErrorCode } from "../../utils/errorUtils";
 
 const BACKEND_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
@@ -9,6 +9,7 @@ export const API_BASE_URL = `${BACKEND_URL}/api/v1`;
 
 export const api = axios.create({
     baseURL: API_BASE_URL,
+    withCredentials: true,
     headers: {
         'Content-Type': 'application/json'
     }
@@ -57,6 +58,7 @@ api.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
         error.normalizedMessage = getErrorMessage(error);
+        error.message = error.normalizedMessage;
         error.errorCode = getErrorCode(error);
 
         console.error(`[API Error ${error.response?.status || 'NETWORK'}] ${error.errorCode}:`, error.normalizedMessage, error.config?.url);
@@ -88,9 +90,11 @@ api.interceptors.response.use(
             try {
                 // Thực hiện refresh token
                 const newToken = await authService.refreshToken();
+                if (!newToken) throw new Error("API refresh token không trả accessToken");
                 console.log("Refresh token thành công");
 
                 // Cập nhật token cho request hiện tại và các request trong hàng đợi
+                saveTokenToLocalStorage(newToken);
                 processQueue(null, newToken);
                 originalRequest.headers['Authorization'] = `Bearer ${newToken}`;
 

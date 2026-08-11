@@ -243,32 +243,6 @@ export const useProducts = () => {
         }
     }, [fetchProducts, products.length, pagination.currentPage, pagination.pageSize]);
 
-    // Handle delete multiple products
-    const handleDeleteMultipleProducts = useCallback(async (productIds) => {
-        try {
-            setError(null);
-            const response = await productService.deleteMultipleProducts(productIds);
-            if (response.status === 200) {
-                // Check if current page becomes empty after deletion
-                const remainingItems = products.length - productIds.length;
-                let targetPage = pagination.currentPage;
-
-                if (remainingItems === 0 && pagination.currentPage > 0) {
-                    // Go to previous page if current page becomes empty
-                    targetPage = pagination.currentPage - 1;
-                }
-
-                await fetchProducts(targetPage, pagination.pageSize);
-                return { success: true, count: productIds.length };
-            }
-            return { success: false, error: "Cannot delete products" };
-        } catch (err) {
-            console.error("Error deleting multiple products:", err);
-            setError("Cannot delete products. Please try again.");
-            return { success: false, error: err.message || "Unknown error" };
-        }
-    }, [fetchProducts, products.length, pagination.currentPage, pagination.pageSize]);
-
     // Initial load
     useEffect(() => {
         let isMounted = true;
@@ -309,7 +283,6 @@ export const useProducts = () => {
         handleAddProduct,
         handleUpdateProduct,
         handleDeleteProduct,
-        handleDeleteMultipleProducts,
         handlePageChange,
         refreshProducts: () => fetchProducts(pagination.currentPage, pagination.pageSize),
         // New methods for direct filter management

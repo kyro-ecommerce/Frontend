@@ -4,9 +4,7 @@ import { API_BASE_URL } from "../../config/user/ApiConfig";
 
 export const reviewService = {
     getReviewsByProduct: (productId) =>
-        api.get(`${API_BASE_URL}/reviews/product/${productId}`).catch(() =>
-            api.get(`${API_BASE_URL}/review/product/${productId}`)
-        ),
+        api.get(`${API_BASE_URL}/reviews/product/${productId}`),
 
     addReview: (reviewData) =>
         api.post(`${API_BASE_URL}/reviews`, reviewData),
@@ -16,4 +14,4 @@ export const reviewService = {
 
     canReview: (reviewId) =>
         api.get(`${API_BASE_URL}/reviews/can-review/${reviewId}`),
-};
+};

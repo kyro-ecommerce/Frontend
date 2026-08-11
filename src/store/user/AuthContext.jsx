@@ -250,37 +250,6 @@ export const AuthProvider = ({ children }) => {
     }
   }, [fetchUserProfileInternal]);
 
-  const upgradeToSellerAndLogout = async () => {
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      await authService.changeRoleToSeller();
-      console.log("Role upgrade successful");
-      
-      // Show success message
-      alert("Successfully upgraded to Seller! Please login again to access the seller dashboard.");
-      
-      // Logout after successful upgrade
-      await logout();
-      
-    } catch (err) {
-      console.error("Role upgrade error:", err);
-      
-      let errorMessage = "Failed to upgrade account. Please try again.";
-      
-      if (err.response?.data?.message) {
-        errorMessage = err.response.data.message;
-      } else if (err.message) {
-        errorMessage = err.message;
-      }
-      
-      setError(errorMessage);
-      setIsLoading(false);
-      throw err;
-    }
-  };
-
   const value = {
     user,
     jwt,
@@ -290,7 +259,6 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
-    upgradeToSellerAndLogout,
     fetchUserProfile: useCallback(() => {
       if (jwt) {
         return fetchUserProfileInternal(jwt);
