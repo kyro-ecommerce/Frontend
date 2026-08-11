@@ -261,7 +261,7 @@ const Cart = () => {
             showToast("Vui lòng chọn ít nhất 1 sản phẩm để thanh toán", "warning");
             return;
         }
-        navigate('/checkout?step=2');
+        navigate(`/checkout?step=2&cartItemIds=${selectedItemIds.join(',')}`);
     };
 
     const CheckoutProgress = () => {

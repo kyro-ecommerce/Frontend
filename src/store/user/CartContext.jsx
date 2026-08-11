@@ -11,7 +11,8 @@ const initialCartState = {
   totalDiscountedPrice: 0,
   discount: 0,
   totalItems: 0,
-  id: null
+  id: null,
+  version: 0
 };
 
 export const CartProvider = ({ children }) => {
@@ -48,6 +49,7 @@ export const CartProvider = ({ children }) => {
         discount: discount > 0 ? discount : 0,
         totalItems,
         id: dataFromApi.id || cart?.id || null,
+        version: dataFromApi.version ?? 0,
       };
     }
     console.warn("[CartContext] Dữ liệu giỏ hàng từ API không đúng định dạng hoặc rỗng:", dataFromApi);
@@ -165,7 +167,7 @@ export const CartProvider = ({ children }) => {
     setError(null);
     try {
       await cartService.clearCart();
-      setCart({ ...initialCartState, id: cart?.id });
+      setCart({ ...initialCartState, id: cart?.id, version: cart?.version ?? 0 });
     } catch (err) {
       const errorMessage = err.response?.data?.message || err.message || "Không thể xóa giỏ hàng.";
       setError(errorMessage);

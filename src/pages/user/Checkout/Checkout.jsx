@@ -34,8 +34,18 @@ const Checkout = () => {
         clearOrderError
     } = useOrderContext();
 
-    const { cart: cartData, isLoading: isCartContextLoading, clearCartContext } = useCartContext();
+    const { cart: cartData, isLoading: isCartContextLoading, fetchCart } = useCartContext();
     const { isLoading: authIsLoading } = useAuthContext();
+    const selectedItemIds = (queryParams.get('cartItemIds') || '')
+        .split(',')
+        .map(Number)
+        .filter(id => Number.isInteger(id) && id > 0);
+    const selectedCartItems = cartData?.cartItems?.filter(item => selectedItemIds.includes(item.id)) || [];
+    const selectedTotalOriginalPrice = selectedCartItems.reduce((total, item) => total + item.price * item.quantity, 0);
+    const selectedTotalDiscountedPrice = selectedCartItems.reduce(
+        (total, item) => total + item.discountedPrice * item.quantity,
+        0
+    );
 
     const [step, setStep] = useState(initialStep < 2 ? 2 : initialStep);
     const [selectedAddress, setSelectedAddress] = useState(null);
@@ -65,6 +75,12 @@ const Checkout = () => {
     const [orderProcessedForEmailAndCartClear, setOrderProcessedForEmailAndCartClear] = useState(false);
     const [emailSentForOrderId, setEmailSentForOrderId] = useState(null); // Cờ theo dõi email đã gửi
     const [isProcessingPostOrder, setIsProcessingPostOrder] = useState(false);
+
+    useEffect(() => {
+        if (step < 4 && !isCartContextLoading && selectedItemIds.length === 0) {
+            navigate('/cart', { replace: true });
+        }
+    }, [step, isCartContextLoading, selectedItemIds.length, navigate]);
 
     useEffect(() => {
         fetchAddresses();
@@ -233,7 +249,7 @@ const Checkout = () => {
                                 console.log(`[POST_PROCESSING_EFFECT] Order post-processing for order ${orderIdForPostProcessing}`);
                                 
                                 setEmailSentForOrderId(orderIdForPostProcessing);
-                                await clearCartContext();
+                                fetchCart();
                                 setOrderProcessedForEmailAndCartClear(true);
                             } catch (error) {
                                 console.error(`[POST_PROCESSING_EFFECT] Error during post-processing for order ${orderIdForPostProcessing}:`, error);
@@ -260,7 +276,7 @@ const Checkout = () => {
         orderFromContext,
         isOrderContextLoadingGlobal,
         fetchOrderByIdContext,
-        clearCartContext,
+        fetchCart,
         showToast,
         isProcessingPostOrder 
     ]);
@@ -404,9 +420,20 @@ const Checkout = () => {
         const addressIdFromUrl = queryParams.get('addressId');
         if (!addressIdFromUrl) { showToast("Vui lòng chọn hoặc lưu địa chỉ giao hàng hợp lệ ở bước trước.", "error"); setIsPlacingOrder(false); return; }
         const finalAddressId = Number(addressIdFromUrl);
+        if (selectedCartItems.length !== selectedItemIds.length) {
+            showToast("Giỏ hàng đã thay đổi, vui lòng chọn lại sản phẩm.", "warning");
+            setIsPlacingOrder(false);
+            return;
+        }
 
         try {
-            const createdOrder = await createNewOrderContext(finalAddressId, paymentMethod);
+            const createdOrder = await createNewOrderContext(
+                finalAddressId,
+                paymentMethod,
+                selectedItemIds,
+                cartData.version,
+                selectedTotalDiscountedPrice
+            );
             if (!createdOrder || !createdOrder.id) { throw new Error("Không nhận được ID đơn hàng sau khi tạo."); }
 
             setProcessedOrderId(createdOrder.id.toString());
@@ -502,11 +529,11 @@ const Checkout = () => {
             </div>
             <div className="p-6 mb-6 border border-gray-200 rounded-lg bg-gray-50">
                 <h3 className="text-xl font-semibold mb-4 text-gray-700">Thông tin đơn hàng</h3>
-                {isCartContextLoading ? <CircularProgress /> : !cartData || !cartData.cartItems || cartData.cartItems.length === 0 ? (
+                {isCartContextLoading ? <CircularProgress /> : selectedCartItems.length === 0 ? (
                     <Typography>Giỏ hàng trống hoặc đang tải...</Typography>
                 ) : (
                     <div className="space-y-3">
-                        {cartData.cartItems.map(item => (
+                        {selectedCartItems.map(item => (
                             <div key={item.id || item.productId} className="flex justify-between items-start py-2 border-b border-gray-200 last:border-b-0">
                                 <div>
                                     <p className='font-medium text-gray-800'>{item.productName}</p>
@@ -516,9 +543,9 @@ const Checkout = () => {
                             </div>
                         ))}
                         <div className="border-t border-gray-300 pt-4 mt-4 space-y-2">
-                            <div className="flex justify-between text-gray-600"><p>Tạm tính:</p> <p>{formatCurrency(cartData.totalOriginalPrice)}</p></div>
-                            <div className="flex justify-between text-gray-600"><p>Giảm giá:</p> <p className="text-green-600">-{formatCurrency(cartData.discount)}</p></div>
-                            <div className="flex justify-between text-lg font-bold text-gray-800"><p>Tổng cộng:</p> <p className="text-red-600">{formatCurrency(cartData.totalDiscountedPrice)}</p></div>
+                            <div className="flex justify-between text-gray-600"><p>Tạm tính:</p> <p>{formatCurrency(selectedTotalOriginalPrice)}</p></div>
+                            <div className="flex justify-between text-gray-600"><p>Giảm giá:</p> <p className="text-green-600">-{formatCurrency(selectedTotalOriginalPrice - selectedTotalDiscountedPrice)}</p></div>
+                            <div className="flex justify-between text-lg font-bold text-gray-800"><p>Tổng cộng:</p> <p className="text-red-600">{formatCurrency(selectedTotalDiscountedPrice)}</p></div>
                         </div>
                     </div>
                 )}
@@ -537,7 +564,7 @@ const Checkout = () => {
                 <button
                     type="button"
                     onClick={handlePlaceOrder}
-                    disabled={isPlacingOrder || isCartContextLoading || !cartData?.cartItems?.length || authIsLoading}
+                    disabled={isPlacingOrder || isCartContextLoading || selectedCartItems.length === 0 || authIsLoading}
                     className="bg-red-600 hover:bg-red-700 active:scale-[0.99] text-white text-xs sm:text-sm font-bold py-3.5 px-8 rounded-2xl shadow-lg shadow-red-100 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                     {isPlacingOrder || authIsLoading ? (

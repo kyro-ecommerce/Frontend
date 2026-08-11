@@ -2,6 +2,7 @@
 import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import { orderService } from '../../services/user/order.service';
 import { useAuthContext } from './AuthContext'; // Giả sử bạn có AuthContext
+import { getErrorMessage } from '../../utils/errorUtils';
 
 const OrderContext = createContext(null);
 
@@ -44,7 +45,7 @@ export const OrderProvider = ({ children }) => {
   }, [isAuthenticated, fetchAddresses]); // Thêm fetchAddresses
 
   // createNewOrder (giữ nguyên hoặc đảm bảo useCallback nếu cần)
-  const createNewOrder = useCallback(async (addressId, paymentMethod = 'COD') => {
+  const createNewOrder = useCallback(async (addressId, paymentMethod, cartItemIds, cartVersion, expectedTotalDiscountedPrice) => {
     if (!isAuthenticated) {
       setError("Vui lòng đăng nhập để đặt hàng.");
       throw new Error("User not authenticated");
@@ -56,7 +57,7 @@ export const OrderProvider = ({ children }) => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await orderService.createOrder(addressId, paymentMethod);
+      const response = await orderService.createOrder(addressId, paymentMethod, cartItemIds, cartVersion, expectedTotalDiscountedPrice);
       const responseBody = response.data;
       let actualOrderObject = null;
       if (responseBody && Array.isArray(responseBody.orders) && responseBody.orders.length > 0) {
@@ -78,7 +79,7 @@ export const OrderProvider = ({ children }) => {
       setCurrentOrder(actualOrderObject);
       return actualOrderObject;
     } catch (err) {
-      const errorMessage = err.message || err.response?.data?.message || err.response?.data?.error || "Không thể tạo đơn hàng.";
+      const errorMessage = getErrorMessage(err, "Không thể tạo đơn hàng.");
       setError(errorMessage);
       setCurrentOrder(null);
       throw err;

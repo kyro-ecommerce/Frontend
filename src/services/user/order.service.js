@@ -2,12 +2,12 @@
 import { api } from "../../config/user/ApiConfig";
 
 export const orderService = {
-    createOrder: async (addressId, paymentMethod = "COD") => {
+    createOrder: async (addressId, paymentMethod, cartItemIds, cartVersion, expectedTotalDiscountedPrice) => {
         try {
             if (!addressId) {
                 throw new Error("Address ID is required to create an order.");
             }
-            const response = await api.post(`/orders`, { addressId, paymentMethod });
+            const response = await api.post(`/orders`, { addressId, paymentMethod, cartItemIds, cartVersion, expectedTotalDiscountedPrice });
             return response; 
         } catch (error) {
             console.error('Lỗi khi tạo đơn hàng (Service):', error.response || error);
@@ -143,14 +143,6 @@ export const orderService = {
     cancelOrder: async (orderId) => { 
         try {
             const response = await api.put(`/orders/${orderId}/cancel`);
-            return response;
-        } catch (error) {
-            throw error;
-        }
-    },
-    sendOrderToEmail: async (orderId) => { /* ... Giữ nguyên ... */ 
-        try {
-            const response = await api.post(`/orders/send-mail/${orderId}`);
             return response;
         } catch (error) {
             throw error;
