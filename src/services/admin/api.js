@@ -35,6 +35,7 @@ api.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
         error.normalizedMessage = getErrorMessage(error);
+        error.message = error.normalizedMessage;
         error.errorCode = getErrorCode(error);
 
         if (error.response?.status === 401 && !originalRequest._retry) {

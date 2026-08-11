@@ -130,7 +130,7 @@ function ForgotPassword({ onBackToLogin }) {
         try {
             // Assuming your authService.resendOtp sends the OTP
             const response = await authService.resendOtp(email);
-            setMessage(response.data?.message || "OTP sent to your email address. Please check your inbox (and spam folder).");
+            setMessage(response.message || "OTP sent to your email address. Please check your inbox (and spam folder).");
             setStep(2); // Move to the next step
         } catch (error) {
             console.error("Error sending OTP:", error);
@@ -157,7 +157,7 @@ function ForgotPassword({ onBackToLogin }) {
              // await authService.verifyOtp(email, otp); // Verify first
              // const response = await authService.resetPassword(...) // Then reset
 
-            setMessage(response.data?.message || "Password has been reset successfully!");
+            setMessage(response.message || "Password has been reset successfully!");
             // Optionally clear fields or redirect after success
             setOtp("");
             setNewPassword("");

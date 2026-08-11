@@ -3,7 +3,6 @@ import axios from "axios";
 import { API_BASE_URL } from "../../config/user/ApiConfig";
 import { api } from "../../config/user/ApiConfig";
 import {
-    getRefreshTokenFromCookie,
     getTokenFromLocalStorage,
 } from "./util";
 
@@ -23,7 +22,7 @@ export const authService = {
     login: async (userData) => {
         try {
             // console.log("Đang gửi yêu cầu đăng nhập:", userData);
-            const response = await axios.post(`${API_BASE_URL}/auth/login`, userData);
+            const response = await axios.post(`${API_BASE_URL}/auth/login`, userData, { withCredentials: true });
             // console.log("Phản hồi từ đăng nhập:", response.data);
             // Service chỉ nên trả về response, việc xử lý token sẽ do AuthContext đảm nhiệm
             return response;
@@ -45,13 +44,8 @@ export const authService = {
 
     refreshToken: async () => {
         try {
-            const refreshToken = getRefreshTokenFromCookie();
-            if (!refreshToken) {
-                throw new Error("Không có refresh token");
-            }
-            const response = await axios.post(`${API_BASE_URL}/auth/refresh-token`, { refreshToken });
-            // Trả về response, AuthContext sẽ xử lý việc lưu token mới
-            return response;
+            const response = await axios.post(`${API_BASE_URL}/auth/refresh-token`, {}, { withCredentials: true });
+            return response.data.accessToken;
         } catch (error) {
             // authService không nên tự clearAllTokens, việc đó do AuthContext quyết định
             throw error;
@@ -112,13 +106,4 @@ export const authService = {
         }
     },
 
-    changeRoleToSeller: async () => {
-        try {
-            const response = await api.post(`${API_BASE_URL}/users/change-role`, { role: 'SELLER' });
-            return response;
-        } catch (error) {
-            console.error("Lỗi khi đổi vai trò thành Seller:", error.response?.data || error.message);
-            throw error;
-        }
-    },
 };

@@ -14,7 +14,7 @@ export const getErrorMessage = (error, fallbackMessage = "Đã xảy ra lỗi. V
   }
 
   // Tái sử dụng theo thứ tự ưu tiên: detail (RFC 7807) > message > title
-  return data.detail || data.message || data.title || error.message || fallbackMessage;
+  return data.detail || data.message || data.properties?.message || data.title || error.message || fallbackMessage;
 };
 
 /**
@@ -24,5 +24,6 @@ export const getErrorMessage = (error, fallbackMessage = "Đã xảy ra lỗi. V
  * @returns {string} Error code string
  */
 export const getErrorCode = (error) => {
-  return error?.response?.data?.code || "UNKNOWN_ERROR";
+  const data = error?.response?.data;
+  return data?.code || data?.properties?.code || "UNKNOWN_ERROR";
 };

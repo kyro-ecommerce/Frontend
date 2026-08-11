@@ -3,54 +3,6 @@
  */
 
 /**
- * Lưu refresh token vào cookie
- * @param {string} refreshToken - Token cần lưu
- * @param {number} days - Số ngày hết hạn (mặc định: 7 ngày)
- */
-export const saveRefreshTokenToCookie = (refreshToken, days = 7) => {
-    try {
-        console.log("Lưu refresh token vào cookie");
-        const expiryDate = new Date();
-        expiryDate.setDate(expiryDate.getDate() + days);
-        document.cookie = `refreshToken=${refreshToken}; expires=${expiryDate.toUTCString()}; path=/; SameSite=Strict; HttpOnly`;
-    } catch (error) {
-        console.error("Lỗi khi lưu refresh token vào cookie:", error);
-    }
-};
-
-/**
- * Lấy refresh token từ cookie
- * @returns {string|null} Refresh token hoặc null nếu không tìm thấy
- */
-export const getRefreshTokenFromCookie = () => {
-    try {
-        const cookieValue = document.cookie
-            .split('; ')
-            .find(row => row.startsWith('refreshToken='));
-        
-        if (cookieValue) {
-            return cookieValue.split('=')[1];
-        }
-        return null;
-    } catch (error) {
-        console.error("Lỗi khi lấy refresh token từ cookie:", error);
-        return null;
-    }
-};
-
-/**
- * Xóa refresh token khỏi cookie
- */
-export const removeRefreshTokenFromCookie = () => {
-    try {
-        document.cookie = 'refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-        console.log("Đã xóa refresh token khỏi cookie");
-    } catch (error) {
-        console.error("Lỗi khi xóa refresh token khỏi cookie:", error);
-    }
-};
-
-/**
  * Lưu access token vào localStorage
  * @param {string} token - Access token cần lưu
  */
@@ -90,11 +42,10 @@ export const removeTokenFromLocalStorage = () => {
 };
 
 /**
- * Xóa tất cả token (cả access và refresh token)
+ * Xóa access token phía client. Refresh token HttpOnly được backend xóa khi logout.
  */
 export const clearAllTokens = () => {
     removeTokenFromLocalStorage();
-    removeRefreshTokenFromCookie();
 };
 
 /**
@@ -152,4 +103,4 @@ export const getCodeFromUrl = () => {
  */
 export const isOAuthCallback = () => {
     return !!getCodeFromUrl();
-}; 
+};
