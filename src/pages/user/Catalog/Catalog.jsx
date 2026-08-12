@@ -241,7 +241,7 @@ const Catalog = ({ category: categoryProp }) => {
 
         <div className="flex flex-col md:flex-row gap-6 lg:gap-8 mt-4">
           {/* Sidebar - Truyền callback để bắt sự kiện khi filter thay đổi */}
-          <FilterSidebar topCategory={categoryProp} onFilterChange={() => setLoading(true)} />
+          <FilterSidebar topCategory={categoryProp} categoryTree={categoryTree} onFilterChange={() => setLoading(true)} />
 
           {/* Main Content Area */}
           <section className="w-full">

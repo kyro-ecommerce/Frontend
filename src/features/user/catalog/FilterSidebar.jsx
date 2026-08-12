@@ -1,7 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useFilter } from "./FilterContext";
-import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { productService } from "../../../services/user/product.service";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import Filter from "./Filter";
 
 // Price filter data (Giữ nguyên)
@@ -31,19 +30,18 @@ const sortOptions = [
   { label: "Mới nhất", value: "newest" }
 ];
 
-// Nhận topCategory từ props của Catalog component
-const FilterSidebar = ({ topCategory }) => {
+// Nhận categoryTree từ Catalog để dùng chung response GET /categories
+const FilterSidebar = ({ topCategory, categoryTree }) => {
   const { activeFilters, updateFilters, clearAllFilters } = useFilter();
   const location = useLocation(); // Để lấy query string hiện tại
   const { secondLevelCategory: secondLevelCategoryFromUrl } = useParams(); 
   const navigate = useNavigate(); // 
 
-  // --- State cho categories ---
-  // Lưu trữ object response từ API { data: [...], message: ... } hoặc null
-  const [categoryData, setCategoryData] = useState(null);
-  const [categoryLoading, setCategoryLoading] = useState(false); // Chỉ loading khi fetch categories
-  const [categoryError, setCategoryError] = useState(null);
-  // ---------------------------
+  const categoryAliases = { desktops: 'desktop-computers', others: 'other-products' };
+  const categoryData = categoryTree?.find(category =>
+    category.name.toLowerCase() === (categoryAliases[topCategory] || topCategory).toLowerCase()
+  )?.subCategories || [];
+  const categoryLoading = topCategory !== 'all' && categoryTree === null;
 
   // --- State cho sections (Giữ nguyên) ---
   const [expandedSections, setExpandedSections] = useState({
@@ -52,42 +50,6 @@ const FilterSidebar = ({ topCategory }) => {
     color: true,
     sort: true
   });
-
-  // --- Fetch second-level categories khi topCategory thay đổi ---
-  useEffect(() => {
-    // Hàm async để fetch data
-    const fetchSecondCategories = async () => {
-        // Chỉ fetch khi topCategory có giá trị và không phải 'all'
-        if (!topCategory || topCategory === 'all') {
-            setCategoryData(null); // Xóa data cũ nếu không fetch
-            setCategoryLoading(false);
-            setCategoryError(null);
-            return; // Không làm gì nếu là trang 'all' hoặc không có topCategory
-        }
-
-        setCategoryLoading(true); // Bắt đầu loading
-        setCategoryError(null); // Reset lỗi
-        setCategoryData(null); // Reset data cũ
-
-        try {
-            // *** Gọi API service đã tạo ***
-            const categoryAliases = { desktops: 'desktop-computers', others: 'other-products' };
-            const response = await productService.getSecondCategory(categoryAliases[topCategory] || topCategory);
-            console.log("Fetched second categories:", response.data); // Log dữ liệu từ API
-            setCategoryData(response.data); // Lưu toàn bộ object { data: [...], message: ...} vào state
-        } catch (err) {
-            console.error("Error fetching second categories:", err);
-            setCategoryError(err.response?.data?.message || err.message || "Failed to load categories");
-            setCategoryData(null); // Đảm bảo data là null khi lỗi
-        } finally {
-            setCategoryLoading(false); // Kết thúc loading
-        }
-    };
-
-    fetchSecondCategories(); // Gọi hàm fetch
-
-    // Dependency array: Chạy lại effect này khi `topCategory` thay đổi
-  }, [topCategory]);
 
   // --- Các hàm xử lý khác (Giữ nguyên) ---
   const toggleSection = (section) => { /* ... */
@@ -156,8 +118,7 @@ const FilterSidebar = ({ topCategory }) => {
             {expandedSections.category && (
               <div className="flex flex-col gap-1 mt-3 text-sm text-gray-700">
                 {categoryLoading && <div className="text-gray-400 text-xs py-1">Đang tải...</div>}
-                {categoryError && <div className="text-red-500 text-xs py-1">Lỗi: {categoryError}</div>}
-                {!categoryLoading && !categoryError && categoryData && (
+                {!categoryLoading && (
                   <label key="all-types" className="flex items-center gap-2.5 py-1 px-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
                     <input
                       type="radio"
@@ -170,7 +131,7 @@ const FilterSidebar = ({ topCategory }) => {
                     <span className="text-sm font-medium text-gray-700">Tất cả {topCategory}</span>
                   </label>
                 )}
-                {!categoryLoading && !categoryError && categoryData?.length > 0 && (
+                {!categoryLoading && categoryData.length > 0 && (
                   categoryData.map((category) => {
                     const categorySlug = category.name.toLowerCase().replace(/\s+/g, '-');
                     const isChecked = secondLevelCategoryFromUrl?.toLowerCase() === categorySlug;
