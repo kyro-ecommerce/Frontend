@@ -92,49 +92,16 @@ export const orderService = {
         }
     },
 
-    getAllOrders: async () => { 
+    getAllOrders: async ({ status, page = 0, size = 20 } = {}) => {
         try {
-            const response = await api.get("/orders");
-            return response;
-        } catch (error) {
-            throw error;
-        }
-    },
-    getPendingOrders: async () => { 
-        try {
-            const response = await api.get("/orders/pending");
-            return response;
-        } catch (error) {
-            throw error;
-        }
-    },
-    getShippingOrders: async () => { 
-        try {
-            const response = await api.get("/orders/shipped");
-            return response;
-        } catch (error) {
-            throw error;
-        }
-    },
-    getDeliveredOrders: async () => { 
-        try {
-            const response = await api.get("/orders/delivered");
-            return response;
-        } catch (error) {
-            throw error;
-        }
-    },
-    getCancelledOrders: async () => { 
-        try {
-            const response = await api.get("/orders/cancelled");
-            return response;
-        } catch (error) {
-            throw error;
-        }
-    },
-    getConfirmedOrders: async () => { 
-        try {
-            const response = await api.get("/orders/confirmed");
+            const response = await api.get("/orders", {
+                params: {
+                    status: status && status !== "all" ? status : undefined,
+                    page,
+                    size,
+                    sort: "orderDate,desc"
+                }
+            });
             return response;
         } catch (error) {
             throw error;

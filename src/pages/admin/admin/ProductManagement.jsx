@@ -124,9 +124,11 @@ const ProductManagementContent = () => {
 
     // Apply filters (same logic as Product.jsx)
     const handleApplyFilters = () => {
+        const selectedCategory = localFilterState.secondLevelCategory || localFilterState.topLevelCategory;
         updateFilters({
             topLevelCategory: localFilterState.topLevelCategory,
             secondLevelCategory: localFilterState.secondLevelCategory,
+            categoryId: selectedCategory ? categories.ids?.[selectedCategory] : null,
             minPrice: localFilterState.minPrice ? parseInt(localFilterState.minPrice) : null,
             maxPrice: localFilterState.maxPrice ? parseInt(localFilterState.maxPrice) : null,
             status: localFilterState.status

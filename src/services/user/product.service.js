@@ -14,30 +14,37 @@ export const productService = {
         }
     },
 
-    getAllProducts: () =>
-        api.get(`${API_BASE_URL}/products`),
+    getAllProducts: (params = {}) =>
+        api.get(`${API_BASE_URL}/products`, { params }),
 
     getProductByFilter: (filterPayload) => {
         const {
-            topLevelCategory,
-            secondLevelCategory,
+            categoryId,
             color,
             minPrice,
             maxPrice,
             sort,
-            keyword
-            // Bỏ pageNumber, pageSize nếu backend không dùng
+            keyword,
+            brand,
+            inStock,
+            minRating,
+            page = 0,
+            size = 20
         } = filterPayload;
 
         // Xây dựng params cho Axios
         const params = {
-            topLevelCategory: topLevelCategory || undefined,
-            secondLevelCategory: secondLevelCategory || undefined,
+            categoryId: categoryId || undefined,
             color: color || undefined,
             minPrice: minPrice ?? undefined, // Gửi nếu là số
             maxPrice: maxPrice ?? undefined,
             sort: sort || undefined,
-            keyword: keyword || undefined
+            keyword: keyword || undefined,
+            brand: brand || undefined,
+            inStock: inStock ?? undefined,
+            minRating: minRating ?? undefined,
+            page,
+            size
         };
 
         // Loại bỏ các key undefined
@@ -51,6 +58,8 @@ export const productService = {
 
 
     getSecondCategory: (topCategory) =>
-        api.get(`${API_BASE_URL}/categories/${topCategory}`)
+        api.get(`${API_BASE_URL}/categories/${topCategory}`),
+
+    getCategories: () => api.get(`${API_BASE_URL}/categories/`)
 
 };

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import BreadcrumbNav from "../../../layouts/user/BreadcrumbNav";
 import ProductControls from "../../../features/user/catalog/ProductControls";
@@ -8,7 +8,6 @@ import ProductCard from "../../../features/user/product/ProductCard";
 import ProductSkeleton from "../../../features/user/product/ProductSkeleton";
 import Pagination from "../../../components/user/common/Pagination";
 import { productService } from "../../../services/user/product.service";
-import { aiService } from "../../../services/user/ai.service";
 import ZeroResultsRecommendations from "../../../features/user/catalog/ZeroResultsRecommendations";
 
 const extractImageUrl = (product) => {
@@ -66,9 +65,19 @@ const Catalog = ({ category: categoryProp }) => {
   const [loading, setLoading] = useState(true);
   const [statusMessage, setStatusMessage] = useState("");
   const [messageType, setMessageType] = useState("");
+  const [categoryTree, setCategoryTree] = useState(null);
+  const latestRequest = useRef(0);
+
+  useEffect(() => {
+    productService.getCategories()
+      .then(response => setCategoryTree(response.data || []))
+      .catch(() => setCategoryTree([]));
+  }, []);
 
   // --- Fetch và Xử lý Dữ liệu ---
   const fetchDataAndPaginate = useCallback(async () => {
+    if (categoryProp !== 'all' && categoryTree === null) return;
+    const requestId = ++latestRequest.current;
     setLoading(true);
     setStatusMessage("Đang tải sản phẩm...");
     setMessageType("info");
@@ -97,55 +106,49 @@ const Catalog = ({ category: categoryProp }) => {
   
       // 2. Tạo payload cho API
       const searchKeyword = queryKeyword || keyword;
+      const categoryAliases = {
+        desktops: 'desktop-computers',
+        others: 'other-products'
+      };
+      const topName = categoryAliases[categoryProp] || categoryProp;
+      const topCategory = categoryTree?.find(category => category.name.toLowerCase() === String(topName).toLowerCase());
+      const selectedCategory = secondLevelCategoryProp
+        ? topCategory?.subCategories?.find(category =>
+            category.name.toLowerCase().replace(/\s+/g, '-') === secondLevelCategoryProp.toLowerCase())
+        : topCategory;
+      const sortMap = {
+        price_low: 'price,asc',
+        price_high: 'price,desc',
+        discount: 'discountPercent,desc',
+        newest: 'createdAt,desc'
+      };
       const filterPayload = {
-        topLevelCategory: (location.pathname.includes('/laptop')) ? "laptop" : 
-                          (categoryProp && categoryProp !== 'all') ? categoryProp : undefined,
-        secondLevelCategory: secondLevelCategoryProp || undefined,
+        categoryId: categoryProp === 'all' ? undefined : (selectedCategory?.categoryId ?? -1),
         color: colorFilter || undefined,
         minPrice: minPrice,
         maxPrice: maxPrice,
-        sort: sortFilter || undefined,
-        keyword: searchKeyword || undefined
+        sort: sortMap[sortFilter] || undefined,
+        keyword: searchKeyword || undefined,
+        page: currentPage - 1,
+        size: itemsPerPage
       };
   
       console.log("Filter payload:", filterPayload);
-      let fetchedData = [];
+      const response = await productService.getProductByFilter(filterPayload);
+      if (requestId !== latestRequest.current) return;
+      const pageData = response.data || {};
+      const fetchedData = pageData.content || [];
 
-      // 3. Ưu tiên AI Hybrid Search (Vector + BM25 RRF) khi người dùng tìm kiếm từ khóa
-      if (searchKeyword && searchKeyword.trim()) {
-        try {
-          const aiSearchRes = await aiService.search(searchKeyword.trim(), 20);
-          if (aiSearchRes && Array.isArray(aiSearchRes.results) && aiSearchRes.results.length > 0) {
-            fetchedData = aiSearchRes.results;
-          }
-        } catch (aiErr) {
-          console.warn("AI Search unavailable, fallback to standard filter:", aiErr);
-        }
-      }
-
-      // 4. Nếu không có kết quả từ AI Search hoặc không dùng từ khóa, fallback sang SQL Filter
-      if (!fetchedData || fetchedData.length === 0) {
-        const response = await productService.getProductByFilter(filterPayload);
-        fetchedData = Array.isArray(response.data) ? response.data : (response.data?.data || []);
-      }
-  
-      // 5. Lưu trữ và Phân trang Client-side
       setAllFilteredProducts(fetchedData);
-      const totalFetchedItems = fetchedData.length;
-      setTotalItems(totalFetchedItems);
-  
-      const calculatedTotalPages = Math.ceil(totalFetchedItems / itemsPerPage);
-      setTotalPages(calculatedTotalPages);
-  
-      // Tính toán slice cho trang hiện tại
-      const startIndex = (currentPage - 1) * itemsPerPage;
-      const endIndex = startIndex + itemsPerPage;
-      setCurrentProducts(fetchedData.slice(startIndex, endIndex));
+      setTotalItems(pageData.totalElements || 0);
+      setTotalPages(pageData.totalPages || 0);
+      setCurrentProducts(fetchedData);
   
       setStatusMessage("");
       setMessageType("");
   
     } catch (error) {
+      if (requestId !== latestRequest.current) return;
       console.error("Lỗi khi lấy dữ liệu sản phẩm:", error);
       setStatusMessage(error.response?.data?.message || "Tải sản phẩm thất bại. Vui lòng thử lại.");
       setMessageType("error");
@@ -154,11 +157,9 @@ const Catalog = ({ category: categoryProp }) => {
       setTotalPages(0);
       setTotalItems(0);
     } finally {
-      setTimeout(() => {
-        setLoading(false);
-      }, 300);
+      if (requestId === latestRequest.current) setLoading(false);
     }
-  }, [categoryProp, secondLevelCategoryProp, currentPage, location.search, itemsPerPage, keyword, location.pathname]);
+  }, [categoryProp, secondLevelCategoryProp, currentPage, location.search, itemsPerPage, keyword, categoryTree]);
 
 
   useEffect(() => {

@@ -4,31 +4,32 @@ import api from './api';
 export const getAllProducts = (params = {}) => {
     const {
         page = 0,
-        size = 10,
+        size = 20,
         sortBy = 'createdAt',
         sortDir = 'desc',
         keyword = '',
-        topLevelCategory = '',
-        secondLevelCategory = '',
+        categoryId = null,
         color = '',
         minPrice = null,
         maxPrice = null,
-        status = 'all'
+        brand = '',
+        inStock = null,
+        minRating = null
     } = params;
 
     const queryParams = new URLSearchParams();
     queryParams.append('page', page);
     queryParams.append('size', size);
-    queryParams.append('sortBy', sortBy);
-    queryParams.append('sortDir', sortDir);
+    queryParams.append('sort', `${sortBy},${sortDir}`);
 
     if (keyword) queryParams.append('keyword', keyword);
-    if (topLevelCategory) queryParams.append('topLevelCategory', topLevelCategory);
-    if (secondLevelCategory) queryParams.append('secondLevelCategory', secondLevelCategory);
+    if (categoryId !== null) queryParams.append('categoryId', categoryId);
     if (color) queryParams.append('color', color);
     if (minPrice !== null) queryParams.append('minPrice', minPrice);
     if (maxPrice !== null) queryParams.append('maxPrice', maxPrice);
-    if (status && status !== 'all') queryParams.append('status', status);
+    if (brand) queryParams.append('brand', brand);
+    if (inStock !== null) queryParams.append('inStock', inStock);
+    if (minRating !== null) queryParams.append('minRating', minRating);
 
     return api.get(`/admin/products?${queryParams.toString()}`);
 };

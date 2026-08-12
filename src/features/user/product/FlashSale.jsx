@@ -16,12 +16,11 @@ const FlashSale = () => {
   const fetchProducts = async () => {
     try {
       const filterPayload = {
-        sort: "discount" || undefined,
-        // sort: "price_low" || undefined,
-        // sort: "newest" || undefined,
+        sort: "discountPercent,desc",
+        size: 5
       };
       const response = await productService.getProductByFilter(filterPayload);
-      setProducts(response.data.slice(0, 5)); // Vẫn giữ nguyên lấy 6 sản phẩm
+      setProducts(response.data?.content || []);
     } catch (error) {
       console.error("Error fetching flash sale products:", error);
     }

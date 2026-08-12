@@ -39,8 +39,7 @@ export const getAllOrders = (
     if (endDate) params.append('endDate', endDate);
     if (paymentMethod && paymentMethod !== 'all') params.append('paymentMethod', paymentMethod.toUpperCase());
     if (paymentStatus && paymentStatus !== 'all') params.append('paymentStatus', paymentStatus.toUpperCase());
-    params.append('sortBy', sortBy);
-    params.append('sortDir', sortDir);
+    params.append('sort', `${sortBy},${sortDir}`);
 
     return api.get(`/admin/orders?${params.toString()}`);
 };

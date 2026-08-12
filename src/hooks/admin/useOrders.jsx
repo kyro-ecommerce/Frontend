@@ -1,8 +1,9 @@
 // src/hooks/useOrders.jsx
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { orderService } from "../../services/admin/index.js";
 
 export const useOrders = () => {
+    const latestRequest = useRef(0);
     // State management
     const [orders, setOrders] = useState([]);
     const [pagination, setPagination] = useState({
@@ -33,6 +34,7 @@ export const useOrders = () => {
 
     // Fetch orders with backend filtering
     const fetchOrders = useCallback(async (page = 0, size = 10) => {
+        const requestId = ++latestRequest.current;
         try {
             setIsLoading(true);
             setError(null);
@@ -52,13 +54,14 @@ export const useOrders = () => {
                 sortBy,
                 sortDir
             );
+            if (requestId !== latestRequest.current) return;
 
             if (response.status === 200) {
                 const responseData = response.data?.data || response.data || {};
                 const orderList = responseData.content || responseData.orders || (Array.isArray(responseData) ? responseData : []);
                 setOrders(orderList);
 
-                const currentPage = responseData.number ?? responseData.currentPage ?? 0;
+                const currentPage = responseData.page ?? 0;
                 const totalPages = responseData.totalPages ?? 1;
                 const totalElements = responseData.totalElements ?? orderList.length;
                 const pageSize = responseData.size ?? size;
@@ -75,11 +78,12 @@ export const useOrders = () => {
                 throw new Error("Cannot load orders data");
             }
         } catch (err) {
+            if (requestId !== latestRequest.current) return;
             console.error("Error loading orders:", err);
             setError("Cannot load orders. Please try again.");
             setOrders([]);
         } finally {
-            setIsLoading(false);
+            if (requestId === latestRequest.current) setIsLoading(false);
         }
     }, [filter, searchTerm, dateRange, paymentMethod, paymentStatus, sortBy, sortDir]);
 

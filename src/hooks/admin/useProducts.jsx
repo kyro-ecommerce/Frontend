@@ -1,5 +1,5 @@
 // src/hooks/useProducts.jsx - Updated with proper filter integration
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { categoryService, productService } from "../../services/admin/index.js";
 
 export const useProducts = () => {
@@ -8,9 +8,10 @@ export const useProducts = () => {
     const [error, setError] = useState(null);
     const [categories, setCategories] = useState({
         topLevel: [],
-        secondLevel: {}
+        secondLevel: {},
+        ids: {}
     });
-    const [isRequestInProgress, setIsRequestInProgress] = useState(false);
+    const latestRequest = useRef(0);
 
 
     // Pagination state
@@ -28,6 +29,7 @@ export const useProducts = () => {
     // Filter state for admin
     const [filters, setFilters] = useState({
         keyword: '',
+        categoryId: null,
         topLevelCategory: '',
         secondLevelCategory: '',
         color: '',
@@ -52,24 +54,22 @@ export const useProducts = () => {
                 topLevel: tree.map(category => category.name),
                 secondLevel: Object.fromEntries(
                     tree.map(category => [category.name, (category.subCategories || []).map(sub => sub.name)])
-                )
+                ),
+                ids: Object.fromEntries(tree.flatMap(category => [
+                    [category.name, category.categoryId],
+                    ...(category.subCategories || []).map(sub => [sub.name, sub.categoryId])
+                ]))
             };
             setCategories(catData);
             return catData;
         } catch (err) {
             console.error('Error fetching categories:', err);
-            return { topLevel: [], secondLevel: {} };
+            return { topLevel: [], secondLevel: {}, ids: {} };
         }
     }, []);
 
     const fetchProducts = useCallback(async (page = 0, size = 10, currentSortBy = sortBy, currentSortOrder = sortOrder, currentFilters = null) => {
-        // Prevent duplicate requests
-        if (isRequestInProgress) {
-            console.log('Request already in progress, skipping...');
-            return;
-        }
-
-        setIsRequestInProgress(true);
+        const requestId = ++latestRequest.current;
         setIsLoading(true);
 
         try {
@@ -80,25 +80,24 @@ export const useProducts = () => {
                 sortBy: currentSortBy,
                 sortDir: currentSortOrder,
                 keyword: filtersToUse.keyword,
-                topLevelCategory: filtersToUse.topLevelCategory,
-                secondLevelCategory: filtersToUse.secondLevelCategory,
+                categoryId: filtersToUse.categoryId,
                 color: filtersToUse.color,
                 minPrice: filtersToUse.minPrice,
                 maxPrice: filtersToUse.maxPrice,
-                status: filtersToUse.status
+                inStock: filtersToUse.status === 'all' ? null : filtersToUse.status === 'inStock'
             });
 
             const pageData = response.data?.data || response.data || {};
+            if (requestId !== latestRequest.current) return;
             const productList = pageData.content || pageData.products || (Array.isArray(pageData) ? pageData : []);
             setProducts(productList);
 
-            const paginationData = pageData.pagination || {};
-            const currentPage = pageData.number ?? pageData.currentPage ?? paginationData.currentPage ?? 0;
-            const totalPages = pageData.totalPages ?? paginationData.totalPages ?? 1;
-            const totalElements = pageData.totalElements ?? paginationData.totalElements ?? productList.length;
-            const pageSize = pageData.size ?? pageData.pageSize ?? paginationData.pageSize ?? 10;
-            const isFirst = pageData.first ?? pageData.isFirst ?? paginationData.isFirst ?? (currentPage === 0);
-            const isLast = pageData.last ?? pageData.isLast ?? paginationData.isLast ?? (currentPage >= totalPages - 1);
+            const currentPage = pageData.page ?? 0;
+            const totalPages = pageData.totalPages ?? 0;
+            const totalElements = pageData.totalElements ?? 0;
+            const pageSize = pageData.size ?? size;
+            const isFirst = pageData.first ?? true;
+            const isLast = pageData.last ?? true;
 
             setPagination({
                 currentPage,
@@ -113,13 +112,13 @@ export const useProducts = () => {
 
             return pageData;
         } catch (err) {
+            if (requestId !== latestRequest.current) return;
             setError(err.response?.data?.message || 'Không thể lấy danh sách sản phẩm');
             throw err;
         } finally {
-            setIsLoading(false);
-            setIsRequestInProgress(false);
+            if (requestId === latestRequest.current) setIsLoading(false);
         }
-    }, [filters, sortBy, sortOrder, isRequestInProgress]);
+    }, [filters, sortBy, sortOrder]);
 
     const updateFilters = useCallback((newFilters, shouldCallAPI = true) => {
         const updatedFilters = { ...filters, ...newFilters };
@@ -133,6 +132,7 @@ export const useProducts = () => {
     const clearFilters = useCallback(() => {
         const defaultFilters = {
             keyword: '',
+            categoryId: null,
             topLevelCategory: '',
             secondLevelCategory: '',
             color: '',
@@ -158,9 +158,14 @@ export const useProducts = () => {
     // Handle category filter (for compatibility)
     const handleCategoryFilter = useCallback((category) => {
         setSelectedCategory(category);
-        setFilters(prev => ({ ...prev, topLevelCategory: category, secondLevelCategory: '' }));
+        setFilters(prev => ({
+            ...prev,
+            categoryId: category ? categories.ids?.[category] : null,
+            topLevelCategory: category,
+            secondLevelCategory: ''
+        }));
         // Reset to first page when filtering
-    }, [fetchProducts, pagination.pageSize, sortBy, sortOrder, filters]);
+    }, [categories]);
 
     // Handle sort
     const handleSort = useCallback((field) => {
@@ -299,6 +304,7 @@ export const useProducts = () => {
         clearFilters: () => {
             const defaultFilters = {
                 keyword: '',
+                categoryId: null,
                 topLevelCategory: '',
                 secondLevelCategory: '',
                 color: '',
