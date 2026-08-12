@@ -4,31 +4,32 @@ import api from './api';
 export const getAllProducts = (params = {}) => {
     const {
         page = 0,
-        size = 10,
+        size = 20,
         sortBy = 'createdAt',
         sortDir = 'desc',
         keyword = '',
-        topLevelCategory = '',
-        secondLevelCategory = '',
+        categoryId = null,
         color = '',
         minPrice = null,
         maxPrice = null,
-        status = 'all'
+        brand = '',
+        inStock = null,
+        minRating = null
     } = params;
 
     const queryParams = new URLSearchParams();
     queryParams.append('page', page);
     queryParams.append('size', size);
-    queryParams.append('sortBy', sortBy);
-    queryParams.append('sortDir', sortDir);
+    queryParams.append('sort', `${sortBy},${sortDir}`);
 
     if (keyword) queryParams.append('keyword', keyword);
-    if (topLevelCategory) queryParams.append('topLevelCategory', topLevelCategory);
-    if (secondLevelCategory) queryParams.append('secondLevelCategory', secondLevelCategory);
+    if (categoryId !== null) queryParams.append('categoryId', categoryId);
     if (color) queryParams.append('color', color);
     if (minPrice !== null) queryParams.append('minPrice', minPrice);
     if (maxPrice !== null) queryParams.append('maxPrice', maxPrice);
-    if (status && status !== 'all') queryParams.append('status', status);
+    if (brand) queryParams.append('brand', brand);
+    if (inStock !== null) queryParams.append('inStock', inStock);
+    if (minRating !== null) queryParams.append('minRating', minRating);
 
     return api.get(`/admin/products?${queryParams.toString()}`);
 };
@@ -36,19 +37,24 @@ export const getAllProducts = (params = {}) => {
 export const getProductById = (productId) => api.get(`/admin/products/${productId}`);
 
 export const createProduct = (productData) => {
-    // Clean payload for CreateProductRequest (remove 'images' and 'id' which don't exist on CreateProductRequest)
-    const { images, id, ...postPayload } = productData;
+    const { images, imageUrls, id, ...postPayload } = productData;
     return api.post("/admin/products", postPayload);
 };
 
 export const updateProduct = (productId, productData) => {
-    // Clean payload for Product entity (remove CreateProductRequest specific fields)
-    const { imageUrls, topLevelCategory, secondLevelCategory, ...putPayload } = productData;
-    if (!putPayload.images && imageUrls) {
-        putPayload.images = imageUrls;
-    }
+    const { images, imageUrls, ...putPayload } = productData;
     return api.put(`/admin/products/${productId}`, putPayload);
 };
+
+export const uploadProductImage = (productId, file) => {
+    const body = new FormData();
+    body.append("image", file);
+    return api.post(`/images/upload/${productId}`, body, { headers: { "Content-Type": "multipart/form-data" } });
+};
+
+export const addProductImageUrl = (productId, url) => api.post(`/images/url/${productId}`, { url });
+
+export const deleteProductImage = (imageId) => api.delete(`/images/delete/${imageId}`);
 
 export const deleteProduct = (productId) => api.delete(`/admin/products/${productId}`);
 

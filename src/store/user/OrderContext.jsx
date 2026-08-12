@@ -1,5 +1,5 @@
 // src/contexts/OrderContext.jsx
-import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
+import React, { createContext, useState, useEffect, useContext, useCallback, useRef } from 'react';
 import { orderService } from '../../services/user/order.service';
 import { useAuthContext } from './AuthContext'; // Giả sử bạn có AuthContext
 import { getErrorMessage } from '../../utils/errorUtils';
@@ -7,7 +7,9 @@ import { getErrorMessage } from '../../utils/errorUtils';
 const OrderContext = createContext(null);
 
 export const OrderProvider = ({ children }) => {
+  const latestOrderRequest = useRef(0);
   const [orders, setOrders] = useState([]);
+  const [orderPagination, setOrderPagination] = useState({ page: 0, totalPages: 0, totalElements: 0, first: true, last: true });
   const [currentOrder, setCurrentOrder] = useState(null);
   const [addresses, setAddresses] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -148,25 +150,27 @@ export const OrderProvider = ({ children }) => {
   }, [isAuthenticated, fetchAddresses]); // Thêm fetchAddresses
 
   // **QUAN TRỌNG: Bọc fetchUserOrders trong useCallback**
-  const fetchUserOrders = useCallback(async (status = "all") => {
+  const fetchUserOrders = useCallback(async (status = "all", page = 0) => {
     if (!isAuthenticated) {
         setOrders([]);
         return;
     }
     setIsLoading(true);
+    const requestId = ++latestOrderRequest.current;
     setError(null);
     console.log(`[OrderContext] Fetching orders with status: ${status}`); // Thêm log
     try {
-        let response;
-        switch (status) {
-          case "PENDING": response = await orderService.getPendingOrders(); break;
-          case "SHIPPED": response = await orderService.getShippingOrders(); break;
-          case "DELIVERED": response = await orderService.getDeliveredOrders(); break;
-          case "CANCELLED": response = await orderService.getCancelledOrders(); break;
-          case "CONFIRMED": response = await orderService.getConfirmedOrders(); break;
-          case "all": default: response = await orderService.getAllOrders(); break;
-        }
-        const fetchedOrders = response.data?.data || response.data || [];
+        const response = await orderService.getAllOrders({ status, page, size: 20 });
+        if (requestId !== latestOrderRequest.current) return;
+        const pageData = response.data || {};
+        const fetchedOrders = pageData.content || [];
+        setOrderPagination({
+          page: pageData.page || 0,
+          totalPages: pageData.totalPages || 0,
+          totalElements: pageData.totalElements || 0,
+          first: pageData.first ?? true,
+          last: pageData.last ?? true
+        });
         console.log(`[OrderContext] Fetched orders for status ${status}:`, fetchedOrders); // Thêm log
         
         const normalizedOrders = fetchedOrders.map(order => {
@@ -177,11 +181,12 @@ export const OrderProvider = ({ children }) => {
         }).filter(Boolean); // Loại bỏ các giá trị null hoặc undefined nếu có
         setOrders(normalizedOrders);
     } catch (err) {
+        if (requestId !== latestOrderRequest.current) return;
         console.error(`Lỗi khi lấy danh sách đơn hàng (${status}) (Context):`, err);
         setError(err.response?.data?.message || err.message || "Không thể tải danh sách đơn hàng.");
         setOrders([]);
     } finally {
-        setIsLoading(false);
+        if (requestId === latestOrderRequest.current) setIsLoading(false);
     }
   }, [isAuthenticated]); // Chỉ phụ thuộc vào isAuthenticated
 
@@ -225,6 +230,7 @@ export const OrderProvider = ({ children }) => {
 
   const value = {
     orders,
+    orderPagination,
     currentOrder,
     addresses,
     isLoading,

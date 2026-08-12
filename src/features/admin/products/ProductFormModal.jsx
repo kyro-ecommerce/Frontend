@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import ProductNewCategory from "./ProductNewCategory";
 import { translateCategoryName } from "../../../utils/admin/format.js";
+import { productService } from "../../../services/admin/index.js";
+import { getErrorMessage } from "../../../utils/errorUtils.js";
 
 const ProductFormModal = ({ product, categories, onClose, onSave }) => {
     const isEditing = !!product;
@@ -18,8 +19,9 @@ const ProductFormModal = ({ product, categories, onClose, onSave }) => {
         sizes: [],
         imageUrls: []
     });
-    const [hasSizes, setHasSizes] = useState(false);
     const [imageFiles, setImageFiles] = useState([]);
+    const [removedImageIds, setRemovedImageIds] = useState([]);
+    const [savedProductId, setSavedProductId] = useState(product?.id || null);
     const [imageUrlInput, setImageUrlInput] = useState("");
     const [errors, setErrors] = useState({});
     const [customSizeInput, setCustomSizeInput] = useState("");
@@ -35,11 +37,9 @@ const ProductFormModal = ({ product, categories, onClose, onSave }) => {
             }
             return prev;
         });
-        setHasSizes(true);
         setCustomSizeInput("");
     };
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [showCategoryForm, setShowCategoryForm] = useState(false);
 
     // Load product data when editing
     useEffect(() => {
@@ -59,17 +59,11 @@ const ProductFormModal = ({ product, categories, onClose, onSave }) => {
                 sizes: initialSizes,
                 imageUrls: product.imageUrls || product.images || []
             });
-            setHasSizes(initialSizes.length > 0);
         }
     }, [product]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-
-        if ((name === "topLevelCategory" || name === "secondLevelCategory") && value === "add-new") {
-            setShowCategoryForm(true);
-            return;
-        }
 
         setFormData(prev => ({
             ...prev,
@@ -82,11 +76,6 @@ const ProductFormModal = ({ product, categories, onClose, onSave }) => {
     const handleTopCategoryChange = (e) => {
         const value = e.target.value;
 
-        if (value === "add-new") {
-            setShowCategoryForm(true);
-            return;
-        }
-
         setFormData(prev => ({
             ...prev,
             topLevelCategory: value,
@@ -96,11 +85,6 @@ const ProductFormModal = ({ product, categories, onClose, onSave }) => {
 
     const handleSubCategoryChange = (e) => {
         const value = e.target.value;
-
-        if (value === "add-new") {
-            setShowCategoryForm(true);
-            return;
-        }
 
         setFormData(prev => ({
             ...prev,
@@ -121,14 +105,14 @@ const ProductFormModal = ({ product, categories, onClose, onSave }) => {
 
     const handleFileChange = (e) => {
         const files = Array.from(e.target.files);
-        setImageFiles(prev => [...prev, ...files]);
+        setImageFiles(prev => [...prev, ...files.map(file => ({ file, error: null }))]);
     };
 
     const handleAddUrlImage = () => {
         if (!imageUrlInput.trim()) return;
         setFormData(prev => ({
             ...prev,
-            imageUrls: [...prev.imageUrls, { downloadUrl: imageUrlInput.trim() }]
+            imageUrls: [...prev.imageUrls, { downloadUrl: imageUrlInput.trim(), pending: true, error: null }]
         }));
         setImageUrlInput("");
     };
@@ -138,6 +122,8 @@ const ProductFormModal = ({ product, categories, onClose, onSave }) => {
     };
 
     const removeExistingImage = (index) => {
+        const image = formData.imageUrls[index];
+        if (image?.imageId) setRemovedImageIds(prev => [...prev, image.imageId]);
         setFormData(prev => ({
             ...prev,
             imageUrls: prev.imageUrls.filter((_, i) => i !== index)
@@ -152,6 +138,8 @@ const ProductFormModal = ({ product, categories, onClose, onSave }) => {
         if (formData.discountedPrice !== "" && Number(formData.discountedPrice) > Number(formData.price)) {
             newErrors.discountedPrice = "Giá khuyến mãi không được lớn hơn giá gốc";
         }
+        if (!formData.topLevelCategory) newErrors.category = "Vui lòng chọn danh mục chính";
+        if (!formData.secondLevelCategory) newErrors.category = "Vui lòng chọn danh mục con";
 
         setErrors(newErrors);
         return Object.keys(newErrors).length === 0;
@@ -170,26 +158,6 @@ const ProductFormModal = ({ product, categories, onClose, onSave }) => {
                 quantity: Number(formData.quantity) || 10
             }));
 
-            // Image list for backend
-            const uploadedImages = imageFiles.map((file, idx) => ({
-                fileName: file.name || `img_${idx + 1}.jpg`,
-                fileType: file.type || "image/jpeg",
-                downloadUrl: `https://picsum.photos/seed/${encodeURIComponent(file.name || Date.now())}/600/600`
-            }));
-
-            const existingImages = (formData.imageUrls || []).map(img => {
-                let url = typeof img === 'string' ? img : (img.downloadUrl || img.url || "");
-                if (url.length > 240) {
-                    url = `https://picsum.photos/seed/img_${Math.floor(Math.random() * 1000)}/600/600`;
-                }
-                return { downloadUrl: url };
-            }).filter(img => Boolean(img.downloadUrl));
-
-            const finalImages = [...existingImages, ...uploadedImages];
-            if (finalImages.length === 0) {
-                finalImages.push({ downloadUrl: "https://picsum.photos/seed/product/600/600" });
-            }
-
             const numPrice = Number(formData.price) || 0;
             let rawDiscounted = formData.discountedPrice !== "" ? Number(formData.discountedPrice) : numPrice;
             let numDiscountPercent = 0;
@@ -207,26 +175,6 @@ const ProductFormModal = ({ product, categories, onClose, onSave }) => {
                 }
             }
 
-            let topCat = formData.topLevelCategory ? formData.topLevelCategory.trim() : "";
-            let subCat = formData.secondLevelCategory ? formData.secondLevelCategory.trim() : "";
-
-            if (!topCat) {
-                if (categories?.topLevel && categories.topLevel.length > 0) {
-                    topCat = categories.topLevel[0];
-                } else {
-                    topCat = "other-products";
-                }
-            }
-
-            if (!subCat || subCat.toLowerCase() === topCat.toLowerCase()) {
-                const availableSubs = categories?.secondLevel?.[topCat] || [];
-                if (availableSubs.length > 0) {
-                    subCat = availableSubs[0];
-                } else {
-                    subCat = `${topCat}-sub`;
-                }
-            }
-
             const payload = {
                 ...(isEditing ? { id: product.id } : {}),
                 title: formData.title.trim().substring(0, 95),
@@ -237,36 +185,87 @@ const ProductFormModal = ({ product, categories, onClose, onSave }) => {
                 quantity: Number(formData.quantity) || 0,
                 brand: (formData.brand ? formData.brand.trim() : "Generic").substring(0, 45),
                 color: (formData.color ? formData.color.trim() : "Tiêu chuẩn").substring(0, 18),
-                topLevelCategory: topCat,
-                secondLevelCategory: subCat,
-                sizes: mappedSizes,
-                images: finalImages,
-                imageUrls: finalImages
+                topLevelCategory: formData.topLevelCategory.trim(),
+                secondLevelCategory: formData.secondLevelCategory.trim(),
+                sizes: mappedSizes
             };
 
-            console.log("Submitting Product Payload:", payload);
-            await onSave(payload);
+            const result = await onSave(payload);
+            if (!result?.success) {
+                setErrors(prev => ({ ...prev, submit: result?.error || "Không thể lưu sản phẩm" }));
+                return;
+            }
+
+            const productId = result.data?.id || product?.id;
+            setSavedProductId(productId);
+            const failures = [];
+            const failedDeletes = [];
+            for (const imageId of removedImageIds) {
+                try {
+                    await productService.deleteProductImage(imageId);
+                } catch (error) {
+                    failedDeletes.push(imageId);
+                    failures.push(getErrorMessage(error));
+                }
+            }
+            setRemovedImageIds(failedDeletes);
+
+            const updatedUrls = [...formData.imageUrls];
+            for (let index = 0; index < updatedUrls.length; index += 1) {
+                const image = updatedUrls[index];
+                if (!image.pending) continue;
+                try {
+                    updatedUrls[index] = (await productService.addProductImageUrl(productId, image.downloadUrl)).data;
+                } catch (error) {
+                    const message = getErrorMessage(error);
+                    updatedUrls[index] = { ...image, error: message };
+                    failures.push(message);
+                }
+            }
+            setFormData(prev => ({ ...prev, imageUrls: updatedUrls }));
+
+            const failedFiles = [];
+            for (const entry of imageFiles) {
+                try {
+                    await productService.uploadProductImage(productId, entry.file);
+                } catch (error) {
+                    const message = getErrorMessage(error);
+                    failedFiles.push({ ...entry, error: message });
+                    failures.push(message);
+                }
+            }
+            setImageFiles(failedFiles);
+
+            if (failures.length) {
+                setErrors(prev => ({ ...prev, images: `Sản phẩm đã lưu; ${failures.length} thao tác ảnh thất bại. Có thể thử lại từng ảnh.` }));
+                return;
+            }
+            onClose();
         } catch (err) {
             console.error("Submit error:", err);
+            setErrors(prev => ({ ...prev, submit: getErrorMessage(err) }));
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    const handleCategoryCreated = (newCategory) => {
-        setShowCategoryForm(false);
-        if (!newCategory.parent) {
-            setFormData(prev => ({
-                ...prev,
-                topLevelCategory: newCategory.name,
-                secondLevelCategory: newCategory.name
-            }));
-        } else {
-            setFormData(prev => ({
-                ...prev,
-                topLevelCategory: newCategory.parent,
-                secondLevelCategory: newCategory.name
-            }));
+    const retryUrl = async (index) => {
+        try {
+            const image = formData.imageUrls[index];
+            const saved = (await productService.addProductImageUrl(savedProductId || product.id, image.downloadUrl)).data;
+            setFormData(prev => ({ ...prev, imageUrls: prev.imageUrls.map((item, i) => i === index ? saved : item) }));
+        } catch (error) {
+            setFormData(prev => ({ ...prev, imageUrls: prev.imageUrls.map((item, i) => i === index ? { ...item, error: getErrorMessage(error) } : item) }));
+        }
+    };
+
+    const retryFile = async (index) => {
+        const entry = imageFiles[index];
+        try {
+            await productService.uploadProductImage(savedProductId || product.id, entry.file);
+            setImageFiles(prev => prev.filter((_, i) => i !== index));
+        } catch (error) {
+            setImageFiles(prev => prev.map((item, i) => i === index ? { ...item, error: getErrorMessage(error) } : item));
         }
     };
 
@@ -286,14 +285,7 @@ const ProductFormModal = ({ product, categories, onClose, onSave }) => {
                     </button>
                 </div>
 
-                {showCategoryForm ? (
-                    <ProductNewCategory
-                        categories={categories?.topLevel || []}
-                        onSave={handleCategoryCreated}
-                        onCancel={() => setShowCategoryForm(false)}
-                    />
-                ) : (
-                    <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
+                <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
                         <div className="p-6 overflow-y-auto flex-1 space-y-5">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                 {/* Left Column: Basic Info */}
@@ -404,6 +396,7 @@ const ProductFormModal = ({ product, categories, onClose, onSave }) => {
                                                     </option>
                                                 ))}
                                             </select>
+                                            {errors.category && <div className="text-red-500 text-[11px] font-semibold mt-1">{errors.category}</div>}
                                         </div>
 
                                         <div>
@@ -418,7 +411,7 @@ const ProductFormModal = ({ product, categories, onClose, onSave }) => {
                                                 disabled={!formData.topLevelCategory}
                                                 className="w-full py-2.5 px-3 bg-slate-50 border border-slate-200/80 rounded-xl text-xs font-bold text-slate-700 outline-none focus:bg-white focus:border-[#1D7461] transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                                             >
-                                                <option value="">Chọn danh mục con (tùy chọn)</option>
+                                                <option value="">Chọn danh mục con</option>
                                                 {formData.topLevelCategory &&
                                                     categories?.secondLevel?.[formData.topLevelCategory]?.map((subCategory, index) => (
                                                         <option key={index} value={subCategory}>
@@ -526,7 +519,7 @@ const ProductFormModal = ({ product, categories, onClose, onSave }) => {
                                             <span className="text-xs font-bold text-slate-500 group-hover:text-[#1D7461]">Tải ảnh từ máy tính</span>
                                         </label>
 
-                                        {/* URL Image Input fallback */}
+                                        {/* Manual image URL */}
                                         <div className="flex gap-2 mb-3">
                                             <input
                                                 type="url"
@@ -546,9 +539,9 @@ const ProductFormModal = ({ product, categories, onClose, onSave }) => {
 
                                         <div className="flex flex-wrap gap-2.5 max-h-36 overflow-y-auto p-1">
                                             {/* New uploaded preview */}
-                                            {imageFiles.map((file, index) => (
-                                                <div key={`new-${index}`} className="relative w-16 h-16 rounded-xl overflow-hidden border border-slate-200 shadow-xs group shrink-0">
-                                                    <img className="w-full h-full object-cover" src={URL.createObjectURL(file)} alt={`Preview ${index + 1}`} />
+                                            {imageFiles.map((entry, index) => (
+                                                <div key={`new-${index}`} className={`relative w-16 h-16 rounded-xl overflow-hidden border shadow-xs group shrink-0 ${entry.error ? 'border-red-500' : 'border-slate-200'}`} title={entry.error || ''}>
+                                                    <img className="w-full h-full object-cover" src={URL.createObjectURL(entry.file)} alt={`Preview ${index + 1}`} />
                                                     <button
                                                         type="button"
                                                         className="absolute top-1 right-1 w-5 h-5 bg-black/60 text-white rounded-full flex items-center justify-center text-xs border-none cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
@@ -556,12 +549,13 @@ const ProductFormModal = ({ product, categories, onClose, onSave }) => {
                                                     >
                                                         ✕
                                                     </button>
+                                                    {entry.error && <button type="button" onClick={() => retryFile(index)} className="absolute bottom-0 inset-x-0 bg-red-600 text-white text-[9px] border-0 cursor-pointer">Thử lại</button>}
                                                 </div>
                                             ))}
 
                                             {/* Existing images preview */}
                                             {formData.imageUrls && formData.imageUrls.map((image, index) => (
-                                                <div key={`existing-${index}`} className="relative w-16 h-16 rounded-xl overflow-hidden border border-slate-200 shadow-xs group shrink-0">
+                                                <div key={`existing-${index}`} className={`relative w-16 h-16 rounded-xl overflow-hidden border shadow-xs group shrink-0 ${image.error ? 'border-red-500' : 'border-slate-200'}`} title={image.error || ''}>
                                                     <img className="w-full h-full object-cover" src={image.downloadUrl || image} alt={`Existing ${index + 1}`} />
                                                     <button
                                                         type="button"
@@ -570,10 +564,12 @@ const ProductFormModal = ({ product, categories, onClose, onSave }) => {
                                                     >
                                                         ✕
                                                     </button>
+                                                    {image.error && <button type="button" onClick={() => retryUrl(index)} className="absolute bottom-0 inset-x-0 bg-red-600 text-white text-[9px] border-0 cursor-pointer">Thử lại</button>}
                                                 </div>
                                             ))}
                                         </div>
                                     </div>
+                                    {(errors.images || errors.submit) && <div className="text-red-600 text-xs font-semibold">{errors.images || errors.submit}</div>}
                                 </div>
                             </div>
                         </div>
@@ -595,8 +591,7 @@ const ProductFormModal = ({ product, categories, onClose, onSave }) => {
                                 {isSubmitting ? "Đang lưu..." : isEditing ? "Cập nhật sản phẩm" : "Thêm sản phẩm mới"}
                             </button>
                         </div>
-                    </form>
-                )}
+                </form>
             </div>
         </div>
     );

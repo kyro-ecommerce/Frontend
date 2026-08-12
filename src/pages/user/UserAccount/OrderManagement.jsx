@@ -9,6 +9,7 @@ const OrderManagement = () => {
   const navigate = useNavigate();
   const {
     orders,
+    orderPagination,
     isLoading,
     error,
     fetchUserOrders,
@@ -16,9 +17,10 @@ const OrderManagement = () => {
   } = useOrderContext();
 
   const [selectedStatus, setSelectedStatus] = useState("all");
+  const [currentPage, setCurrentPage] = useState(0);
 
-  const memoizedFetchUserOrders = useCallback((status) => {
-    fetchUserOrders(status);
+  const memoizedFetchUserOrders = useCallback((status, page) => {
+    fetchUserOrders(status, page);
   }, [fetchUserOrders]);
 
   const memoizedClearOrderError = useCallback(() => {
@@ -27,8 +29,8 @@ const OrderManagement = () => {
 
   useEffect(() => {
     memoizedClearOrderError();
-    memoizedFetchUserOrders(selectedStatus);
-  }, [selectedStatus, memoizedFetchUserOrders, memoizedClearOrderError]);
+    memoizedFetchUserOrders(selectedStatus, currentPage);
+  }, [selectedStatus, currentPage, memoizedFetchUserOrders, memoizedClearOrderError]);
 
   const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', minimumFractionDigits: 0 }).format(amount || 0);
 
@@ -89,7 +91,10 @@ const OrderManagement = () => {
         {statusFilters.map(filter => (
           <button
             key={filter.value}
-            onClick={() => setSelectedStatus(filter.value)}
+            onClick={() => {
+              setSelectedStatus(filter.value);
+              setCurrentPage(0);
+            }}
             className={`px-4 py-2 text-xs sm:text-sm font-bold rounded-2xl transition-all cursor-pointer ${
               selectedStatus === filter.value
                 ? 'bg-blue-600 text-white shadow-md shadow-blue-100'
@@ -203,6 +208,29 @@ const OrderManagement = () => {
               </div>
             </div>
           ))}
+          {orderPagination.totalPages > 1 && (
+            <div className="flex items-center justify-center gap-3 pt-2">
+              <button
+                type="button"
+                disabled={orderPagination.first || isLoading}
+                onClick={() => setCurrentPage(page => page - 1)}
+                className="px-4 py-2 rounded-xl border border-gray-200 bg-white text-sm font-bold disabled:opacity-40"
+              >
+                Trang trước
+              </button>
+              <span className="text-sm font-semibold text-gray-600">
+                Trang {orderPagination.page + 1}/{orderPagination.totalPages}
+              </span>
+              <button
+                type="button"
+                disabled={orderPagination.last || isLoading}
+                onClick={() => setCurrentPage(page => page + 1)}
+                className="px-4 py-2 rounded-xl border border-gray-200 bg-white text-sm font-bold disabled:opacity-40"
+              >
+                Trang sau
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

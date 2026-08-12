@@ -83,14 +83,14 @@ const ProductManagementContent = () => {
 
             if (result.success) {
                 toast.success(editingProduct ? "Cập nhật sản phẩm thành công!" : "Thêm sản phẩm mới thành công!");
-                setIsFormModalOpen(false);
-                setEditingProduct(null);
                 refreshProducts();
             } else {
                 toast.error(result.error || "Thao tác thất bại!");
             }
+            return result;
         } catch (err) {
             toast.error(`Đã xảy ra lỗi: ${err.message}`);
+            return { success: false, error: err.message };
         }
     };
 
@@ -124,9 +124,11 @@ const ProductManagementContent = () => {
 
     // Apply filters (same logic as Product.jsx)
     const handleApplyFilters = () => {
+        const selectedCategory = localFilterState.secondLevelCategory || localFilterState.topLevelCategory;
         updateFilters({
             topLevelCategory: localFilterState.topLevelCategory,
             secondLevelCategory: localFilterState.secondLevelCategory,
+            categoryId: selectedCategory ? categories.ids?.[selectedCategory] : null,
             minPrice: localFilterState.minPrice ? parseInt(localFilterState.minPrice) : null,
             maxPrice: localFilterState.maxPrice ? parseInt(localFilterState.maxPrice) : null,
             status: localFilterState.status

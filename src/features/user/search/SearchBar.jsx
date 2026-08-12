@@ -41,12 +41,10 @@ const SearchBar = () => {
     setIsLoading(true);
     const timer = setTimeout(async () => {
       try {
-        const response = await productService.getProductByFilter({ keyword: trimmed });
-        const productList = Array.isArray(response?.data)
-          ? response.data
-          : response?.data?.data || [];
-        setTotalCount(productList.length);
-        setResults(productList.slice(0, 7)); // Hiển thị tối đa 7 sản phẩm
+        const response = await productService.getProductByFilter({ keyword: trimmed, size: 7 });
+        const productList = response.data?.content || [];
+        setTotalCount(response.data?.totalElements || 0);
+        setResults(productList);
         setIsOpen(true);
       } catch (error) {
         console.error('Lỗi khi tìm kiếm sản phẩm:', error);

@@ -71,7 +71,8 @@ const FilterSidebar = ({ topCategory }) => {
 
         try {
             // *** Gọi API service đã tạo ***
-            const response = await productService.getSecondCategory(topCategory);
+            const categoryAliases = { desktops: 'desktop-computers', others: 'other-products' };
+            const response = await productService.getSecondCategory(categoryAliases[topCategory] || topCategory);
             console.log("Fetched second categories:", response.data); // Log dữ liệu từ API
             setCategoryData(response.data); // Lưu toàn bộ object { data: [...], message: ...} vào state
         } catch (err) {

@@ -64,7 +64,7 @@ const ProductList = ({
                                             <div className="flex items-center gap-3">
                                                 <div className="w-12 h-12 rounded-xl bg-slate-100 overflow-hidden shrink-0 border border-slate-200/60 p-0.5">
                                                     {(() => {
-                                                        const img = product.imageUrls?.[0]?.downloadUrl || product.imageUrls?.[0]?.url || (typeof product.imageUrls?.[0] === 'string' ? product.imageUrls[0] : null) || product.images?.[0]?.downloadUrl || product.imageUrl || 'https://picsum.photos/seed/product/200/200';
+                                                        const img = product.imageUrls?.[0]?.downloadUrl || product.imageUrls?.[0]?.url || (typeof product.imageUrls?.[0] === 'string' ? product.imageUrls[0] : null) || product.images?.[0]?.downloadUrl || product.imageUrl || '/Placeholder2.png';
                                                         return <img className="w-full h-full object-cover rounded-lg" src={img} alt={product.title} />;
                                                     })()}
                                                 </div>

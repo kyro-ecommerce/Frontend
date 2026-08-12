@@ -26,7 +26,7 @@ const ProductDetailModal = ({ product, onClose, onEdit }) => {
                                 const imagesList = (product.imageUrls && product.imageUrls.length > 0)
                                     ? product.imageUrls
                                     : (product.images || []);
-                                const mainImg = imagesList[0]?.downloadUrl || imagesList[0]?.url || (typeof imagesList[0] === 'string' ? imagesList[0] : null) || 'https://picsum.photos/seed/product/400/400';
+                                const mainImg = imagesList[0]?.downloadUrl || imagesList[0]?.url || (typeof imagesList[0] === 'string' ? imagesList[0] : null) || '/Placeholder2.png';
                                 
                                 return (
                                     <>
