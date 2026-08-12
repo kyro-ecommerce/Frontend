@@ -55,11 +55,6 @@ export const productService = {
         return api.get(`${API_BASE_URL}/products`, { params }); // Axios sẽ tự chuyển thành query string
     },
 
-
-
-    getSecondCategory: (topCategory) =>
-        api.get(`${API_BASE_URL}/categories/${topCategory}`),
-
-    getCategories: () => api.get(`${API_BASE_URL}/categories/`)
+    getCategories: () => api.get(`${API_BASE_URL}/categories`)
 
 };

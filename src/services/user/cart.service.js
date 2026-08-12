@@ -34,9 +34,7 @@ export const cartService = {
 
     updateCartItem: async (itemId, quantity) => {
         try {
-            const response = await api.put(`/carts/items/${itemId}`, null, {
-                params: { quantity }
-            });
+            const response = await api.patch(`/carts/items/${itemId}`, { quantity });
             return response;
         } catch (error) {
             console.error("Error updating cart item in service:", error.response || error);
