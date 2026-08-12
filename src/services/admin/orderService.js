@@ -1,11 +1,7 @@
 // src/services/orderService.js
 import api from './api';
 
-export const confirmOrder = (orderId) => api.put(`/admin/orders/${orderId}/confirm`);
-export const shipOrder = (orderId) => api.put(`/admin/orders/${orderId}/ship`);
-export const deliverOrder = (orderId) => api.put(`/admin/orders/${orderId}/deliver`);
-export const cancelOrder = (orderId) => api.put(`/admin/orders/${orderId}/cancel`);
-export const updateOrderStatus = (orderId, status) => api.put(`/admin/orders/${orderId}/status`, { status });
+export const updateOrderStatus = (orderId, status) => api.patch(`/admin/orders/${orderId}/status`, { status });
 export const deleteOrder = (orderId) => api.delete(`/admin/orders/${orderId}`);
 
 export const getOrderStats = (startDate, endDate) => {
@@ -13,7 +9,7 @@ export const getOrderStats = (startDate, endDate) => {
     if (startDate) params.append('startDate', startDate);
     if (endDate) params.append('endDate', endDate);
 
-    return api.get(`/admin/orders/stats?${params.toString()}`);
+    return api.get(`/admin/analytics/orders/summary?${params.toString()}`);
 };
 
 export const getAllOrders = (

@@ -42,7 +42,8 @@ const ProductReviews = ({ productId, onRatingUpdate, initialAverageRating, initi
       if (isAuthenticated()) {
         try {
           const tempp = await reviewService.canReview(productId);
-          setCanReview(Boolean(tempp?.data?.data ?? tempp?.data));
+          const eligibility = tempp?.data?.data ?? tempp?.data;
+          setCanReview(Boolean(eligibility?.eligible));
         } catch (err) {
           setCanReview(false);
         }
@@ -138,8 +139,7 @@ const ProductReviews = ({ productId, onRatingUpdate, initialAverageRating, initi
 
     setIsSubmitting(true);
     try {
-       await reviewService.addReview({
-        productId,
+       await reviewService.addReview(productId, {
         rating: userRating,
         content: comment
       });

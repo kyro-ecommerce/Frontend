@@ -143,29 +143,9 @@ export const useOrders = () => {
     // Handle status change
     const handleStatusChange = useCallback(async (orderId, actionOrStatus) => {
         try {
-            let response;
             const upper = String(actionOrStatus).toUpperCase();
-
-            if (["PENDING", "CONFIRMED", "SHIPPED", "DELIVERED", "CANCELLED"].includes(upper)) {
-                response = await orderService.updateOrderStatus(orderId, upper);
-            } else {
-                switch (actionOrStatus) {
-                    case "confirm":
-                        response = await orderService.confirmOrder(orderId);
-                        break;
-                    case "ship":
-                        response = await orderService.shipOrder(orderId);
-                        break;
-                    case "deliver":
-                        response = await orderService.deliverOrder(orderId);
-                        break;
-                    case "cancel":
-                        response = await orderService.cancelOrder(orderId);
-                        break;
-                    default:
-                        response = await orderService.updateOrderStatus(orderId, upper);
-                }
-            }
+            const status = { confirm: "CONFIRMED", ship: "SHIPPED", deliver: "DELIVERED", cancel: "CANCELLED" }[actionOrStatus] || upper;
+            const response = await orderService.updateOrderStatus(orderId, status);
 
             if (response && (response.status === 200 || response.status === 204)) {
                 fetchOrders(pagination.currentPage, pagination.pageSize);

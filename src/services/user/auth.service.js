@@ -35,7 +35,7 @@ export const authService = {
 
     getUserProfile: async () => { // Nên là async nếu bạn muốn await nó trong Context
         try {
-            const response = await api.get(`${API_BASE_URL}/users/profile`);
+            const response = await api.get(`${API_BASE_URL}/users/me`);
             return response; // Trả về toàn bộ response
         } catch (error) {
             throw error;
@@ -44,7 +44,7 @@ export const authService = {
 
     refreshToken: async () => {
         try {
-            const response = await axios.post(`${API_BASE_URL}/auth/refresh-token`, {}, { withCredentials: true });
+            const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {}, { withCredentials: true });
             return response.data.accessToken;
         } catch (error) {
             // authService không nên tự clearAllTokens, việc đó do AuthContext quyết định
@@ -72,7 +72,7 @@ export const authService = {
     // Ví dụ:
     resendOtp: async (email) => {
         try {
-            const response = await axios.post(`${API_BASE_URL}/auth/register/resend-otp`, { email });
+            const response = await axios.post(`${API_BASE_URL}/auth/verification/resend`, { email });
             return response.data;
         } catch (error) {
             throw error;
@@ -81,7 +81,7 @@ export const authService = {
 
     verifyOtp: async (email, otp) => {
         try {
-            const response = await axios.post(`${API_BASE_URL}/auth/register/verify`, { email, otp });
+            const response = await axios.post(`${API_BASE_URL}/auth/verification`, { email, otp });
             return response.data;
         } catch (error) {
             throw error;
@@ -90,7 +90,7 @@ export const authService = {
 
     resetPassword: async (email, newPassword, otp) => {
         try {
-            const response = await axios.post(`${API_BASE_URL}/auth/register/forgot-password`, { email, newPassword, otp });
+            const response = await axios.post(`${API_BASE_URL}/auth/password-reset`, { email, newPassword, otp });
             return response.data;
         } catch (error) {
             throw error;
@@ -99,7 +99,7 @@ export const authService = {
 
     updateProfile: async (userData) => {
         try {
-            const response = await api.put(`${API_BASE_URL}/users/profile`, userData);
+            const response = await api.patch(`${API_BASE_URL}/users/me`, userData);
             return response.data; // Trả về data để context/component xử lý
         } catch (error) {
             throw error;

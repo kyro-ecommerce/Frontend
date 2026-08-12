@@ -43,7 +43,7 @@ api.interceptors.response.use(
             try {
                 // Gọi API refresh token
                 const res = await axios.post(
-                    `${API_URL}/auth/refresh-token`,
+                    `${API_URL}/auth/refresh`,
                     {},
                     {
                         withCredentials: true, // Để gửi cookies (refresh token)

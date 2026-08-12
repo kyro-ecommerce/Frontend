@@ -27,7 +27,7 @@ export const orderService = {
 
     getAddresses: async () => {
         try {
-            const response = await api.get("/users/addresses");
+            const response = await api.get("/users/me/addresses");
             return response;
         } catch (error) {
             console.error('Lỗi khi lấy địa chỉ (Service):', error.response || error);
@@ -37,7 +37,7 @@ export const orderService = {
 
     addAddress: async (addressData) => {
         try {
-            const response = await api.post("/users/addresses", addressData);
+            const response = await api.post("/users/me/addresses", addressData);
             return response;
         } catch (error) {
             console.error('Lỗi khi thêm địa chỉ (Service):', error.response || error);
@@ -47,7 +47,7 @@ export const orderService = {
 
     deleteAddress: async (addressId) => {
         try {
-            const response = await api.delete(`/users/addresses/${addressId}`);
+            const response = await api.delete(`/users/me/addresses/${addressId}`);
             return response;
         } catch (error) {
             console.error('Lỗi khi xóa địa chỉ (Service):', error.response || error);
@@ -57,7 +57,7 @@ export const orderService = {
 
     updateAddress: async (addressId, addressData) => {
         try {
-            const response = await api.put(`/users/addresses/${addressId}`, addressData);
+            const response = await api.put(`/users/me/addresses/${addressId}`, addressData);
             return response;
         } catch (error) {
             console.error('Lỗi khi sửa địa chỉ (Service):', error.response || error);
@@ -67,7 +67,7 @@ export const orderService = {
 
     createVNPayPayment: async (orderId) => {
         try {
-            const response = await api.post(`/payments/${orderId}`);
+            const response = await api.post(`/orders/${orderId}/payments`);
             return response;
         } catch (error) {
             console.error(`Lỗi khi tạo thanh toán VNPAY cho đơn ${orderId} (Service):`, error.response || error);
@@ -81,7 +81,7 @@ export const orderService = {
         }
         try {
             console.log("[OrderService] Calling VNPAY Callback with params:", vnpayParams);
-            const response = await api.get(`/payments/vnpay-callback`, { 
+            const response = await api.get(`/payment-providers/vnpay/callback`, {
                 params: vnpayParams 
             });
             console.log("[OrderService] VNPAY Callback response:", response);
@@ -109,7 +109,7 @@ export const orderService = {
     },
     cancelOrder: async (orderId) => { 
         try {
-            const response = await api.put(`/orders/${orderId}/cancel`);
+            const response = await api.patch(`/orders/${orderId}/status`, { status: "CANCELLED" });
             return response;
         } catch (error) {
             throw error;
