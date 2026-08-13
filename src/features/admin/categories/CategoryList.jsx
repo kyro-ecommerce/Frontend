@@ -50,6 +50,7 @@ const CategoryList = ({
                         <tr className="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
                             <th className="py-3.5 px-4 w-12 text-center">#</th>
                             <th className="py-3.5 px-4">Tên danh mục</th>
+                            <th className="py-3.5 px-4 text-center">Danh mục con</th>
                             <th className="py-3.5 px-4 text-center">Số sản phẩm</th>
                             <th className="py-3.5 px-4 text-right pr-6">Hành động</th>
                         </tr>
@@ -59,6 +60,9 @@ const CategoryList = ({
                             const isExpanded = expandedCategories[parent.categoryId] !== false; // expanded by default
                             const subCats = parent.subCategories || [];
                             const hasSub = subCats.length > 0;
+                            const totalParentProductCount = hasSub
+                                ? subCats.reduce((acc, sub) => acc + (sub.productCount || 0), 0)
+                                : (parent.productCount || 0);
 
                             return (
                                 <React.Fragment key={parent.categoryId || index}>
@@ -95,8 +99,10 @@ const CategoryList = ({
                                                         {parent.name.charAt(0).toUpperCase()}
                                                     </div>
                                                     <div>
-                                                        <div className="font-bold text-slate-900 text-sm">
-                                                            {translateCategoryName(parent.name)}
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-bold text-slate-900 text-sm">
+                                                                {translateCategoryName(parent.name)}
+                                                            </span>
                                                         </div>
                                                         <div className="text-[10px] text-slate-400 font-mono">
                                                             ID: {parent.name}
@@ -106,8 +112,13 @@ const CategoryList = ({
                                             </div>
                                         </td>
                                         <td className="py-3.5 px-4 text-center">
+                                            <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-purple-50 text-purple-700 font-bold text-xs border border-purple-200/60">
+                                                {subCats.length} danh mục
+                                            </span>
+                                        </td>
+                                        <td className="py-3.5 px-4 text-center">
                                             <span className="inline-block px-2.5 py-1 rounded-lg bg-slate-100 text-slate-800 font-bold text-xs">
-                                                {parent.productCount || 0}
+                                                {totalParentProductCount}
                                             </span>
                                         </td>
                                         <td className="py-3.5 px-4 text-right pr-6">
@@ -154,6 +165,9 @@ const CategoryList = ({
                                                         ({sub.name})
                                                     </span>
                                                 </div>
+                                            </td>
+                                            <td className="py-2.5 px-4 text-center text-slate-300 font-bold text-xs">
+                                                -
                                             </td>
                                             <td className="py-2.5 px-4 text-center">
                                                 <span className="inline-block px-2 py-0.5 rounded-md bg-white border border-slate-200 text-slate-700 text-xs font-medium">

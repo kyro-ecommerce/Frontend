@@ -173,20 +173,41 @@ const OrderDetail = () => {
             <Paper elevation={0} sx={{ mb: 4, p: 3, border: '1px solid #e0e0e0', borderRadius: 2 }}>
               <h2 className="text-lg font-semibold mb-4 text-gray-700">Sản phẩm trong đơn hàng</h2>
               <div className="divide-y divide-gray-200">
-                {order.orderItems.map((item, index) => (
-                  <div key={index} className="flex flex-col sm:flex-row gap-4 py-4">
-                    <img src={item.imageUrl || "/Placeholder2.png"} alt={item.productTitle} className="w-24 h-24 object-contain rounded border border-gray-200"/>
-                    <div className="flex-1">
-                      <h3 className="font-medium text-gray-800">{item.productTitle}</h3>
-                      <p className="text-sm text-gray-500">Số lượng: {item.quantity}</p>
-                      {item.size && <p className="text-sm text-gray-500">Cấu hình: {item.size}</p>}
+                {order.orderItems.map((item, index) => {
+                  const targetProductId = item.productId || item.id;
+                  const handleProductClick = () => {
+                    if (targetProductId) {
+                      navigate(`/product/${targetProductId}`);
+                    }
+                  };
+
+                  return (
+                    <div key={index} className="flex flex-col sm:flex-row gap-4 py-4 border-b last:border-b-0 border-gray-100">
+                      <img 
+                        src={item.imageUrl || "/Placeholder2.png"} 
+                        alt={item.productTitle} 
+                        onClick={handleProductClick}
+                        className="w-24 h-24 object-contain rounded border border-gray-200 cursor-pointer hover:opacity-90 hover:border-blue-400 transition-all shrink-0"
+                        title="Xem chi tiết sản phẩm"
+                      />
+                      <div className="flex-1">
+                        <h3 
+                          onClick={handleProductClick}
+                          className="font-medium text-gray-800 cursor-pointer hover:text-blue-600 transition-colors text-base"
+                          title={item.productTitle}
+                        >
+                          {item.productTitle}
+                        </h3>
+                        <p className="text-sm text-gray-500 mt-1">Số lượng: {item.quantity}</p>
+                        {item.size && <p className="text-sm text-gray-500">Cấu hình: {item.size}</p>}
+                      </div>
+                      <div className="text-right sm:min-w-30">
+                        <p className="font-semibold text-blue-600">{formatCurrency(item.discountedPrice * item.quantity)}</p>
+                        {item.price > item.discountedPrice && <p className="text-sm text-gray-400 line-through">{formatCurrency(item.price * item.quantity)}</p>}
+                      </div>
                     </div>
-                    <div className="text-right sm:min-w-30">
-                      <p className="font-semibold text-blue-600">{formatCurrency(item.discountedPrice * item.quantity)}</p>
-                      {item.price > item.discountedPrice && <p className="text-sm text-gray-400 line-through">{formatCurrency(item.price * item.quantity)}</p>}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               <div className="mt-6 pt-4 border-t border-gray-300 space-y-2">
                 <div className="flex justify-between"><p className="text-gray-600">Tạm tính:</p><p>{formatCurrency(order.originalPrice)}</p></div>

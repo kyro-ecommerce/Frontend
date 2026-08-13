@@ -1,9 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import {formatDate} from "../../../utils/admin/format.js";
 import { ArrowUpDown, ArrowUp, ArrowDown, Eye, Trash2, Filter } from "lucide-react";
 
 const UserList = ({
-                      users,
+                      users = [],
                       isLoading,
                       currentPage,
                       totalPages,
@@ -18,8 +18,24 @@ const UserList = ({
                       onStatusFilter,
                       sortBy = "id",
                       sortDir = "asc",
-                      onSort
+                      onSort,
+                      totalElements
                   }) => {
+    const [pageInput, setPageInput] = useState("");
+
+    const handlePageInputChange = (e) => {
+        setPageInput(e.target.value);
+    };
+
+    const handlePageInputKeyPress = (e) => {
+        if (e.key === 'Enter') {
+            const pageNumber = parseInt(pageInput, 10);
+            if (pageNumber >= 1 && pageNumber <= totalPages) {
+                onPageChange(pageNumber - 1);
+            }
+            setPageInput("");
+        }
+    };
 
     const renderSortButton = (field, label) => {
         const isActive = sortBy === field;
@@ -98,6 +114,11 @@ const UserList = ({
                 <h3 className="text-base font-extrabold text-slate-900 tracking-tight m-0">
                     Danh sách người dùng
                 </h3>
+                {totalElements != null && (
+                    <div className="text-xs font-bold text-slate-500">
+                        Hiển thị <span className="text-slate-900 font-extrabold">{users.length}</span> trên <span className="text-slate-900 font-extrabold">{totalElements}</span> người dùng
+                    </div>
+                )}
             </div>
 
             {isLoading ? (
@@ -253,42 +274,60 @@ const UserList = ({
                     </div>
 
                     {/* Phân trang */}
-                    <div className="flex justify-center mt-5">
-                        <button
-                            className="w-9 h-9 border border-slate-200 bg-white rounded-xl mx-1 cursor-pointer flex items-center justify-center text-xs font-bold disabled:text-slate-300 disabled:cursor-not-allowed transition-all"
-                            disabled={currentPage === 0}
-                            onClick={() => onPageChange(currentPage - 1)}
-                        >
-                            &laquo;
-                        </button>
+                    {totalPages > 0 && (
+                        <div className="flex justify-center items-center pt-3 border-t border-slate-200/60 mt-4">
+                            <div className="flex flex-wrap items-center justify-center gap-1.5 bg-slate-50/80 p-1 rounded-2xl border border-slate-200/80">
+                                <button
+                                    className="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-white text-slate-700 hover:bg-slate-100 border border-slate-200/80 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs"
+                                    onClick={() => onPageChange(0)}
+                                    disabled={currentPage === 0}
+                                    title="Trang đầu"
+                                >
+                                    « Đầu
+                                </button>
 
-                        {getPageNumbers().map((page, index) => (
-                            <button
-                                key={index}
-                                className={`w-9 h-9 border rounded-xl mx-1 flex items-center justify-center text-xs font-bold transition-all ${
-                                    page === currentPage
-                                        ? 'bg-[#1D7461] text-white border-[#1D7461] shadow-sm shadow-[#1D7461]/20 cursor-pointer'
-                                        : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 cursor-pointer disabled:text-slate-300 disabled:cursor-not-allowed'
-                                }`}
-                                onClick={() => {
-                                    if (typeof page === 'number') {
-                                        onPageChange(page);
-                                    }
-                                }}
-                                disabled={typeof page !== 'number'}
-                            >
-                                {page === '...' ? '...' : page + 1}
-                            </button>
-                        ))}
+                                <button
+                                    className="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-white text-slate-700 hover:bg-slate-100 border border-slate-200/80 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs"
+                                    disabled={currentPage === 0}
+                                    onClick={() => onPageChange(currentPage - 1)}
+                                >
+                                    ‹ Trước
+                                </button>
 
-                        <button
-                            className="w-9 h-9 border border-slate-200 bg-white rounded-xl mx-1 cursor-pointer flex items-center justify-center text-xs font-bold disabled:text-slate-300 disabled:cursor-not-allowed transition-all"
-                            disabled={currentPage === totalPages - 1}
-                            onClick={() => onPageChange(currentPage + 1)}
-                        >
-                            &raquo;
-                        </button>
-                    </div>
+                                <div className="flex items-center gap-1.5 px-2">
+                                    <span className="text-xs font-bold text-slate-500">Trang</span>
+                                    <input
+                                        type="number"
+                                        value={pageInput}
+                                        onChange={handlePageInputChange}
+                                        onKeyPress={handlePageInputKeyPress}
+                                        placeholder={`${currentPage + 1}`}
+                                        min="1"
+                                        max={totalPages}
+                                        className="w-12 py-1 px-1 text-xs font-black text-center text-[#1D7461] bg-white border border-slate-300 rounded-lg outline-none focus:border-[#1D7461] focus:ring-1 focus:ring-[#1D7461]"
+                                    />
+                                    <span className="text-xs font-bold text-slate-500">/ {totalPages || 1}</span>
+                                </div>
+
+                                <button
+                                    className="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-white text-slate-700 hover:bg-slate-100 border border-slate-200/80 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs"
+                                    disabled={currentPage >= totalPages - 1}
+                                    onClick={() => onPageChange(currentPage + 1)}
+                                >
+                                    Kế ›
+                                </button>
+
+                                <button
+                                    className="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-white text-slate-700 hover:bg-slate-100 border border-slate-200/80 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs"
+                                    onClick={() => onPageChange(totalPages - 1)}
+                                    disabled={currentPage >= totalPages - 1 || totalPages === 0}
+                                    title="Trang cuối"
+                                >
+                                    Cuối »
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </>
             )}
         </div>

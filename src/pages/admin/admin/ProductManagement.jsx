@@ -470,27 +470,30 @@ const ProductManagementContent = () => {
                             onEdit={handleOpenEditModal}
                             onAddProduct={handleOpenAddModal}
                             onDelete={handleDelete}
+                            totalElements={pagination.totalElements}
                         />
 
-                        <div className="flex flex-col items-center mt-6 gap-3">
-                            <div className="flex flex-wrap justify-center items-center gap-2">
+                        <div className="flex justify-center items-center pt-3 border-t border-slate-200/60 mt-4">
+                            <div className="flex flex-wrap items-center justify-center gap-1.5 bg-slate-50/80 p-1 rounded-2xl border border-slate-200/80">
                                 <button
-                                    className={`px-3 py-2 rounded-xl text-xs font-bold inline-flex items-center justify-center gap-2 cursor-pointer transition-all border disabled:opacity-50 disabled:cursor-not-allowed ${pagination.currentPage === 0 ? 'bg-[#1D7461] text-white border-[#1D7461]' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'}`}
+                                    className="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-white text-slate-700 hover:bg-slate-100 border border-slate-200/80 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs"
                                     onClick={() => goToPage(0)}
                                     disabled={pagination.currentPage === 0}
+                                    title="Trang đầu"
                                 >
-                                    Trang đầu
+                                    « Đầu
                                 </button>
 
                                 <button
-                                    className="px-3 py-2 rounded-xl text-xs font-bold inline-flex items-center justify-center gap-2 cursor-pointer transition-all border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-white text-slate-700 hover:bg-slate-100 border border-slate-200/80 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs"
                                     disabled={!pagination.hasPrevious}
                                     onClick={previousPage}
                                 >
-                                    Trang Trước
+                                    ‹ Trước
                                 </button>
 
-                                <div>
+                                <div className="flex items-center gap-1.5 px-2">
+                                    <span className="text-xs font-bold text-slate-500">Trang</span>
                                     <input
                                         type="number"
                                         value={pageInput}
@@ -499,29 +502,27 @@ const ProductManagementContent = () => {
                                         placeholder={`${pagination.currentPage + 1}`}
                                         min="1"
                                         max={pagination.totalPages}
-                                        className="px-3 py-2 rounded-xl text-xs font-bold text-center border border-slate-200 w-16 outline-none focus:border-[#1D7461] bg-white"
+                                        className="w-12 py-1 px-1 text-xs font-black text-center text-[#1D7461] bg-white border border-slate-300 rounded-lg outline-none focus:border-[#1D7461] focus:ring-1 focus:ring-[#1D7461]"
                                     />
+                                    <span className="text-xs font-bold text-slate-500">/ {pagination.totalPages || 1}</span>
                                 </div>
 
                                 <button
-                                    className="px-3 py-2 rounded-xl text-xs font-bold inline-flex items-center justify-center gap-2 cursor-pointer transition-all border border-slate-200 bg-white text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-white text-slate-700 hover:bg-slate-100 border border-slate-200/80 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs"
                                     disabled={!pagination.hasNext}
                                     onClick={nextPage}
                                 >
-                                    Trang kế
+                                    Kế ›
                                 </button>
 
                                 <button
-                                    className={`px-3 py-2 rounded-xl text-xs font-bold inline-flex items-center justify-center gap-2 cursor-pointer transition-all border disabled:opacity-50 disabled:cursor-not-allowed ${pagination.currentPage === pagination.totalPages - 1 || pagination.totalPages === 0 ? 'bg-[#1D7461] text-white border-[#1D7461]' : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'}`}
+                                    className="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-white text-slate-700 hover:bg-slate-100 border border-slate-200/80 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs"
                                     onClick={() => goToPage(pagination.totalPages - 1)}
                                     disabled={pagination.currentPage === pagination.totalPages - 1 || pagination.totalPages === 0}
+                                    title="Trang cuối"
                                 >
-                                    Trang cuối
+                                    Cuối »
                                 </button>
-                            </div>
-
-                            <div className="text-xs font-semibold text-slate-400">
-                                Hiển thị {products?.length || 0} trên {pagination?.totalElements || 0} sản phẩm
                             </div>
                         </div>
                     </div>

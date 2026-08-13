@@ -19,6 +19,7 @@ const UserManagement = () => {
     const [error, setError] = useState(null);
     const [currentPage, setCurrentPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
+    const [totalElements, setTotalElements] = useState(0);
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedRole, setSelectedRole] = useState("");
     const [selectedStatus, setSelectedStatus] = useState("all");
@@ -103,6 +104,7 @@ const UserManagement = () => {
                 const rawList = userData.content || (Array.isArray(userData) ? userData : []);
                 setUsers(rawList);
                 setTotalPages(userData.totalPages || 1);
+                setTotalElements(userData.totalElements || rawList.length);
             } else {
                 throw new Error("Không thể lấy dữ liệu người dùng");
             }
@@ -336,6 +338,7 @@ const UserManagement = () => {
                             sortBy={sortBy}
                             sortDir={sortDir}
                             onSort={handleSort}
+                            totalElements={totalElements || stats.totalUsers || processedUsers.length}
                         />
                     </div>
                 </div>

@@ -4,7 +4,7 @@ import { useConfirm } from "../../../context/ConfirmContext.jsx";
 import { Eye, Pencil, Trash2 } from "lucide-react";
 
 const ProductList = ({
-                         products,
+                         products = [],
                          isLoading,
                          categories = [],
                          onCategoryFilter,
@@ -16,7 +16,8 @@ const ProductList = ({
                          onEdit,
                          onDelete,
                          onAddProduct,
-                         onMultipleDelete
+                         onMultipleDelete,
+                         totalElements
                      }) => {
     const confirm = useConfirm();
 
@@ -35,6 +36,11 @@ const ProductList = ({
                         Danh sách sản phẩm
                     </h3>
                 </div>
+                {totalElements != null && (
+                    <div className="text-xs font-bold text-slate-500">
+                        Hiển thị <span className="text-slate-900 font-extrabold">{products.length}</span> trên <span className="text-slate-900 font-extrabold">{totalElements}</span> sản phẩm
+                    </div>
+                )}
             </div>
 
             {isLoading ? (

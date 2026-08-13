@@ -40,44 +40,37 @@ const CategoryManagement = () => {
 
     return (
         <Layout>
-            <div className="space-y-6 pb-12">
-                {/* Page Title & Breadcrumb */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                        <h1 className="text-xl sm:text-2xl font-black text-slate-900 tracking-tight m-0">
-                            Quản lý danh mục
-                        </h1>
-                        <p className="text-xs font-medium text-slate-500 m-0 mt-1">
-                            Tổ chức và quản lý các phân loại danh mục sản phẩm của cửa hàng
-                        </p>
+            <div className="p-6 md:p-8 bg-[#F8FAFC] min-h-screen">
+                <div className="max-w-7xl mx-auto space-y-4">
+                    {/* Metric Summary Cards */}
+                    <CategoryStats stats={stats} />
+
+                    {/* Container cho bộ lọc và danh sách */}
+                    <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] space-y-4">
+                        {/* Filter and Control Bar */}
+                        <CategoryFilters
+                            searchTerm={searchTerm}
+                            onSearchChange={setSearchTerm}
+                            selectedLevel={selectedLevel}
+                            onLevelChange={setSelectedLevel}
+                            onOpenAddModal={() => {
+                                setDefaultParent(null);
+                                handleOpenAddModal();
+                            }}
+                        />
+
+                        {error && <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs font-bold text-red-700">{error}</div>}
+
+                        {/* Hierarchical Category List Table */}
+                        <CategoryList
+                            categories={filteredCategories}
+                            isLoading={isLoading}
+                            onEditCategory={handleOpenEditModal}
+                            onDeleteCategory={handleOpenDeleteModal}
+                            onAddSubCategory={handleAddSubCategory}
+                        />
                     </div>
                 </div>
-
-                {/* Metric Summary Cards */}
-                <CategoryStats stats={stats} />
-
-                {error && <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs font-bold text-red-700">{error}</div>}
-
-                {/* Filter and Control Bar */}
-                <CategoryFilters
-                    searchTerm={searchTerm}
-                    onSearchChange={setSearchTerm}
-                    selectedLevel={selectedLevel}
-                    onLevelChange={setSelectedLevel}
-                    onOpenAddModal={() => {
-                        setDefaultParent(null);
-                        handleOpenAddModal();
-                    }}
-                />
-
-                {/* Hierarchical Category List Table */}
-                <CategoryList
-                    categories={filteredCategories}
-                    isLoading={isLoading}
-                    onEditCategory={handleOpenEditModal}
-                    onDeleteCategory={handleOpenDeleteModal}
-                    onAddSubCategory={handleAddSubCategory}
-                />
 
                 {/* Add / Edit Form Modal */}
                 <CategoryFormModal

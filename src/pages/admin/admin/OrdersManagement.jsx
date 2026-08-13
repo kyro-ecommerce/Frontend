@@ -141,11 +141,12 @@ const OrdersManagement = () => {
                             onPaymentStatusChange={setPaymentStatus}
                             paymentMethod={paymentMethod}
                             onPaymentMethodChange={setPaymentMethod}
+                            totalElements={pagination.totalElements}
                         />
 
                         {/* Pagination */}
                         {!isLoading && orders.length > 0 && (
-                            <div className="flex flex-col sm:flex-row justify-between items-center pt-3 border-t border-slate-200/60 gap-4">
+                            <div className="flex justify-center items-center pt-3 border-t border-slate-200/60">
                                 <div className="flex flex-wrap items-center justify-center gap-1.5 bg-slate-50/80 p-1 rounded-2xl border border-slate-200/80">
                                     <button
                                         className="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-white text-slate-700 hover:bg-slate-100 border border-slate-200/80 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs"
@@ -195,10 +196,6 @@ const OrdersManagement = () => {
                                     >
                                         Cuối »
                                     </button>
-                                </div>
-
-                                <div className="text-xs font-bold text-slate-500">
-                                    Hiển thị <span className="text-slate-900 font-extrabold">{orders.length}</span> trên <span className="text-slate-900 font-extrabold">{pagination.totalElements || 0}</span> đơn hàng
                                 </div>
                             </div>
                         )}

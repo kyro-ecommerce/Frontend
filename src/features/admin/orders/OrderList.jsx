@@ -15,7 +15,8 @@ const OrderList = ({
     currentFilter = "all",
     onFilterChange,
     paymentStatus = "all",
-    onPaymentStatusChange
+    onPaymentStatusChange,
+    totalElements
 }) => {
     const confirm = useConfirm();
 
@@ -114,6 +115,11 @@ const OrderList = ({
                 <h3 className="text-base font-black text-slate-900 tracking-tight m-0">
                     Danh sách đơn hàng
                 </h3>
+                {totalElements != null && (
+                    <div className="text-xs font-bold text-slate-500">
+                        Hiển thị <span className="text-slate-900 font-extrabold">{orders.length}</span> trên <span className="text-slate-900 font-extrabold">{totalElements}</span> đơn hàng
+                    </div>
+                )}
             </div>
 
             {isLoading ? (

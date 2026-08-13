@@ -10,12 +10,21 @@ import CartAccessories from "../../../features/user/product/CartAccessories";
 
 // --- Component CartItem ---
 const CartItem = ({ item, isSelected, onToggleSelect, onRemove, formatCurrency, isLoading: isActionLoading }) => {
+    const navigate = useNavigate();
     const { updateCartItem: contextUpdateCartItem, isLoading: isCartContextUpdating } = useCartContext();
     const [quantity, setQuantity] = useState(item.quantity);
     const [localMaxStock, setLocalMaxStock] = useState(
         item.stock ?? item.quantityInStock ?? item.availableQuantity ?? item.quantityAvailable ?? item.sizeQuantity ?? item.maxQuantity ?? null
     );
     const { showToast } = useToast();
+
+    const targetProductId = item.productId || item.id;
+
+    const handleProductClick = () => {
+        if (targetProductId) {
+            navigate(`/product/${targetProductId}`);
+        }
+    };
 
     useEffect(() => {
         setQuantity(item.quantity);
@@ -104,7 +113,11 @@ const CartItem = ({ item, isSelected, onToggleSelect, onRemove, formatCurrency, 
                 />
 
                 {/* Product Image */}
-                <div className="w-20 h-20 sm:w-24 sm:h-24 bg-white border border-gray-300 rounded-xl p-1.5 shrink-0 flex items-center justify-center overflow-hidden">
+                <div 
+                    onClick={handleProductClick}
+                    className="w-20 h-20 sm:w-24 sm:h-24 bg-white border border-gray-300 rounded-xl p-1.5 shrink-0 flex items-center justify-center overflow-hidden cursor-pointer hover:opacity-90 hover:border-blue-400 transition-all"
+                    title="Xem chi tiết sản phẩm"
+                >
                     <img
                         src={item?.imageUrl || "/Placeholder2.png"}
                         alt={item?.productName || "Sản phẩm"}
@@ -113,7 +126,11 @@ const CartItem = ({ item, isSelected, onToggleSelect, onRemove, formatCurrency, 
                 </div>
 
                 <div className="flex flex-col">
-                    <h3 className="text-base sm:text-lg font-semibold text-gray-900 line-clamp-2 leading-snug mb-1" title={item?.productName || "Sản phẩm"}>
+                    <h3 
+                        onClick={handleProductClick}
+                        className="text-base sm:text-lg font-semibold text-gray-900 line-clamp-2 leading-snug mb-1 cursor-pointer hover:text-blue-600 transition-colors" 
+                        title={item?.productName || "Sản phẩm"}
+                    >
                         {item?.productName || "Sản phẩm"}
                     </h3>
                     <p className="text-xs sm:text-sm text-gray-500 mb-1.5">
