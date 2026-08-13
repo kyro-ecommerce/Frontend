@@ -143,14 +143,24 @@ const ProductInfo = ({ item }) => {
         <div className="flex items-center bg-gray-100 rounded-xl px-3 py-1.5 gap-4 font-bold text-gray-900 text-sm">
           <button
             onClick={() => setQuantity(Math.max(1, quantity - 1))}
-            className="w-6 h-6 flex items-center justify-center hover:bg-gray-200 rounded-md cursor-pointer transition-colors"
+            className="w-6 h-6 flex items-center justify-center hover:bg-gray-200 rounded-md cursor-pointer transition-colors disabled:opacity-40"
+            disabled={quantity <= 1}
           >
             -
           </button>
           <span>{quantity}</span>
           <button
-            onClick={() => setQuantity(quantity + 1)}
-            className="w-6 h-6 flex items-center justify-center hover:bg-gray-200 rounded-md cursor-pointer transition-colors"
+            onClick={() => {
+              const maxStock = selectedSize?.quantity ?? item?.quantityInStock ?? item?.stock ?? item?.quantityAvailable ?? null;
+              if (maxStock !== null && quantity >= maxStock) {
+                showToast(`Đã đạt số lượng tồn kho tối đa (${maxStock})`, "warning");
+                return;
+              }
+              setQuantity(quantity + 1);
+            }}
+            disabled={(selectedSize?.quantity ?? item?.quantityInStock ?? item?.stock ?? item?.quantityAvailable ?? null) !== null && quantity >= (selectedSize?.quantity ?? item?.quantityInStock ?? item?.stock ?? item?.quantityAvailable)}
+            className="w-6 h-6 flex items-center justify-center hover:bg-gray-200 rounded-md cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            title={(selectedSize?.quantity ?? item?.quantityInStock ?? item?.stock ?? item?.quantityAvailable ?? null) !== null && quantity >= (selectedSize?.quantity ?? item?.quantityInStock ?? item?.stock ?? item?.quantityAvailable) ? "Đã đạt số lượng tồn kho tối đa" : ""}
           >
             +
           </button>

@@ -1,7 +1,7 @@
-// src/contexts/CartContext.jsx
 import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import { cartService } from '../../services/user/cart.service';
 import { useAuthContext } from './AuthContext';
+import { getErrorMessage } from '../../utils/errorUtils';
 
 const CartContext = createContext(null);
 
@@ -26,7 +26,8 @@ export const CartProvider = ({ children }) => {
       const rawItems = dataFromApi.cartItems || dataFromApi.items || [];
       const normalizedItems = rawItems.map(item => ({
         ...item,
-        id: item.id || item.productId,
+        id: item.id != null ? item.id : (item.cartItemId != null ? item.cartItemId : item.productId),
+        cartItemId: item.id != null ? item.id : item.cartItemId,
         productId: item.productId || item.id,
         productName: item.productName || item.title || item.name || "Sản phẩm",
         imageUrl: item.productImageUrl || item.imageUrl || item.image || "/Placeholder2.png",
@@ -35,12 +36,13 @@ export const CartProvider = ({ children }) => {
         discountedPrice: item.discountedPrice != null ? item.discountedPrice : (item.price || 0),
         quantity: item.quantity || 1,
         size: item.size || null,
+        stock: item.stock ?? item.quantityInStock ?? item.quantityAvailable ?? item.availableQuantity ?? item.maxQuantity ?? null,
       }));
 
       const totalOriginalPrice = dataFromApi.totalOriginalPrice ?? dataFromApi.totalPrice ?? 0;
       const totalDiscountedPrice = dataFromApi.totalDiscountedPrice ?? (dataFromApi.totalPrice || 0);
       const discount = dataFromApi.discount ?? (totalOriginalPrice - totalDiscountedPrice);
-      const totalItems = dataFromApi.totalItems ?? normalizedItems.reduce((acc, curr) => acc + (curr.quantity || 1), 0);
+      const totalItems = normalizedItems.length;
 
       return {
         cartItems: normalizedItems,
@@ -58,48 +60,38 @@ export const CartProvider = ({ children }) => {
 
   const internalFetchCart = useCallback(async () => {
     if (authIsLoading) {
-      // console.log("[CartContext] AuthContext is loading, deferring internalFetchCart.");
       return;
     }
 
     if (!isAuthenticated || !user) {
-      // console.log("[CartContext] Not authenticated or no user, setting cart to initial state.");
       setCart(initialCartState);
       setIsLoading(false);
       setError(null);
       return;
     }
 
-    // console.log("[CartContext] Attempting to fetch cart via internalFetchCart.");
     setIsLoading(true);
     setError(null);
     try {
       const response = await cartService.getCart();
-      // console.log("[CartContext] API response from cartService.getCart():", response);
       const cartDataFromApi = response.data.data || response.data;
-      // console.log("[CartContext] Extracted cartDataFromApi:", cartDataFromApi);
       const normalizedData = normalizeCartData(cartDataFromApi);
-      // console.log("[CartContext] Normalized cart data:", normalizedData);
       setCart(normalizedData);
     } catch (err) {
       console.error("[CartContext] Lỗi khi lấy giỏ hàng:", err);
-      const errorMessage = err.response?.data?.message || err.message || "Không thể tải giỏ hàng.";
+      const errorMessage = getErrorMessage(err, "Không thể tải giỏ hàng.");
       setError(errorMessage);
       setCart(initialCartState);
     } finally {
       setIsLoading(false);
-      // console.log("[CartContext] internalFetchCart finished.");
     }
-  }, [isAuthenticated, user, authIsLoading]); // Dependencies này OK
+  }, [isAuthenticated, user, authIsLoading]);
 
   useEffect(() => {
-    // console.log("[CartContext Main Effect] Triggered. AuthLoading:", authIsLoading, "IsAuth:", isAuthenticated, "User:", !!user);
     if (!authIsLoading) {
       if (isAuthenticated && user) {
-        // console.log("[CartContext Main Effect] User authenticated, calling internalFetchCart.");
         internalFetchCart();
       } else {
-        // console.log("[CartContext Main Effect] User not authenticated or no user, resetting cart state.");
         setCart(initialCartState);
         setIsLoading(false);
         setError(null);
@@ -110,37 +102,42 @@ export const CartProvider = ({ children }) => {
   const addItemToCart = async (cartData) => {
     if (authIsLoading) { throw new Error("Hệ thống đang xử lý, vui lòng thử lại sau."); }
     if (!isAuthenticated) { throw new Error("Vui lòng đăng nhập để thêm sản phẩm vào giỏ hàng."); }
-    setIsLoading(true); // Bắt đầu loading cho action này
-    setError(null);
+    setIsLoading(true);
     try {
-      await cartService.addToCart(cartData);
-      await internalFetchCart(); // Fetch lại toàn bộ giỏ hàng
-      // Không cần return updatedCartData nữa nếu component sẽ lấy từ state cart được cập nhật
+      const response = await cartService.addToCart(cartData);
+      const cartDataFromApi = response.data?.data || response.data;
+      if (cartDataFromApi && typeof cartDataFromApi === 'object') {
+        setCart(normalizeCartData(cartDataFromApi));
+      } else {
+        await internalFetchCart();
+      }
     } catch (err) {
-      const errorMessage = err.response?.data?.message || err.message || "Không thể thêm vào giỏ hàng.";
-      setError(errorMessage);
-      // setIsLoading(false) sẽ được gọi trong finally của internalFetchCart hoặc ở đây nếu internalFetchCart không chạy
-      if (!err.message?.includes("Authentication in progress")) { // Tránh set loading false nếu lỗi do auth
+      if (!err.message?.includes("Authentication in progress")) {
           setIsLoading(false);
       }
-      throw err; // Ném lỗi để component gọi có thể xử lý (ví dụ: hiển thị toast)
+      throw err;
+    } finally {
+      setIsLoading(false);
     }
-    // setIsLoading(false) sẽ được xử lý bởi internalFetchCart nếu nó chạy thành công
   };
 
   const removeItemFromCart = async (cartItemId) => {
     if (authIsLoading) throw new Error("Hệ thống đang xử lý, vui lòng thử lại sau.");
     if (!isAuthenticated) throw new Error("Vui lòng đăng nhập để thực hiện thao tác này.");
     setIsLoading(true);
-    setError(null);
     try {
-      await cartService.removeFromCart(cartItemId);
-      await internalFetchCart();
+      const response = await cartService.removeFromCart(cartItemId);
+      const cartDataFromApi = response.data?.data || response.data;
+      if (cartDataFromApi && typeof cartDataFromApi === 'object') {
+        setCart(normalizeCartData(cartDataFromApi));
+      } else {
+        await internalFetchCart();
+      }
     } catch (err) {
-      const errorMessage = err.response?.data?.message || err.message || "Không thể xóa sản phẩm.";
-      setError(errorMessage);
-      setIsLoading(false);
+      console.error("[CartContext] Error in removeItemFromCart:", err);
       throw err;
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -148,15 +145,19 @@ export const CartProvider = ({ children }) => {
     if (authIsLoading) throw new Error("Hệ thống đang xử lý, vui lòng thử lại sau.");
     if (!isAuthenticated) throw new Error("Vui lòng đăng nhập để thực hiện thao tác này.");
     setIsLoading(true);
-    setError(null);
     try {
-      await cartService.updateCartItem(cartItemId, newQuantity);
-      await internalFetchCart();
+      const response = await cartService.updateCartItem(cartItemId, newQuantity);
+      const cartDataFromApi = response.data?.data || response.data;
+      if (cartDataFromApi && typeof cartDataFromApi === 'object') {
+        setCart(normalizeCartData(cartDataFromApi));
+      } else {
+        await internalFetchCart();
+      }
     } catch (err) {
-      const errorMessage = err.response?.data?.message || err.message || "Không thể cập nhật số lượng.";
-      setError(errorMessage);
-      setIsLoading(false);
+      console.error("[CartContext] Error in updateCartItem:", err);
       throw err;
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -164,13 +165,10 @@ export const CartProvider = ({ children }) => {
     if (authIsLoading) { throw new Error("Hệ thống đang xử lý, không thể xóa giỏ hàng lúc này."); }
     if (!isAuthenticated) { throw new Error("Vui lòng đăng nhập để thực hiện thao tác này."); }
     setIsLoading(true);
-    setError(null);
     try {
       await cartService.clearCart();
       setCart({ ...initialCartState, id: cart?.id, version: cart?.version ?? 0 });
     } catch (err) {
-      const errorMessage = err.response?.data?.message || err.message || "Không thể xóa giỏ hàng.";
-      setError(errorMessage);
       throw err;
     } finally {
       setIsLoading(false);

@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
+import { toast } from "react-hot-toast";
 import { useAuthContext } from '../../../store/user/AuthContext';
 import ForgotPassword from "./ForgotPassword";
 import { authService } from "../../../services/user/auth.service";
+import { getErrorMessage } from "../../../utils/errorUtils";
 import {
   TextField,
   InputAdornment,
@@ -175,7 +177,7 @@ function LoginForm({
 
       {authError && (
         <Alert severity="error" sx={{ mb: 2, borderRadius: '14px' }} onClose={clearAuthError}>
-          {authError}
+          {getErrorMessage(authError, "Email hoặc mật khẩu không chính xác.")}
         </Alert>
       )}
 
@@ -377,9 +379,12 @@ function RegisterForm({
         setActiveStep(1);
         setStatusMessage("Mã OTP đã được gửi đến email của bạn.");
         setMessageType("success");
+        toast.success("Đã gửi mã OTP đến email!");
       } catch (err) {
-        setStatusMessage(err.response?.data?.message || err.message || "Đăng ký thất bại.");
+        const errorMsg = getErrorMessage(err, "Đăng ký thất bại.");
+        setStatusMessage(errorMsg);
         setMessageType("error");
+        toast.error(errorMsg);
       } finally {
         setActionLoading(prev => ({ ...prev, register: false }));
       }
@@ -395,10 +400,13 @@ function RegisterForm({
         await authService.verifyOtp(formData.email, formData.otp);
         setStatusMessage("Xác thực thành công! Đang đăng nhập...");
         setMessageType("success");
+        toast.success("Xác thực OTP thành công!");
         await contextLogin({ email: formData.email, password: formData.password });
       } catch (err) {
-        setStatusMessage(err.response?.data?.message || err.message || "Xác thực OTP thất bại.");
+        const errorMsg = getErrorMessage(err, "Xác thực OTP thất bại.");
+        setStatusMessage(errorMsg);
         setMessageType("error");
+        toast.error(errorMsg);
       } finally {
         setActionLoading(prev => ({ ...prev, verifyOtp: false }));
       }
@@ -413,9 +421,12 @@ function RegisterForm({
       await authService.resendOtp(formData.email);
       setStatusMessage("Mã OTP mới đã được gửi vào email.");
       setMessageType("success");
+      toast.success("Đã gửi lại mã OTP.");
     } catch (err) {
-      setStatusMessage(err.response?.data?.message || err.message || "Gửi lại OTP thất bại.");
+      const errorMsg = getErrorMessage(err, "Gửi lại OTP thất bại.");
+      setStatusMessage(errorMsg);
       setMessageType("error");
+      toast.error(errorMsg);
     } finally {
       setActionLoading(prev => ({ ...prev, resendOtp: false }));
     }
@@ -438,7 +449,9 @@ function RegisterForm({
       </div>
 
       {authError && activeStep === 0 && (
-        <Alert severity="error" sx={{ mb: 2, borderRadius: '14px' }} onClose={clearAuthError}>{authError}</Alert>
+        <Alert severity="error" sx={{ mb: 2, borderRadius: '14px' }} onClose={clearAuthError}>
+          {getErrorMessage(authError, "Đăng ký thất bại.")}
+        </Alert>
       )}
       {statusMessage && (
         <Alert severity={messageType || "info"} sx={{ mb: 2, borderRadius: '14px' }} onClose={() => setStatusMessage("")}>{statusMessage}</Alert>

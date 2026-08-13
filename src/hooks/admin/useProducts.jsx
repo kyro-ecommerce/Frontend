@@ -1,6 +1,7 @@
 // src/hooks/useProducts.jsx - Updated with proper filter integration
 import { useState, useEffect, useCallback, useRef } from "react";
 import { categoryService, productService } from "../../services/admin/index.js";
+import { getErrorMessage } from "../../utils/errorUtils.js";
 
 export const useProducts = () => {
     const [products, setProducts] = useState([]);
@@ -74,6 +75,12 @@ export const useProducts = () => {
 
         try {
             const filtersToUse = currentFilters || filters;
+            const parsePrice = (val) => {
+                if (val === null || val === undefined || val === '') return null;
+                const num = Number(val);
+                return isNaN(num) ? null : num;
+            };
+
             const response = await productService.getAllProducts({
                 page,
                 size,
@@ -82,8 +89,8 @@ export const useProducts = () => {
                 keyword: filtersToUse.keyword,
                 categoryId: filtersToUse.categoryId,
                 color: filtersToUse.color,
-                minPrice: filtersToUse.minPrice,
-                maxPrice: filtersToUse.maxPrice,
+                minPrice: parsePrice(filtersToUse.minPrice),
+                maxPrice: parsePrice(filtersToUse.maxPrice),
                 inStock: filtersToUse.status === 'all' ? null : filtersToUse.status === 'inStock'
             });
 
@@ -113,7 +120,7 @@ export const useProducts = () => {
             return pageData;
         } catch (err) {
             if (requestId !== latestRequest.current) return;
-            setError(err.response?.data?.message || 'Không thể lấy danh sách sản phẩm');
+            setError(getErrorMessage(err, 'Không thể lấy danh sách sản phẩm'));
             throw err;
         } finally {
             if (requestId === latestRequest.current) setIsLoading(false);
@@ -151,43 +158,39 @@ export const useProducts = () => {
     // Handle search (for compatibility with existing components)
     const handleSearch = useCallback((term) => {
         setSearchTerm(term);
-        setFilters(prev => ({ ...prev, keyword: term }));
-        // Reset to first page when searching
-    }, [fetchProducts, pagination.pageSize, sortBy, sortOrder, filters]);
+        updateFilters({ keyword: term });
+    }, [updateFilters]);
 
     // Handle category filter (for compatibility)
-    const handleCategoryFilter = useCallback((category) => {
-        setSelectedCategory(category);
-        setFilters(prev => ({
-            ...prev,
-            categoryId: category ? categories.ids?.[category] : null,
-            topLevelCategory: category,
-            secondLevelCategory: ''
-        }));
-        // Reset to first page when filtering
-    }, [categories]);
+    const handleCategoryFilter = useCallback((categoryName) => {
+        setSelectedCategory(categoryName);
 
-    // Handle sort
-    const handleSort = useCallback((field) => {
-        let newSortBy = field;
-        let newSortOrder = 'desc';
-
-        if (sortBy === field) {
-            // If sorting by same field, toggle order
-            newSortOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+        if (!categoryName) {
+            updateFilters({ categoryId: null, topLevelCategory: '', secondLevelCategory: '' });
+            return;
         }
 
-        setSortBy(newSortBy);
-        setSortOrder(newSortOrder);
+        const categoryId = categories.ids[categoryName];
+        if (categoryId) {
+            updateFilters({ categoryId });
+        } else {
+            console.warn(`Category ID not found for: ${categoryName}`);
+        }
+    }, [categories.ids, updateFilters]);
 
-        // Reset to first page when sorting
-        fetchProducts(0, pagination.pageSize, newSortBy, newSortOrder);
-    }, [sortBy, sortOrder, fetchProducts, pagination.pageSize]);
+    // Handle sort
+    const handleSort = useCallback((field, order) => {
+        setSortBy(field);
+        setSortOrder(order);
+        fetchProducts(pagination.currentPage, pagination.pageSize, field, order);
+    }, [fetchProducts, pagination.currentPage, pagination.pageSize]);
 
     // Handle page change
-    const handlePageChange = useCallback((page) => {
-        fetchProducts(page, pagination.pageSize);
-    }, [fetchProducts, pagination.pageSize]);
+    const handlePageChange = useCallback((newPage) => {
+        if (newPage >= 0 && newPage < pagination.totalPages) {
+            fetchProducts(newPage, pagination.pageSize);
+        }
+    }, [fetchProducts, pagination.totalPages, pagination.pageSize]);
 
     // Handle add product
     const handleAddProduct = useCallback(async (productData) => {
@@ -202,7 +205,7 @@ export const useProducts = () => {
             return { success: false, error: "Cannot add product" };
         } catch (err) {
             console.error("Error adding product:", err);
-            const errorMsg = err.response?.data?.message || err.message || "Unknown error";
+            const errorMsg = getErrorMessage(err, "Không thể thêm sản phẩm.");
             setError(`Không thể thêm sản phẩm: ${errorMsg}`);
             return { success: false, error: errorMsg };
         }
@@ -221,7 +224,7 @@ export const useProducts = () => {
             return { success: false, error: "Cannot update product" };
         } catch (err) {
             console.error("Error updating product:", err);
-            const errorMsg = err.response?.data?.message || err.message || "Unknown error";
+            const errorMsg = getErrorMessage(err, "Không thể cập nhật sản phẩm.");
             setError(`Không thể cập nhật sản phẩm: ${errorMsg}`);
             return { success: false, error: errorMsg };
         }
@@ -248,8 +251,9 @@ export const useProducts = () => {
             return { success: false, error: "Cannot delete product" };
         } catch (err) {
             console.error("Error deleting product:", err);
-            setError("Cannot delete product. Please try again.");
-            return { success: false, error: err.message || "Unknown error" };
+            const errorMsg = getErrorMessage(err, "Không thể xóa sản phẩm. Vui lòng thử lại.");
+            setError(errorMsg);
+            return { success: false, error: errorMsg };
         }
     }, [fetchProducts, products.length, pagination.currentPage, pagination.pageSize]);
 

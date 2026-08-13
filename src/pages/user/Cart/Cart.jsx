@@ -1,8 +1,8 @@
-// src/pages/Cart/Cart.jsx
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCartContext } from "../../../store/user/CartContext";
 import { useToast } from "../../../store/user/ToastContext";
+import { getErrorMessage } from "../../../utils/errorUtils";
 import { CircularProgress, Typography, Button as MuiButton, Box, Alert } from "@mui/material";
 import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined';
 import CartAccessories from "../../../features/user/product/CartAccessories";
@@ -12,6 +12,9 @@ import CartAccessories from "../../../features/user/product/CartAccessories";
 const CartItem = ({ item, isSelected, onToggleSelect, onRemove, formatCurrency, isLoading: isActionLoading }) => {
     const { updateCartItem: contextUpdateCartItem, isLoading: isCartContextUpdating } = useCartContext();
     const [quantity, setQuantity] = useState(item.quantity);
+    const [localMaxStock, setLocalMaxStock] = useState(
+        item.stock ?? item.quantityInStock ?? item.availableQuantity ?? item.quantityAvailable ?? item.sizeQuantity ?? item.maxQuantity ?? null
+    );
     const { showToast } = useToast();
 
     useEffect(() => {
@@ -22,6 +25,11 @@ const CartItem = ({ item, isSelected, onToggleSelect, onRemove, formatCurrency, 
         const newQuantity = Math.max(1, quantity + changeValue);
         if (newQuantity === quantity && changeValue !== 0) return;
 
+        if (changeValue > 0 && localMaxStock !== null && quantity >= localMaxStock) {
+            showToast(`Đã đạt số lượng tồn kho tối đa của sản phẩm (${localMaxStock} cái)`, "warning");
+            return;
+        }
+
         const oldQuantity = quantity;
         setQuantity(newQuantity);
 
@@ -29,7 +37,12 @@ const CartItem = ({ item, isSelected, onToggleSelect, onRemove, formatCurrency, 
             await contextUpdateCartItem(item.id, newQuantity);
         } catch (error) {
             console.error("Error updating cart item quantity (CartItem):", error);
-            showToast(error.message || "Lỗi cập nhật số lượng", "error");
+            if (changeValue > 0) {
+                setLocalMaxStock(oldQuantity);
+                showToast(`Đã đạt số lượng tồn kho tối đa (${oldQuantity} cái)`, "warning");
+            } else {
+                showToast(getErrorMessage(error, "Lỗi cập nhật số lượng"), "error");
+            }
             setQuantity(oldQuantity);
         }
     };
@@ -41,7 +54,12 @@ const CartItem = ({ item, isSelected, onToggleSelect, onRemove, formatCurrency, 
         } else {
             const numValue = parseInt(value, 10);
             if (!isNaN(numValue) && numValue > 0) {
-                setQuantity(numValue);
+                if (localMaxStock !== null && numValue > localMaxStock) {
+                    setQuantity(localMaxStock);
+                    showToast(`Sản phẩm chỉ còn tồn kho ${localMaxStock} cái`, "warning");
+                } else {
+                    setQuantity(numValue);
+                }
             }
         }
     };
@@ -53,18 +71,25 @@ const CartItem = ({ item, isSelected, onToggleSelect, onRemove, formatCurrency, 
             setQuantity(finalQuantity);
             return;
         }
+        if (localMaxStock !== null && finalQuantity > localMaxStock) {
+            finalQuantity = localMaxStock;
+            setQuantity(localMaxStock);
+            showToast(`Sản phẩm chỉ còn tồn kho ${localMaxStock} cái`, "warning");
+        }
         if (finalQuantity === item.quantity) return;
 
         try {
             await contextUpdateCartItem(item.id, finalQuantity);
         } catch (error) {
             console.error("Error updating cart item quantity on blur:", error);
-            showToast(error.message || "Lỗi cập nhật số lượng", "error");
+            setLocalMaxStock(item.quantity);
+            showToast(`Đã đạt số lượng tồn kho tối đa (${item.quantity} cái)`, "warning");
             setQuantity(item.quantity);
         }
     };
 
     const currentLoadingState = isActionLoading || isCartContextUpdating;
+    const isMaxStockReached = localMaxStock !== null && quantity >= localMaxStock;
 
     return (
         <article className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 md:p-5 mb-4 border border-gray-200 rounded-xl bg-white shadow-2xs hover:border-gray-300 transition-colors gap-4">
@@ -134,9 +159,10 @@ const CartItem = ({ item, isSelected, onToggleSelect, onRemove, formatCurrency, 
                         disabled={currentLoadingState}
                     />
                     <button
-                        className="px-2.5 py-1 text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-40 cursor-pointer transition-colors"
+                        className="px-2.5 py-1 text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-colors"
                         onClick={() => handleLocalQuantityChange(1)}
-                        disabled={currentLoadingState}
+                        disabled={currentLoadingState || isMaxStockReached}
+                        title={isMaxStockReached ? `Đã đạt số lượng tồn kho tối đa (${localMaxStock})` : ""}
                     >
                         +
                     </button>
@@ -147,7 +173,7 @@ const CartItem = ({ item, isSelected, onToggleSelect, onRemove, formatCurrency, 
 };
 
 // --- Component CartSummary ---
-const CartSummary = ({ selectedItemsCount, totalOriginalPrice, totalDiscountedPrice, discount, formatCurrency, onCheckout, isLoading }) => {
+const CartSummary = ({ selectedItemsCount, selectedTotalQuantity = 0, totalOriginalPrice, totalDiscountedPrice, discount, formatCurrency, onCheckout, isLoading }) => {
     return (
         <div className="w-full md:w-1/3 lg:w-1/4 mt-6 md:mt-0 md:sticky md:top-10">
             <div className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
@@ -156,6 +182,10 @@ const CartSummary = ({ selectedItemsCount, totalOriginalPrice, totalDiscountedPr
                     <div className="flex justify-between items-center">
                         <p className="text-gray-600">Sản phẩm chọn:</p>
                         <p className="font-bold text-gray-800">{selectedItemsCount} món</p>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <p className="text-gray-600">Tổng số lượng:</p>
+                        <p className="font-bold text-gray-800">{selectedTotalQuantity} cái</p>
                     </div>
                     <div className="flex justify-between items-center">
                         <p className="text-gray-600">Tạm tính:</p>
@@ -178,7 +208,7 @@ const CartSummary = ({ selectedItemsCount, totalOriginalPrice, totalDiscountedPr
 
                 <button
                     type="button"
-                    className="w-full h-12 sm:h-14 rounded-lg bg-red-600 text-white font-semibold text-lg hover:bg-red-700 transition-colors"
+                    className="w-full h-12 sm:h-14 rounded-lg bg-red-600 text-white font-semibold text-lg hover:bg-red-700 transition-colors cursor-pointer"
                     onClick={onCheckout}
                     disabled={isLoading || selectedItemsCount === 0}
                 >
@@ -196,6 +226,7 @@ const Cart = () => {
         cart,
         isLoading: isCartContextLoading,
         error: cartContextError,
+        fetchCart,
         removeItemFromCart,
         clearCartError
     } = useCartContext();
@@ -232,13 +263,19 @@ const Cart = () => {
         if (selectedItemIds.length === 0) return;
         setIsProcessingAction(true);
         try {
+            const { cartService } = await import("../../../services/user/cart.service");
             for (const id of selectedItemIds) {
-                await removeItemFromCart(id);
+                try {
+                    await cartService.removeFromCart(id);
+                } catch (e) {
+                    console.warn("Item already removed or invalid id:", id, e);
+                }
             }
+            await fetchCart();
             setSelectedItemIds([]);
             showToast("Đã xóa các sản phẩm được chọn.", "success");
         } catch (err) {
-            showToast(err.message || "Lỗi xóa sản phẩm", "error");
+            showToast(getErrorMessage(err, "Lỗi xóa sản phẩm"), "error");
         } finally {
             setIsProcessingAction(false);
         }
@@ -251,9 +288,11 @@ const Cart = () => {
             setSelectedItemIds(prev => prev.filter(id => id !== itemId));
             showToast("Đã xóa sản phẩm khỏi giỏ hàng.", "success");
         } catch (err) {
-            showToast(err.message || "Lỗi xóa sản phẩm", "error");
+            console.error("Error removing item:", err);
+            showToast(getErrorMessage(err, "Không thể xóa sản phẩm. Vui lòng thử lại."), "error");
+        } finally {
+            setIsProcessingAction(false);
         }
-        setIsProcessingAction(false);
     };
 
     const handleCheckout = () => {
@@ -327,6 +366,7 @@ const Cart = () => {
 
     // Tính toán số liệu dựa TRÊN CÁC SẢN PHẨM ĐƯỢC CHỌN
     const selectedItems = cart?.cartItems?.filter(i => selectedItemIds.includes(i.id)) || [];
+    const selectedTotalQuantity = selectedItems.reduce((acc, item) => acc + (item.quantity || 1), 0);
     const totalOriginalPrice = selectedItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
     const totalDiscountedPrice = selectedItems.reduce((acc, item) => acc + (item.discountedPrice * item.quantity), 0);
     const totalDiscount = totalOriginalPrice - totalDiscountedPrice;
@@ -400,6 +440,7 @@ const Cart = () => {
                             {/* Tóm tắt đơn hàng (tính theo các món được tick chọn) */}
                             <CartSummary
                                 selectedItemsCount={selectedItemIds.length}
+                                selectedTotalQuantity={selectedTotalQuantity}
                                 totalOriginalPrice={totalOriginalPrice}
                                 totalDiscountedPrice={totalDiscountedPrice}
                                 discount={totalDiscount}

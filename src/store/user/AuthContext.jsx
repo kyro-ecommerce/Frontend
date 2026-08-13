@@ -7,6 +7,7 @@ import {
   clearAllTokens,
   extractTokensFromResponse
 } from '../../services/user/util';
+import { getErrorMessage } from '../../utils/errorUtils';
 
 const AuthContext = createContext(null);
 
@@ -54,11 +55,11 @@ export const AuthProvider = ({ children }) => {
         clearAllTokens();
         setJwt(null);
         setUser(null);
-        setError("Session expired. Please login again.");
+        setError("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
       } else {
         // For other errors, don't clear tokens but log the error
         console.warn("Non-auth error while fetching profile, keeping tokens");
-        setError("Failed to load user profile. Please try again.");
+        setError("Không thể tải thông tin tài khoản. Vui lòng thử lại.");
       }
       return null;
     }
@@ -79,7 +80,7 @@ export const AuthProvider = ({ children }) => {
       }
     } catch (err) {
       console.error("Error checking auth status:", err);
-      setError("Authentication check failed");
+      setError("Kiểm tra xác thực thất bại.");
     } finally {
       setIsLoading(false);
     }
@@ -142,7 +143,7 @@ export const AuthProvider = ({ children }) => {
           return;
         } catch (urlError) {
           console.error("Error constructing seller URL:", urlError);
-          setError("Failed to redirect to seller dashboard. Invalid seller URL configuration.");
+          setError("Không thể chuyển hướng đến kênh người bán.");
           setIsLoading(false);
           return;
         }
@@ -153,15 +154,7 @@ export const AuthProvider = ({ children }) => {
       
     } catch (err) {
       console.error("Login error:", err);
-      
-      let errorMessage = "Login failed. Please try again.";
-      
-      if (err.response?.data?.message) {
-        errorMessage = err.response.data.message;
-      } else if (err.message) {
-        errorMessage = err.message;
-      }
-      
+      const errorMessage = getErrorMessage(err, "Đăng nhập thất bại. Vui lòng kiểm tra lại email và mật khẩu.");
       setError(errorMessage);
       setUser(null);
       setJwt(null);
@@ -187,15 +180,7 @@ export const AuthProvider = ({ children }) => {
       
     } catch (err) {
       console.error("Registration error:", err);
-      
-      let errorMessage = "Registration failed. Please try again.";
-      
-      if (err.response?.data?.message) {
-        errorMessage = err.response.data.message;
-      } else if (err.message) {
-        errorMessage = err.message;
-      }
-      
+      const errorMessage = getErrorMessage(err, "Đăng ký thất bại. Vui lòng thử lại.");
       setError(errorMessage);
       throw err;
     } finally {

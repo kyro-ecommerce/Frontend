@@ -1,7 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
+import { Toaster, ToastBar, toast } from 'react-hot-toast';
 import { ConfirmProvider } from './context/ConfirmContext.jsx';
 
 // --- Customer Imports ---
@@ -56,8 +56,12 @@ root.render(
         {/* Global Toast Notification Container */}
         <Toaster
           position="top-right"
+          containerStyle={{
+            top: 85,
+            right: 24,
+          }}
           toastOptions={{
-            duration: 3500,
+            duration: 2000,
             style: {
               background: '#1e293b',
               color: '#ffffff',
@@ -66,6 +70,7 @@ root.render(
               borderRadius: '16px',
               padding: '12px 18px',
               boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1)',
+              cursor: 'pointer',
             },
             success: {
               iconTheme: {
@@ -86,7 +91,22 @@ root.render(
               }
             }
           }}
-        />
+        >
+          {(t) => (
+            <ToastBar toast={t}>
+              {({ icon, message }) => (
+                <div
+                  onClick={() => toast.dismiss(t.id)}
+                  className="flex items-center gap-2 cursor-pointer"
+                  title="Bấm để tắt thông báo"
+                >
+                  {icon}
+                  {message}
+                </div>
+              )}
+            </ToastBar>
+          )}
+        </Toaster>
       </ConfirmProvider>
     </BrowserRouter>
   </StrictMode>

@@ -29,24 +29,23 @@ export const OrderProvider = ({ children }) => {
       setAddresses(response.data?.data || response.data || []);
     } catch (err) {
       console.error("Lỗi khi lấy danh sách địa chỉ (Context):", err);
-      setError(err.response?.data?.message || err.message || "Không thể tải danh sách địa chỉ.");
+      setError(getErrorMessage(err, "Không thể tải danh sách địa chỉ."));
       setAddresses([]);
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated]); // Phụ thuộc vào isAuthenticated
+  }, [isAuthenticated]);
 
   useEffect(() => {
     if (isAuthenticated) {
       fetchAddresses();
     } else {
       setAddresses([]);
-      setOrders([]); // Reset orders khi không xác thực
+      setOrders([]);
       setCurrentOrder(null);
     }
-  }, [isAuthenticated, fetchAddresses]); // Thêm fetchAddresses
+  }, [isAuthenticated, fetchAddresses]);
 
-  // createNewOrder (giữ nguyên hoặc đảm bảo useCallback nếu cần)
   const createNewOrder = useCallback(async (addressId, paymentMethod, cartItemIds, cartVersion, expectedTotalDiscountedPrice) => {
     if (!isAuthenticated) {
       setError("Vui lòng đăng nhập để đặt hàng.");
@@ -88,9 +87,8 @@ export const OrderProvider = ({ children }) => {
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated]); // Phụ thuộc vào isAuthenticated
+  }, [isAuthenticated]);
 
-  // fetchOrderById (giữ nguyên hoặc đảm bảo useCallback nếu cần)
   const fetchOrderById = useCallback(async (orderId) => {
     if (!isAuthenticated || !orderId) {
         setCurrentOrder(null);
@@ -121,14 +119,13 @@ export const OrderProvider = ({ children }) => {
       setCurrentOrder(orderData);
     } catch (err) {
       console.error(`Lỗi khi lấy chi tiết đơn hàng ${orderId} (Context):`, err);
-      setError(err.response?.data?.message || err.message || "Không thể tải chi tiết đơn hàng.");
+      setError(getErrorMessage(err, "Không thể tải chi tiết đơn hàng."));
       setCurrentOrder(null);
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated]); // Phụ thuộc vào isAuthenticated
+  }, [isAuthenticated]);
 
-  // addNewAddress (giữ nguyên hoặc đảm bảo useCallback nếu cần)
   const addNewAddress = useCallback(async (addressData) => {
     if (!isAuthenticated) {
       setError("Vui lòng đăng nhập để thêm địa chỉ.");
@@ -138,18 +135,17 @@ export const OrderProvider = ({ children }) => {
     setError(null);
     try {
       const response = await orderService.addAddress(addressData);
-      await fetchAddresses(); // Fetch lại danh sách địa chỉ sau khi thêm
+      await fetchAddresses();
       return response.data;
     } catch (err) {
-      const errorMessage = err.response?.data?.message || err.message || "Không thể thêm địa chỉ mới.";
+      const errorMessage = getErrorMessage(err, "Không thể thêm địa chỉ mới.");
       setError(errorMessage);
       throw err;
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated, fetchAddresses]); // Thêm fetchAddresses
+  }, [isAuthenticated, fetchAddresses]);
 
-  // **QUAN TRỌNG: Bọc fetchUserOrders trong useCallback**
   const fetchUserOrders = useCallback(async (status = "all", page = 0) => {
     if (!isAuthenticated) {
         setOrders([]);
@@ -158,7 +154,6 @@ export const OrderProvider = ({ children }) => {
     setIsLoading(true);
     const requestId = ++latestOrderRequest.current;
     setError(null);
-    console.log(`[OrderContext] Fetching orders with status: ${status}`); // Thêm log
     try {
         const response = await orderService.getAllOrders({ status, page, size: 20 });
         if (requestId !== latestOrderRequest.current) return;
@@ -171,26 +166,24 @@ export const OrderProvider = ({ children }) => {
           first: pageData.first ?? true,
           last: pageData.last ?? true
         });
-        console.log(`[OrderContext] Fetched orders for status ${status}:`, fetchedOrders); // Thêm log
         
         const normalizedOrders = fetchedOrders.map(order => {
             if (order && typeof order === 'object' && !order.id && (order.orderId || order.order_id)) {
                 return { ...order, id: order.orderId || order.order_id };
             }
             return order;
-        }).filter(Boolean); // Loại bỏ các giá trị null hoặc undefined nếu có
+        }).filter(Boolean);
         setOrders(normalizedOrders);
     } catch (err) {
         if (requestId !== latestOrderRequest.current) return;
         console.error(`Lỗi khi lấy danh sách đơn hàng (${status}) (Context):`, err);
-        setError(err.response?.data?.message || err.message || "Không thể tải danh sách đơn hàng.");
+        setError(getErrorMessage(err, "Không thể tải danh sách đơn hàng."));
         setOrders([]);
     } finally {
         if (requestId === latestOrderRequest.current) setIsLoading(false);
     }
-  }, [isAuthenticated]); // Chỉ phụ thuộc vào isAuthenticated
+  }, [isAuthenticated]);
 
-  // cancelUserOrder (giữ nguyên hoặc đảm bảo useCallback nếu cần)
   const cancelUserOrder = useCallback(async (orderId) => {
     if (!isAuthenticated) {
         setError("Vui lòng đăng nhập để thực hiện thao tác này.");
@@ -207,15 +200,9 @@ export const OrderProvider = ({ children }) => {
                 setCurrentOrder(prev => ({ ...prev, orderStatus: "CANCELLED", id: actualId }));
              }
         }
-        // Gọi fetchUserOrders với status hiện tại để cập nhật danh sách
-        // Tuy nhiên, nếu đang ở trang chi tiết, có thể không cần gọi lại toàn bộ danh sách
-        // Thay vào đó, OrderManagement sẽ tự fetch lại khi quay về.
-        // Hoặc, bạn có thể truyền status hiện tại của OrderManagement vào đây.
-        // Để đơn giản, chúng ta sẽ để OrderManagement tự xử lý việc fetch lại.
-        // await fetchUserOrders(); // Tạm thời comment dòng này để tránh gọi thừa
         return response.data;
     } catch (err) {
-        const errorMessage = err.response?.data?.message || err.message || "Không thể hủy đơn hàng.";
+        const errorMessage = getErrorMessage(err, "Không thể hủy đơn hàng.");
         setError(errorMessage);
         throw err;
     } finally {

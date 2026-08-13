@@ -62,7 +62,7 @@ const OrderList = ({
         return (
             <div className="flex gap-1.5 justify-center items-center">
                 <button
-                    className="p-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 cursor-pointer flex items-center justify-center transition-all border-none"
+                    className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer flex items-center justify-center transition-all border-none"
                     title="Xem chi tiết"
                     onClick={(e) => {
                         e.stopPropagation();
@@ -72,7 +72,7 @@ const OrderList = ({
                     <Eye className="w-4 h-4 text-slate-700" />
                 </button>
                 <button
-                    className="p-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 cursor-pointer flex items-center justify-center transition-all border-none"
+                    className="w-8 h-8 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 cursor-pointer flex items-center justify-center transition-all border-none"
                     title="Xóa đơn hàng"
                     onClick={async (e) => {
                         e.stopPropagation();
@@ -155,12 +155,12 @@ const OrderList = ({
                                             onChange={(e) => onFilterChange && onFilterChange(e.target.value)}
                                             className="bg-slate-50 hover:bg-slate-100 text-[#1D7461] font-bold text-xs py-0.5 px-1.5 rounded-lg border border-slate-200 outline-none cursor-pointer transition-all"
                                         >
-                                            <option value="all">Tất cả</option>
-                                            <option value="PENDING">Chờ xử lý</option>
-                                            <option value="CONFIRMED">Đã xác nhận</option>
-                                            <option value="SHIPPED">Đang vận chuyển</option>
-                                            <option value="DELIVERED">Đã giao</option>
-                                            <option value="CANCELLED">Đã hủy</option>
+                                            <option value="all" className="bg-white text-slate-900" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>Tất cả</option>
+                                            <option value="PENDING" className="bg-white text-slate-900" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>Chờ xử lý</option>
+                                            <option value="CONFIRMED" className="bg-white text-slate-900" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>Đã xác nhận</option>
+                                            <option value="SHIPPED" className="bg-white text-slate-900" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>Đang vận chuyển</option>
+                                            <option value="DELIVERED" className="bg-white text-slate-900" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>Đã giao</option>
+                                            <option value="CANCELLED" className="bg-white text-slate-900" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>Đã hủy</option>
                                         </select>
                                     </div>
                                 </th>
@@ -174,12 +174,12 @@ const OrderList = ({
                                             onChange={(e) => onPaymentStatusChange && onPaymentStatusChange(e.target.value)}
                                             className="bg-slate-50 hover:bg-slate-100 text-[#1D7461] font-bold text-xs py-0.5 px-1.5 rounded-lg border border-slate-200 outline-none cursor-pointer transition-all"
                                         >
-                                            <option value="all">Tất cả</option>
-                                            <option value="PENDING">Chờ TT</option>
-                                            <option value="COMPLETED">Đã TT</option>
-                                            <option value="FAILED">Thất bại</option>
-                                            <option value="CANCELLED">Đã hủy TT</option>
-                                            <option value="REFUNDED">Hoàn tiền</option>
+                                            <option value="all" className="bg-white text-slate-900" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>Tất cả</option>
+                                            <option value="PENDING" className="bg-white text-slate-900" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>Chờ TT</option>
+                                            <option value="COMPLETED" className="bg-white text-slate-900" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>Đã TT</option>
+                                            <option value="FAILED" className="bg-white text-slate-900" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>Thất bại</option>
+                                            <option value="CANCELLED" className="bg-white text-slate-900" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>Đã hủy TT</option>
+                                            <option value="REFUNDED" className="bg-white text-slate-900" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>Hoàn tiền</option>
                                         </select>
                                     </div>
                                 </th>

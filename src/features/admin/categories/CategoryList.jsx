@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { translateCategoryName } from "../../../utils/admin/format.js";
+import { Plus, Pencil, Trash2 } from "lucide-react";
 
 const CategoryList = ({
     categories,
@@ -113,31 +114,25 @@ const CategoryList = ({
                                             <div className="flex items-center justify-end gap-1.5">
                                                 <button
                                                     onClick={() => onAddSubCategory(parent)}
-                                                    className="px-2.5 py-1.5 rounded-lg bg-emerald-50 text-[#1D7461] hover:bg-emerald-100 font-semibold text-xs transition-all cursor-pointer border-none flex items-center gap-1"
+                                                    className="h-8 px-2.5 rounded-xl bg-emerald-50 text-[#1D7461] hover:bg-emerald-100 font-bold text-xs transition-all cursor-pointer border-none flex items-center gap-1"
                                                     title="Thêm danh mục con"
                                                 >
-                                                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                                                    </svg>
+                                                    <Plus className="w-3.5 h-3.5" />
                                                     <span className="hidden sm:inline">Thêm con</span>
                                                 </button>
                                                 <button
                                                     onClick={() => onEditCategory(parent)}
-                                                    className="p-1.5 rounded-lg text-slate-500 hover:text-blue-600 hover:bg-blue-50 transition-all cursor-pointer border-none"
+                                                    className="w-8 h-8 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-600 cursor-pointer flex items-center justify-center transition-all border-none"
                                                     title="Chỉnh sửa danh mục"
                                                 >
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                    </svg>
+                                                    <Pencil className="w-4 h-4 text-blue-600" />
                                                 </button>
                                                 <button
                                                     onClick={() => onDeleteCategory(parent)}
-                                                    className="p-1.5 rounded-lg text-slate-500 hover:text-red-600 hover:bg-red-50 transition-all cursor-pointer border-none"
+                                                    className="w-8 h-8 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 cursor-pointer flex items-center justify-center transition-all border-none"
                                                     title="Xóa danh mục"
                                                 >
-                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                    </svg>
+                                                    <Trash2 className="w-4 h-4 text-red-500" />
                                                 </button>
                                             </div>
                                         </td>
@@ -169,21 +164,17 @@ const CategoryList = ({
                                                 <div className="flex items-center justify-end gap-1.5">
                                                     <button
                                                         onClick={() => onEditCategory(sub)}
-                                                        className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 transition-all cursor-pointer border-none"
+                                                        className="w-8 h-8 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-600 cursor-pointer flex items-center justify-center transition-all border-none"
                                                         title="Chỉnh sửa danh mục con"
                                                     >
-                                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                                        </svg>
+                                                        <Pencil className="w-4 h-4 text-blue-600" />
                                                     </button>
                                                     <button
                                                         onClick={() => onDeleteCategory(sub)}
-                                                        className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-all cursor-pointer border-none"
+                                                        className="w-8 h-8 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 cursor-pointer flex items-center justify-center transition-all border-none"
                                                         title="Xóa danh mục con"
                                                     >
-                                                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                        </svg>
+                                                        <Trash2 className="w-4 h-4 text-red-500" />
                                                     </button>
                                                 </div>
                                             </td>

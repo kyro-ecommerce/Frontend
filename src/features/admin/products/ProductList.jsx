@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { formatCurrency, formatDate, translateCategoryName } from "../../../utils/admin/format.js";
 import { useConfirm } from "../../../context/ConfirmContext.jsx";
+import { Eye, Pencil, Trash2 } from "lucide-react";
 
 const ProductList = ({
                          products,
@@ -59,7 +60,11 @@ const ProductList = ({
                                 const stockStatus = getStockStatus(product.quantity || 0);
 
                                 return (
-                                    <tr key={product.id} className="hover:bg-slate-50/80 transition-colors cursor-pointer">
+                                    <tr
+                                        key={product.id}
+                                        onClick={() => onView && onView(product)}
+                                        className="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                                    >
                                         <td className="p-3.5 px-5">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-12 h-12 rounded-xl bg-slate-100 overflow-hidden shrink-0 border border-slate-200/60 p-0.5">
@@ -99,41 +104,32 @@ const ProductList = ({
                                         <td className="p-3.5 px-5 text-center" onClick={(e) => e.stopPropagation()}>
                                             <div className="flex gap-1.5 justify-center">
                                                 <button
-                                                    className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-600 cursor-pointer flex items-center justify-center transition-all border-none"
-                                                    title="Xem"
+                                                    className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer flex items-center justify-center transition-all border-none"
+                                                    title="Xem chi tiết"
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         onView(product);
                                                     }}
                                                 >
-                                                    <img
-                                                        src="https://cdn-icons-png.flaticon.com/512/159/159604.png"
-                                                        alt="Xem"
-                                                        width={16}
-                                                        height={16}
-                                                    />
+                                                    <Eye className="w-4 h-4 text-slate-700" />
                                                 </button>
                                                 {onEdit && (
                                                     <button
                                                         className="w-8 h-8 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-600 cursor-pointer flex items-center justify-center transition-all border-none"
-                                                        title="Sửa"
+                                                        title="Sửa sản phẩm"
                                                         onClick={(e) => {
                                                             e.stopPropagation();
                                                             onEdit(product);
                                                         }}
                                                     >
-                                                        <img
-                                                            src="https://cdn-icons-png.flaticon.com/512/1828/1828911.png"
-                                                            alt="Sửa"
-                                                            width={16}
-                                                            height={16}
-                                                        />
+                                                        <Pencil className="w-4 h-4 text-blue-600" />
                                                     </button>
                                                 )}
                                                 <button
                                                     className="w-8 h-8 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 cursor-pointer flex items-center justify-center transition-all border-none"
-                                                    title="Xóa"
-                                                    onClick={async () => {
+                                                    title="Xóa sản phẩm"
+                                                    onClick={async (e) => {
+                                                        e.stopPropagation();
                                                         const isConfirmed = await confirm({
                                                             title: "Xóa sản phẩm",
                                                             message: `Bạn có chắc chắn muốn xóa sản phẩm "${product.title}" không?`,
@@ -146,12 +142,7 @@ const ProductList = ({
                                                         }
                                                     }}
                                                 >
-                                            <img
-                                                src="https://cdn-icons-png.flaticon.com/512/1214/1214428.png"
-                                                alt="Xóa"
-                                                width={20}
-                                                height={20}
-                                            />
+                                                    <Trash2 className="w-4 h-4 text-red-500" />
                                                 </button>
                                             </div>
                                         </td>

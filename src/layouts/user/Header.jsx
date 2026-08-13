@@ -86,7 +86,7 @@ const Header = () => {
     };
   }, [showLoginForm]);
 
-  const totalItems = cart?.totalItems || 0;
+  const totalItems = cart?.cartItems ? cart.cartItems.length : (cart?.totalItems || 0);
 
   const getDisplayName = () => {
     if (!user) return '';

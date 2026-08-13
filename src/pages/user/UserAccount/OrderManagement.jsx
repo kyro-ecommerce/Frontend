@@ -4,6 +4,8 @@ import { useNavigate } from "react-router-dom";
 import { useOrderContext } from "../../../store/user/OrderContext";
 import { CircularProgress, Alert } from '@mui/material';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
+import SearchIcon from '@mui/icons-material/Search';
+import ClearIcon from '@mui/icons-material/Clear';
 
 const OrderManagement = () => {
   const navigate = useNavigate();
@@ -18,6 +20,7 @@ const OrderManagement = () => {
 
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [currentPage, setCurrentPage] = useState(0);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const memoizedFetchUserOrders = useCallback((status, page) => {
     fetchUserOrders(status, page);
@@ -31,6 +34,22 @@ const OrderManagement = () => {
     memoizedClearOrderError();
     memoizedFetchUserOrders(selectedStatus, currentPage);
   }, [selectedStatus, currentPage, memoizedFetchUserOrders, memoizedClearOrderError]);
+
+  // Client-side filtering by order ID and product title
+  const filteredOrders = orders.filter((order) => {
+    if (!searchTerm.trim()) return true;
+    const term = searchTerm.trim().toLowerCase().replace(/^#/, '');
+
+    // Match order ID
+    const matchId = order.id?.toString().includes(term);
+
+    // Match product title in order items
+    const matchProduct = order.orderItems?.some((item) =>
+      item.productTitle?.toLowerCase().includes(term)
+    );
+
+    return matchId || matchProduct;
+  });
 
   const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', minimumFractionDigits: 0 }).format(amount || 0);
 
@@ -87,7 +106,7 @@ const OrderManagement = () => {
       <h1 className="mb-6 text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">Đơn hàng của tôi</h1>
 
       {/* Pill Filter Tabs */}
-      <div className="flex flex-wrap gap-2 mb-6 border-b border-gray-200 pb-3">
+      <div className="flex flex-wrap gap-2 mb-4 border-b border-gray-200 pb-3">
         {statusFilters.map(filter => (
           <button
             key={filter.value}
@@ -104,6 +123,29 @@ const OrderManagement = () => {
             {filter.label}
           </button>
         ))}
+      </div>
+
+      {/* Search Input Bar */}
+      <div className="relative mb-6">
+        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-gray-400">
+          <SearchIcon sx={{ fontSize: 20 }} />
+        </div>
+        <input
+          type="text"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Tìm theo Mã đơn hàng hoặc Tên sản phẩm"
+          className="w-full pl-10 pr-10 py-2.5 bg-white border border-gray-200 rounded-2xl text-xs sm:text-sm font-medium text-gray-900 placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition-all shadow-sm"
+        />
+        {searchTerm && (
+          <button
+            type="button"
+            onClick={() => setSearchTerm("")}
+            className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+          >
+            <ClearIcon sx={{ fontSize: 18 }} />
+          </button>
+        )}
       </div>
 
       {isLoading && (
@@ -140,9 +182,27 @@ const OrderManagement = () => {
             Khám phá sản phẩm
           </button>
         </div>
+      ) : !isLoading && !error && filteredOrders.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-12 text-center bg-white p-8 rounded-3xl border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
+          <div className="w-16 h-16 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center mb-3">
+            <SearchIcon sx={{ fontSize: 32 }} />
+          </div>
+          <h2 className="text-base sm:text-lg font-extrabold text-gray-900 mb-1">
+            Không tìm thấy đơn hàng phù hợp
+          </h2>
+          <p className="text-xs sm:text-sm text-gray-500 max-w-sm mb-5 leading-relaxed">
+            Không tìm thấy đơn hàng nào khớp với từ khóa "<span className="font-semibold text-gray-800">{searchTerm}</span>".
+          </p>
+          <button
+            onClick={() => setSearchTerm("")}
+            className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs py-2 px-5 rounded-2xl transition-all cursor-pointer"
+          >
+            Xóa tìm kiếm
+          </button>
+        </div>
       ) : (
         <div className="space-y-5">
-          {orders.map(order => (
+          {filteredOrders.map(order => (
             <div
               key={order.id}
               className="bg-white rounded-3xl border border-gray-100 overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.03)] hover:border-gray-200 transition-all"
@@ -238,3 +298,4 @@ const OrderManagement = () => {
 };
 
 export default OrderManagement;
+

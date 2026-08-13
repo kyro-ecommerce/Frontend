@@ -68,9 +68,9 @@ const UserFilters = ({ onSearch, onRoleFilter, selectedRole }) => {
                         onChange={handleRoleChange}
                         className="w-full md:w-auto py-2.5 px-4 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 bg-white cursor-pointer outline-none focus:border-[#1D7461] focus:ring-2 focus:ring-[#1D7461]/20 transition-all"
                     >
-                        <option value="">Tất cả vai trò</option>
-                        <option value="CUSTOMER">Khách hàng</option>
-                        <option value="ADMIN">Quản trị viên</option>
+                        <option value="" className="bg-white text-slate-900" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>Tất cả vai trò</option>
+                        <option value="CUSTOMER" className="bg-white text-slate-900" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>Khách hàng</option>
+                        <option value="ADMIN" className="bg-white text-slate-900" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>Quản trị viên</option>
                     </select>
                 </div>
             </div>

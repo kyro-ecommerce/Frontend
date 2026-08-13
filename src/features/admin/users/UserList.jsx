@@ -1,5 +1,6 @@
 import React from "react";
 import {formatDate} from "../../../utils/admin/format.js";
+import { ArrowUpDown, ArrowUp, ArrowDown, Eye, Trash2, Filter } from "lucide-react";
 
 const UserList = ({
                       users,
@@ -10,8 +11,46 @@ const UserList = ({
                       onToggleStatus,
                       onChangeRole,
                       onDeleteUser,
-                      onViewDetail
+                      onViewDetail,
+                      selectedRole = "",
+                      onRoleFilter,
+                      selectedStatus = "all",
+                      onStatusFilter,
+                      sortBy = "id",
+                      sortDir = "asc",
+                      onSort
                   }) => {
+
+    const renderSortButton = (field, label) => {
+        const isActive = sortBy === field;
+        return (
+            <button
+                type="button"
+                onClick={() => onSort && onSort(field)}
+                className={`group bg-transparent border-none font-extrabold text-xs tracking-wider inline-flex items-center gap-1.5 cursor-pointer transition-colors ${
+                    isActive
+                        ? "text-[#1D7461]"
+                        : "text-slate-500 hover:text-slate-900"
+                }`}
+                title={`Sắp xếp theo ${label}`}
+            >
+                <span>{label}</span>
+                {isActive ? (
+                    <span className="w-5 h-5 rounded-md bg-[#1D7461]/15 text-[#1D7461] flex items-center justify-center">
+                        {sortDir === "desc" ? (
+                            <ArrowDown className="w-3.5 h-3.5 stroke-[2.5]" />
+                        ) : (
+                            <ArrowUp className="w-3.5 h-3.5 stroke-[2.5]" />
+                        )}
+                    </span>
+                ) : (
+                    <span className="w-5 h-5 rounded-md bg-slate-100 group-hover:bg-slate-200 text-slate-400 group-hover:text-slate-700 flex items-center justify-center transition-colors">
+                        <ArrowUpDown className="w-3.5 h-3.5" />
+                    </span>
+                )}
+            </button>
+        );
+    };
 
 
     // Tạo một mảng các số trang để hiển thị
@@ -62,95 +101,153 @@ const UserList = ({
             </div>
 
             {isLoading ? (
-                <div className="p-12 text-center text-slate-400 text-xs font-medium">Đang tải dữ liệu người dùng...</div>
-            ) : users.length === 0 ? (
-                <div className="p-12 text-center text-slate-400 text-xs font-medium">Không tìm thấy người dùng nào</div>
+                <div className="bg-white rounded-2xl border border-slate-200/80 p-12 text-center">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-3 border-slate-200 border-t-[#1D7461] mb-3"></div>
+                    <p className="text-xs font-medium text-slate-500">Đang tải dữ liệu người dùng...</p>
+                </div>
             ) : (
                 <>
-                    <div className="overflow-x-auto border border-slate-100 rounded-2xl">
-                        <table className="w-full border-collapse">
+                    <div className="overflow-x-auto border border-slate-200/80 rounded-2xl bg-white shadow-2xs">
+                        <table className="w-full text-left border-collapse">
                             <thead>
-                                <tr className="border-b border-slate-100 bg-slate-50/80">
-                                    <th className="p-3.5 px-4 text-center font-extrabold text-slate-400 text-xs uppercase tracking-wider">ID</th>
-                                    <th className="p-3.5 px-4 text-left font-extrabold text-slate-400 text-xs uppercase tracking-wider">Email</th>
-                                    <th className="p-3.5 px-4 text-left font-extrabold text-slate-400 text-xs uppercase tracking-wider">Họ tên</th>
-                                    <th className="p-3.5 px-4 text-center font-extrabold text-slate-400 text-xs uppercase tracking-wider">Vai trò</th>
-                                    <th className="p-3.5 px-4 text-center font-extrabold text-slate-400 text-xs uppercase tracking-wider">Ngày đăng ký</th>
-                                    <th className="p-3.5 px-4 text-center font-extrabold text-slate-400 text-xs uppercase tracking-wider">Trạng thái</th>
-                                    <th className="p-3.5 px-4 text-center font-extrabold text-slate-400 text-xs uppercase tracking-wider">Thao tác</th>
+                                <tr className="border-b border-slate-200/80 bg-slate-50/90 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
+                                    {/* ID */}
+                                    <th className="py-3.5 px-4 text-center">
+                                        {renderSortButton("id", "ID")}
+                                    </th>
+
+                                    {/* EMAIL */}
+                                    <th className="py-3.5 px-4 text-left">
+                                        {renderSortButton("email", "EMAIL")}
+                                    </th>
+
+                                    {/* HỌ TÊN */}
+                                    <th className="py-3.5 px-4 text-left">
+                                        {renderSortButton("name", "HỌ TÊN")}
+                                    </th>
+
+                                    {/* VAI TRÒ - INLINE FILTER */}
+                                    <th className="py-3.5 px-4 text-center">
+                                        <div className="inline-flex items-center gap-1.5 bg-white border border-slate-200 px-2.5 py-1 rounded-xl shadow-2xs">
+                                            <span className="text-slate-600 font-extrabold whitespace-nowrap">VAI TRÒ</span>
+                                            <select
+                                                value={selectedRole || ""}
+                                                onChange={(e) => onRoleFilter && onRoleFilter(e.target.value)}
+                                                className="bg-slate-50 hover:bg-slate-100 text-[#1D7461] font-bold text-xs py-0.5 px-1.5 rounded-lg border border-slate-200 outline-none cursor-pointer transition-all"
+                                            >
+                                                <option value="" className="bg-white text-slate-900" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>Tất cả</option>
+                                                <option value="CUSTOMER" className="bg-white text-slate-900" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>Khách hàng</option>
+                                                <option value="ADMIN" className="bg-white text-slate-900" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>Quản trị viên</option>
+                                            </select>
+                                        </div>
+                                    </th>
+
+                                    {/* NGÀY ĐĂNG KÝ */}
+                                    <th className="py-3.5 px-4 text-center">
+                                        {renderSortButton("createdAt", "NGÀY ĐĂNG KÝ")}
+                                    </th>
+
+                                    {/* TRẠNG THÁI - INLINE FILTER */}
+                                    <th className="py-3.5 px-4 text-center">
+                                        <div className="inline-flex items-center gap-1.5 bg-white border border-slate-200 px-2.5 py-1 rounded-xl shadow-2xs">
+                                            <span className="text-slate-600 font-extrabold whitespace-nowrap">TRẠNG THÁI</span>
+                                            <select
+                                                value={selectedStatus || "all"}
+                                                onChange={(e) => onStatusFilter && onStatusFilter(e.target.value)}
+                                                className="bg-slate-50 hover:bg-slate-100 text-[#1D7461] font-bold text-xs py-0.5 px-1.5 rounded-lg border border-slate-200 outline-none cursor-pointer transition-all"
+                                            >
+                                                <option value="all" className="bg-white text-slate-900" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>Tất cả</option>
+                                                <option value="active" className="bg-white text-slate-900" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>Hoạt động</option>
+                                                <option value="banned" className="bg-white text-slate-900" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>Bị khóa</option>
+                                            </select>
+                                        </div>
+                                    </th>
+
+                                    {/* THAO TÁC */}
+                                    <th className="py-3.5 px-4 text-center font-extrabold text-slate-700 text-xs uppercase tracking-wider">
+                                        THAO TÁC
+                                    </th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100">
-                                {users.map((user) => (
-                                    <tr key={user.id} className="hover:bg-slate-50/80 transition-colors cursor-pointer" onClick={() => onViewDetail(user.id)}>
-                                        <td className="p-3.5 px-4 text-center">
-                                            <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-lg border border-slate-200/60 font-bold text-xs">#{user.id}</span>
-                                        </td>
-                                        <td className="p-3.5 px-4 text-left font-bold text-xs text-slate-800">{user.email}</td>
-                                        <td className="p-3.5 px-4 text-left font-semibold text-xs text-slate-600">
-                                            {user.firstName || user.lastName
-                                                ? `${user.firstName || ''} ${user.lastName || ''}`
-                                                : 'Chưa cập nhật'}
-                                        </td>
-                                        <td className="p-3.5 px-4 text-center" onClick={(e) => e.stopPropagation()}>
-                                            <select
-                                                value={user.role || "CUSTOMER"}
-                                                onChange={(e) => {
-                                                    e.stopPropagation();
-                                                    if (onChangeRole) onChangeRole(user.id, e.target.value);
-                                                }}
-                                                className={`py-1 px-3 rounded-full text-xs font-extrabold border cursor-pointer outline-none transition-all ${
-                                                    user.role === "ADMIN" ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-blue-50 text-blue-700 border-blue-200'
-                                                }`}
-                                            >
-                                                <option value="CUSTOMER">Khách hàng</option>
-                                                <option value="ADMIN">Quản trị viên</option>
-                                            </select>
-                                        </td>
-                                        <td className="p-3.5 px-4 text-center text-xs font-medium text-slate-500">{formatDate(user.createdAt)}</td>
-                                        <td className="p-3.5 px-4 text-center" onClick={(e) => e.stopPropagation()}>
-                                            <button
-                                                className={`py-1 px-3 rounded-full text-xs font-extrabold border cursor-pointer transition-all ${
-                                                    user.banned ? 'bg-red-50 text-red-600 border-red-200' : 'bg-[#F2F9F7] text-[#1D7461] border-[#D5EFE8]'
-                                                }`}
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    onToggleStatus(user.id, !user.banned);
-                                                }}
-                                            >
-                                                {user.banned ? 'Bị khóa' : 'Hoạt động'}
-                                            </button>
-                                        </td>
-                                        <td className="p-3.5 px-4 text-center" onClick={(e) => e.stopPropagation()}>
-                                            <div className="flex gap-1.5 justify-center">
-                                                <button
-                                                    className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200/80 text-slate-600 cursor-pointer flex items-center justify-center transition-all border-none"
-                                                    title="Xem"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        onViewDetail(user.id);
-                                                    }}
-                                                >
-                                                    <img
-                                                        src="https://cdn-icons-png.flaticon.com/512/159/159604.png"
-                                                        alt="Xem"
-                                                        width={16}
-                                                        height={16}
-                                                    />
-                                                </button>
-                                                <button
-                                                    className="py-1.5 px-3 border-none rounded-xl text-xs font-bold cursor-pointer bg-red-50 text-red-600 hover:bg-red-100 transition-all"
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        onDeleteUser(user.id);
-                                                    }}
-                                                >
-                                                    Xóa
-                                                </button>
+                            <tbody className="divide-y divide-slate-100 text-xs font-medium text-slate-700">
+                                {users.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={7} className="p-12 text-center">
+                                            <div className="w-10 h-10 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-2">
+                                                <Filter className="w-5 h-5" />
                                             </div>
+                                            <p className="text-xs font-bold text-slate-700 mb-0.5">Không tìm thấy người dùng phù hợp</p>
+                                            <p className="text-[11px] text-slate-400 m-0">Hãy thử đổi các bộ lọc ở tiêu đề cột hoặc ô tìm kiếm ở trên.</p>
                                         </td>
                                     </tr>
-                                ))}
+                                ) : (
+                                    users.map((user) => (
+                                        <tr key={user.id} className="hover:bg-slate-50/80 transition-colors cursor-pointer" onClick={() => onViewDetail(user.id)}>
+                                            <td className="p-3.5 px-4 text-center">
+                                                <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-lg border border-slate-200/60 font-bold text-xs">#{user.id}</span>
+                                            </td>
+                                            <td className="p-3.5 px-4 text-left font-bold text-xs text-slate-800">{user.email}</td>
+                                            <td className="p-3.5 px-4 text-left font-semibold text-xs text-slate-600">
+                                                {user.firstName || user.lastName
+                                                    ? `${user.firstName || ''} ${user.lastName || ''}`
+                                                    : 'Chưa cập nhật'}
+                                            </td>
+                                            <td className="p-3.5 px-4 text-center" onClick={(e) => e.stopPropagation()}>
+                                                <select
+                                                    value={user.role || "CUSTOMER"}
+                                                    onChange={(e) => {
+                                                        e.stopPropagation();
+                                                        if (onChangeRole) onChangeRole(user.id, e.target.value);
+                                                    }}
+                                                    className={`py-1 px-3 rounded-full text-xs font-extrabold border cursor-pointer outline-none transition-all ${
+                                                        user.role === "ADMIN" ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-blue-50 text-blue-700 border-blue-200'
+                                                    }`}
+                                                >
+                                                    <option value="CUSTOMER">Khách hàng</option>
+                                                    <option value="ADMIN">Quản trị viên</option>
+                                                </select>
+                                            </td>
+                                            <td className="p-3.5 px-4 text-center text-xs font-medium text-slate-500">{formatDate(user.createdAt)}</td>
+                                            <td className="p-3.5 px-4 text-center" onClick={(e) => e.stopPropagation()}>
+                                                <button
+                                                    className={`py-1 px-3 rounded-full text-xs font-extrabold border cursor-pointer transition-all ${
+                                                        user.banned ? 'bg-red-50 text-red-600 border-red-200' : 'bg-[#F2F9F7] text-[#1D7461] border-[#D5EFE8]'
+                                                    }`}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        onToggleStatus(user.id, !user.banned);
+                                                    }}
+                                                >
+                                                    {user.banned ? 'Bị khóa' : 'Hoạt động'}
+                                                </button>
+                                            </td>
+                                            <td className="p-3.5 px-4 text-center" onClick={(e) => e.stopPropagation()}>
+                                                <div className="flex gap-1.5 justify-center">
+                                                    <button
+                                                        className="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 cursor-pointer flex items-center justify-center transition-all border-none"
+                                                        title="Xem chi tiết"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            onViewDetail(user.id);
+                                                        }}
+                                                    >
+                                                        <Eye className="w-4 h-4 text-slate-700" />
+                                                    </button>
+                                                    <button
+                                                        className="w-8 h-8 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 cursor-pointer flex items-center justify-center transition-all border-none"
+                                                        title="Xóa người dùng"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            onDeleteUser(user.id);
+                                                        }}
+                                                    >
+                                                        <Trash2 className="w-4 h-4 text-red-500" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
                             </tbody>
                         </table>
                     </div>

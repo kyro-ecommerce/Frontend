@@ -21,8 +21,66 @@ const UserManagement = () => {
     const [totalPages, setTotalPages] = useState(0);
     const [searchTerm, setSearchTerm] = useState("");
     const [selectedRole, setSelectedRole] = useState("");
+    const [selectedStatus, setSelectedStatus] = useState("all");
+    const [sortBy, setSortBy] = useState("id");
+    const [sortDir, setSortDir] = useState("asc");
     const [selectedUser, setSelectedUser] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+
+    // Client-side status filtering & sorting
+    const processedUsers = React.useMemo(() => {
+        let list = [...users];
+
+        // Lọc theo trạng thái
+        if (selectedStatus === 'active') {
+            list = list.filter(u => !u.banned);
+        } else if (selectedStatus === 'banned') {
+            list = list.filter(u => u.banned);
+        }
+
+        // Sắp xếp theo cột
+        if (sortBy) {
+            list.sort((a, b) => {
+                let valA = a[sortBy];
+                let valB = b[sortBy];
+
+                if (sortBy === 'name') {
+                    valA = `${a.firstName || ''} ${a.lastName || ''}`.trim().toLowerCase();
+                    valB = `${b.firstName || ''} ${b.lastName || ''}`.trim().toLowerCase();
+                } else if (sortBy === 'email') {
+                    valA = (a.email || '').toLowerCase();
+                    valB = (b.email || '').toLowerCase();
+                } else if (sortBy === 'createdAt') {
+                    valA = new Date(a.createdAt || 0).getTime();
+                    valB = new Date(b.createdAt || 0).getTime();
+                } else if (sortBy === 'id') {
+                    valA = Number(a.id || 0);
+                    valB = Number(b.id || 0);
+                }
+
+                if (valA < valB) return sortDir === 'asc' ? -1 : 1;
+                if (valA > valB) return sortDir === 'asc' ? 1 : -1;
+                return 0;
+            });
+        }
+
+        return list;
+    }, [users, selectedStatus, sortBy, sortDir]);
+
+    // Xử lý khi lọc theo trạng thái trên header
+    const handleStatusFilter = (status) => {
+        setSelectedStatus(status);
+    };
+
+    // Xử lý khi bấm sắp xếp cột trên header
+    const handleSort = (field) => {
+        if (sortBy === field) {
+            setSortDir(prev => (prev === 'asc' ? 'desc' : 'asc'));
+        } else {
+            setSortBy(field);
+            setSortDir('asc');
+        }
+    };
 
     const fetchUsers = async () => {
         try {
@@ -260,9 +318,9 @@ const UserManagement = () => {
 
                         {error && <div className="text-red-600 bg-red-50 border border-red-200 p-3.5 rounded-xl text-xs font-semibold">{error}</div>}
 
-                        {/* Danh sách người dùng */}
+                        {/* Danh sách người dùng với header filter và sắp xếp */}
                         <UserList
-                            users={users}
+                            users={processedUsers}
                             isLoading={isLoading}
                             currentPage={currentPage}
                             totalPages={totalPages}
@@ -271,6 +329,13 @@ const UserManagement = () => {
                             onChangeRole={handleChangeRole}
                             onDeleteUser={handleDeleteUser}
                             onViewDetail={handleViewDetail}
+                            selectedRole={selectedRole}
+                            onRoleFilter={handleRoleFilter}
+                            selectedStatus={selectedStatus}
+                            onStatusFilter={handleStatusFilter}
+                            sortBy={sortBy}
+                            sortDir={sortDir}
+                            onSort={handleSort}
                         />
                     </div>
                 </div>

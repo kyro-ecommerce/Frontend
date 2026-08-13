@@ -9,6 +9,7 @@ import {ToastProvider, useToast} from "../../../store/admin/ToastContext";
 import ProductDetailModal from "../../../features/admin/products/ProductDetailModal";
 import ProductFormModal from "../../../features/admin/products/ProductFormModal";
 import { translateCategoryName } from "../../../utils/admin/format.js";
+import { getErrorMessage } from "../../../utils/errorUtils";
 
 // Wrapper component to use toast in main component
 const ProductManagementContent = () => {
@@ -122,17 +123,25 @@ const ProductManagementContent = () => {
         });
     }, [filters]);
 
-    // Apply filters (same logic as Product.jsx)
-    const handleApplyFilters = () => {
-        const selectedCategory = localFilterState.secondLevelCategory || localFilterState.topLevelCategory;
+    // Instant filter helper
+    const applyImmediateFilter = (changes) => {
+        const nextState = { ...localFilterState, ...changes };
+        setLocalFilterState(nextState);
+
+        const selectedCat = nextState.secondLevelCategory || nextState.topLevelCategory;
         updateFilters({
-            topLevelCategory: localFilterState.topLevelCategory,
-            secondLevelCategory: localFilterState.secondLevelCategory,
-            categoryId: selectedCategory ? categories.ids?.[selectedCategory] : null,
-            minPrice: localFilterState.minPrice ? parseInt(localFilterState.minPrice) : null,
-            maxPrice: localFilterState.maxPrice ? parseInt(localFilterState.maxPrice) : null,
-            status: localFilterState.status
+            topLevelCategory: nextState.topLevelCategory,
+            secondLevelCategory: nextState.secondLevelCategory,
+            categoryId: selectedCat ? categories.ids?.[selectedCat] : null,
+            minPrice: nextState.minPrice !== '' && nextState.minPrice !== null ? parseInt(nextState.minPrice) : null,
+            maxPrice: nextState.maxPrice !== '' && nextState.maxPrice !== null ? parseInt(nextState.maxPrice) : null,
+            status: nextState.status
         });
+    };
+
+    // Apply filters manually if needed
+    const handleApplyFilters = () => {
+        applyImmediateFilter({});
     };
 
     // Clear filters
@@ -145,6 +154,18 @@ const ProductManagementContent = () => {
             status: 'all'
         });
         clearFilters();
+    };
+
+    // Active filters count
+    const activeFilterCount = (localFilterState.topLevelCategory ? 1 : 0) +
+        (localFilterState.secondLevelCategory ? 1 : 0) +
+        (localFilterState.minPrice !== '' || localFilterState.maxPrice !== '' ? 1 : 0) +
+        (localFilterState.status !== 'all' ? 1 : 0) +
+        (filters.keyword ? 1 : 0);
+
+    // Price preset handler
+    const handlePricePreset = (min, max) => {
+        applyImmediateFilter({ minPrice: min, maxPrice: max });
     };
 
     // Pagination handlers
@@ -222,14 +243,15 @@ const ProductManagementContent = () => {
                 <div className="max-w-7xl mx-auto space-y-4">
                     <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
                         {/* Filters & Action Section */}
-                        <div className="flex flex-col gap-4 mb-4 items-start justify-center w-full">
-                            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 w-full">
-                                <div className="flex items-center gap-4 w-full max-w-md relative">
+                        <div className="flex flex-col gap-4 mb-5 w-full">
+                            {/* Row 1: Search Bar + Status Tabs + Add Product Button */}
+                            <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 w-full">
+                                <div className="flex items-center gap-3 w-full md:max-w-md relative">
                                     <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
                                     <input
                                         type="search"
-                                        className="w-full py-2.5 pr-4 pl-10 rounded-xl border border-slate-200 text-xs font-semibold outline-none focus:border-[#1D7461] focus:ring-2 focus:ring-[#1D7461]/20 transition-all"
-                                        placeholder="Tìm kiếm sản phẩm..."
+                                        className="w-full h-10 pr-4 pl-10 rounded-xl border border-slate-200 text-xs font-semibold outline-none focus:border-[#1D7461] focus:ring-2 focus:ring-[#1D7461]/20 transition-all bg-white"
+                                        placeholder="Tìm kiếm sản phẩm theo tên..."
                                         value={filters.keyword || ''}
                                         onChange={(e) => {
                                             const value = e.target.value;
@@ -238,147 +260,201 @@ const ProductManagementContent = () => {
                                             }
                                             searchTimeout.current = setTimeout(() => {
                                                 updateFilters({ keyword: value });
-                                            }, 50);
+                                            }, 150);
                                         }}
                                     />
                                 </div>
+
+                                {/* Status Tabs */}
+                                <div className="flex items-center gap-1 p-1 bg-slate-100/90 rounded-xl border border-slate-200/60 shrink-0">
+                                    {[
+                                        { id: 'all', label: 'Tất cả' },
+                                        { id: 'inStock', label: 'Còn hàng' },
+                                        { id: 'outOfStock', label: 'Hết hàng' }
+                                    ].map((tab) => {
+                                        const isActive = localFilterState.status === tab.id;
+                                        return (
+                                            <button
+                                                key={tab.id}
+                                                type="button"
+                                                onClick={() => applyImmediateFilter({ status: tab.id })}
+                                                className={`px-3.5 h-8 rounded-lg text-xs font-bold transition-all cursor-pointer border-none ${
+                                                    isActive
+                                                        ? 'bg-[#1D7461] text-white shadow-xs'
+                                                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
+                                                }`}
+                                            >
+                                                {tab.label}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
                                 <button
                                     onClick={handleOpenAddModal}
-                                    className="px-4 py-2.5 bg-[#1D7461] hover:bg-[#136050] text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm shadow-[#1D7461]/20 border-none flex items-center justify-center gap-1.5 shrink-0"
+                                    className="h-10 px-4 bg-[#1D7461] hover:bg-[#136050] text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm shadow-[#1D7461]/20 border-none flex items-center justify-center gap-1.5 shrink-0 ml-auto md:ml-0"
                                 >
                                     <Plus className="w-4 h-4" /> Thêm sản phẩm
                                 </button>
                             </div>
-                            <div className="w-full flex">
-                                <div className="w-full flex">
-                                    <div className="flex flex-row items-end gap-4 flex-wrap w-full">
-                                        <div className="flex flex-row gap-4 flex-wrap">
-                                            <div className="flex flex-col gap-1.5 items-start">
-                                                <label className="text-xs font-bold text-slate-600">Danh mục</label>
-                                                <select
-                                                    value={localFilterState.topLevelCategory}
-                                                    onChange={(e) => setLocalFilterState(prev => ({
-                                                        ...prev,
-                                                        topLevelCategory: e.target.value,
-                                                        secondLevelCategory: ''
-                                                    }))}
-                                                    className="rounded-xl border border-slate-200 text-xs font-semibold p-2.5 outline-none focus:border-[#1D7461] min-w-40 h-10 bg-white"
-                                                >
-                                                    <option value="">Tất cả</option>
-                                                    {categories?.topLevel?.map(cat => (
-                                                        <option key={cat} value={cat}>{translateCategoryName(cat)}</option>
-                                                    )) || []}
-                                                </select>
-                                            </div>
 
-                                            <div className="flex flex-col gap-1.5 items-start">
-                                                <label className="text-xs font-bold text-slate-600">Danh mục con</label>
-                                                <select
-                                                    value={localFilterState.secondLevelCategory}
-                                                    onChange={(e) => setLocalFilterState(prev => ({
-                                                        ...prev,
-                                                        secondLevelCategory: e.target.value
-                                                    }))}
-                                                    className="rounded-xl border border-slate-200 text-xs font-semibold p-2.5 outline-none focus:border-[#1D7461] min-w-40 h-10 bg-white disabled:opacity-50"
-                                                    disabled={!localFilterState.topLevelCategory}
-                                                >
-                                                    <option value="">Tất cả</option>
-                                                    {localFilterState.topLevelCategory && categories?.secondLevel?.[localFilterState.topLevelCategory] &&
-                                                        categories.secondLevel[localFilterState.topLevelCategory].map(subcat => (
-                                                            <option key={subcat} value={subcat}>{translateCategoryName(subcat)}</option>
-                                                        ))}
-                                                </select>
-                                            </div>
+                            {/* Row 2: Category Dropdowns + Sort Control + Price Presets */}
+                            <div className="p-3.5 bg-slate-50/80 rounded-2xl border border-slate-200/70 flex flex-col gap-3">
+                                <div className="flex flex-wrap items-center justify-between gap-3 w-full">
+                                    <div className="flex flex-wrap items-center gap-3">
+                                        {/* Top Level Category */}
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs font-bold text-slate-600 shrink-0">Danh mục:</span>
+                                            <select
+                                                value={localFilterState.topLevelCategory}
+                                                onChange={(e) => applyImmediateFilter({
+                                                    topLevelCategory: e.target.value,
+                                                    secondLevelCategory: ''
+                                                })}
+                                                className="rounded-xl border border-slate-200 text-xs font-semibold px-3 h-9 outline-none focus:border-[#1D7461] bg-white text-slate-800 cursor-pointer shadow-2xs min-w-36"
+                                            >
+                                                <option value="" className="bg-white text-slate-900" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>Tất cả danh mục</option>
+                                                {categories?.topLevel?.map(cat => (
+                                                    <option key={cat} value={cat} className="bg-white text-slate-900" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>{translateCategoryName(cat)}</option>
+                                                )) || []}
+                                            </select>
+                                        </div>
 
-                                            <div className="flex flex-col gap-1.5 items-start">
-                                                <label className="text-xs font-bold text-slate-600">Khoảng giá</label>
-                                                <div className="flex items-center gap-2">
-                                                    <input
-                                                        type="number"
-                                                        placeholder="Từ"
-                                                        value={localFilterState.minPrice}
-                                                        onChange={(e) => setLocalFilterState(prev => ({
-                                                            ...prev,
-                                                            minPrice: e.target.value
-                                                        }))}
-                                                        className="rounded-xl border border-slate-200 text-xs font-semibold p-2 text-center h-10 w-24 outline-none focus:border-[#1D7461] bg-white"
-                                                    />
-                                                    <span className="text-slate-400 font-bold text-xs">-</span>
-                                                    <input
-                                                        type="number"
-                                                        placeholder="Đến"
-                                                        value={localFilterState.maxPrice}
-                                                        onChange={(e) => setLocalFilterState(prev => ({
-                                                            ...prev,
-                                                            maxPrice: e.target.value
-                                                        }))}
-                                                        className="rounded-xl border border-slate-200 text-xs font-semibold p-2 text-center h-10 w-24 outline-none focus:border-[#1D7461] bg-white"
-                                                    />
-                                                </div>
-                                            </div>
+                                        {/* Second Level Category */}
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs font-bold text-slate-600 shrink-0">Danh mục con:</span>
+                                            <select
+                                                value={localFilterState.secondLevelCategory}
+                                                onChange={(e) => applyImmediateFilter({ secondLevelCategory: e.target.value })}
+                                                className="rounded-xl border border-slate-200 text-xs font-semibold px-3 h-9 outline-none focus:border-[#1D7461] bg-white text-slate-800 disabled:opacity-50 cursor-pointer shadow-2xs min-w-36"
+                                                disabled={!localFilterState.topLevelCategory}
+                                            >
+                                                <option value="" className="bg-white text-slate-900" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>Tất cả danh mục con</option>
+                                                {localFilterState.topLevelCategory && categories?.secondLevel?.[localFilterState.topLevelCategory] &&
+                                                    categories.secondLevel[localFilterState.topLevelCategory].map(subcat => (
+                                                        <option key={subcat} value={subcat} className="bg-white text-slate-900" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>{translateCategoryName(subcat)}</option>
+                                                    ))}
+                                            </select>
+                                        </div>
 
-                                            <div className="flex flex-col gap-1.5 items-start">
-                                                <label className="text-xs font-bold text-slate-600">Trạng thái</label>
-                                                <select
-                                                    value={localFilterState.status}
-                                                    onChange={(e) => setLocalFilterState(prev => ({
-                                                        ...prev,
-                                                        status: e.target.value
-                                                    }))}
-                                                    className="rounded-xl border border-slate-200 text-xs font-semibold p-2.5 outline-none focus:border-[#1D7461] min-w-30 h-10 bg-white"
-                                                >
-                                                    <option value="all">Tất cả</option>
-                                                    <option value="inStock">Còn hàng</option>
-                                                    <option value="outOfStock">Hết hàng</option>
-                                                </select>
-                                            </div>
+                                        {/* Sort Control */}
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs font-bold text-slate-600 shrink-0">Sắp xếp:</span>
+                                            <select
+                                                value={sortBy}
+                                                onChange={(e) => handleSort(e.target.value, sortOrder)}
+                                                className="rounded-xl border border-slate-200 text-xs font-semibold px-3 h-9 outline-none focus:border-[#1D7461] bg-white text-slate-800 cursor-pointer shadow-2xs min-w-32"
+                                            >
+                                                <option value="createdAt" className="bg-white text-slate-900" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>Ngày thêm</option>
+                                                <option value="id" className="bg-white text-slate-900" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>ID</option>
+                                                <option value="price" className="bg-white text-slate-900" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>Giá bán</option>
+                                                <option value="quantity" className="bg-white text-slate-900" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>Kho hàng</option>
+                                            </select>
+                                            
+                                            {/* Sleek Sort Direction Toggle Button */}
+                                            <button
+                                                type="button"
+                                                onClick={() => handleSort(sortBy, sortOrder === 'asc' ? 'desc' : 'asc')}
+                                                className="h-9 px-3 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl flex items-center gap-1.5 cursor-pointer transition-all font-bold text-xs text-slate-700 shadow-2xs active:scale-95"
+                                                title={sortOrder === 'asc' ? 'Đang xếp Tăng dần (Bấm để xếp Giảm dần)' : 'Đang xếp Giảm dần (Bấm để xếp Tăng dần)'}
+                                            >
+                                                <span className="text-[#1D7461] font-extrabold">{sortOrder === 'asc' ? '↑' : '↓'}</span>
+                                                <span>{sortOrder === 'asc' ? 'Tăng dần' : 'Giảm dần'}</span>
+                                            </button>
+                                        </div>
+                                    </div>
 
-                                            <div className="flex flex-col gap-1.5 items-start">
-                                                <label className="text-xs font-bold text-slate-600">Sắp xếp theo</label>
-                                                <select
-                                                    value={sortBy}
-                                                    onChange={(e) => handleSort(e.target.value)}
-                                                    className="rounded-xl border border-slate-200 text-xs font-semibold p-2.5 outline-none focus:border-[#1D7461] min-w-35 h-10 bg-white"
-                                                >
-                                                    <option value="createdAt">Ngày thêm</option>
-                                                    <option value="id">ID</option>
-                                                    <option value="price">Giá bán</option>
-                                                    <option value="quantity">Kho hàng</option>
-                                                    <option value="quantitySold">Đã bán</option>
-                                                </select>
-                                            </div>
+                                    {/* Clear Filter Button */}
+                                    {activeFilterCount > 0 && (
+                                        <button
+                                            type="button"
+                                            className="px-3.5 h-9 bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-700 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 ml-auto"
+                                            onClick={handleClearFilters}
+                                        >
+                                            <span>Xóa bộ lọc</span>
+                                            <span className="w-4 h-4 rounded-full bg-rose-600 text-white text-[10px] flex items-center justify-center font-bold">
+                                                {activeFilterCount}
+                                            </span>
+                                        </button>
+                                    )}
+                                </div>
 
-                                            <div className="flex flex-col gap-1.5 items-start">
-                                                <label className="text-xs font-bold text-slate-600">Thứ tự</label>
+                                {/* Price Range Row */}
+                                <div className="flex flex-wrap items-center justify-start gap-4 pt-2.5 border-t border-slate-200/60">
+                                    {/* Custom Min / Max Price Inputs (Left) */}
+                                    <div className="flex items-center gap-1.5">
+                                        <span className="text-xs font-bold text-slate-600 shrink-0">Tùy chỉnh giá:</span>
+                                        <input
+                                            type="number"
+                                            placeholder="Từ giá"
+                                            maxLength={9}
+                                            max={999999999}
+                                            value={localFilterState.minPrice}
+                                            onChange={(e) => {
+                                                const val = e.target.value.slice(0, 9);
+                                                setLocalFilterState(prev => ({ ...prev, minPrice: val }));
+                                                if (searchTimeout.current) clearTimeout(searchTimeout.current);
+                                                searchTimeout.current = setTimeout(() => {
+                                                    applyImmediateFilter({ minPrice: val });
+                                                }, 400);
+                                            }}
+                                            className="rounded-lg border border-slate-200 text-xs font-semibold px-2 py-1 text-center h-8 w-24 outline-none focus:border-[#1D7461] bg-white shadow-2xs"
+                                        />
+                                        <span className="text-slate-400 font-bold text-xs">-</span>
+                                        <input
+                                            type="number"
+                                            placeholder="Đến giá"
+                                            maxLength={9}
+                                            max={999999999}
+                                            value={localFilterState.maxPrice}
+                                            onChange={(e) => {
+                                                const val = e.target.value.slice(0, 9);
+                                                setLocalFilterState(prev => ({ ...prev, maxPrice: val }));
+                                                if (searchTimeout.current) clearTimeout(searchTimeout.current);
+                                                searchTimeout.current = setTimeout(() => {
+                                                    applyImmediateFilter({ maxPrice: val });
+                                                }, 400);
+                                            }}
+                                            className="rounded-lg border border-slate-200 text-xs font-semibold px-2 py-1 text-center h-8 w-24 outline-none focus:border-[#1D7461] bg-white shadow-2xs"
+                                        />
+                                    </div>
+
+                                    {/* Price Presets (Following Custom Inputs) */}
+                                    <div className="flex flex-wrap items-center gap-1.5 border-l border-slate-200/80 pl-4">
+                                        <span className="text-xs font-bold text-slate-500 mr-1 shrink-0">Giá nhanh:</span>
+                                        {[
+                                            { label: 'Tất cả', min: '', max: '' },
+                                            { label: '< 5 triệu', min: '', max: '5000000' },
+                                            { label: '5 - 15 triệu', min: '5000000', max: '15000000' },
+                                            { label: '15 - 30 triệu', min: '15000000', max: '30000000' },
+                                            { label: '> 30 triệu', min: '30000000', max: '' },
+                                        ].map((preset) => {
+                                            const isSelected = localFilterState.minPrice === preset.min && localFilterState.maxPrice === preset.max;
+                                            return (
                                                 <button
-                                                    className="bg-white border border-slate-200 rounded-xl flex items-center justify-center cursor-pointer hover:bg-slate-50 h-10 w-10 transition-colors font-bold text-slate-700"
-                                                    onClick={() => handleSort(sortBy)}
+                                                    key={preset.label}
+                                                    type="button"
+                                                    onClick={() => handlePricePreset(preset.min, preset.max)}
+                                                    className={`px-2.5 h-7 rounded-lg text-[11px] font-semibold transition-all cursor-pointer border ${
+                                                        isSelected
+                                                            ? 'bg-[#1D7461]/10 text-[#1D7461] border-[#1D7461] font-bold shadow-2xs'
+                                                            : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300 hover:bg-slate-100/60'
+                                                    }`}
                                                 >
-                                                    {sortOrder === 'asc' ? '↑' : '↓'}
+                                                    {preset.label}
                                                 </button>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex flex-row gap-2.5 items-end ml-auto">
-                                            <button
-                                                className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200/80 border border-slate-200/80 text-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer"
-                                                onClick={handleClearFilters}
-                                            >
-                                                Xóa bộ lọc
-                                            </button>
-                                            <button
-                                                className="px-4 py-2.5 bg-[#1D7461] hover:bg-[#136050] text-white rounded-xl text-xs font-bold transition-all cursor-pointer shadow-sm shadow-[#1D7461]/20 border-none"
-                                                onClick={handleApplyFilters}
-                                            >
-                                                Lọc
-                                            </button>
-                                        </div>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        {error && <div className="text-red-600 my-4 bg-red-50 border border-red-200 p-3 rounded-xl text-xs font-semibold">{error}</div>}
+                        {error && (
+                            <div className="text-red-600 my-4 bg-red-50 border border-red-200 p-3 rounded-xl text-xs font-semibold">
+                                {getErrorMessage(error, "Không thể lọc dữ liệu sản phẩm. Vui lòng kiểm tra lại điều kiện lọc.")}
+                            </div>
+                        )}
 
                         {/* Product List */}
                         <ProductList

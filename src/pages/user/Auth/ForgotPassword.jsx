@@ -1,4 +1,3 @@
-// src/pages/Auth/ForgotPassword.jsx
 import React, { useState } from "react";
 import {
     Button,
@@ -18,7 +17,8 @@ import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import PropTypes from "prop-types";
-import { authService } from "../../../services/user/auth.service"; // Import the auth service
+import { authService } from "../../../services/user/auth.service";
+import { getErrorMessage } from "../../../utils/errorUtils";
 
 function ForgotPassword({ onBackToLogin }) {
     const [step, setStep] = useState(1); // 1: Enter Email, 2: Enter OTP & New Password
@@ -128,13 +128,12 @@ function ForgotPassword({ onBackToLogin }) {
         clearMessages();
 
         try {
-            // Assuming your authService.resendOtp sends the OTP
             const response = await authService.resendOtp(email);
-            setMessage(response.message || "OTP sent to your email address. Please check your inbox (and spam folder).");
-            setStep(2); // Move to the next step
+            setMessage(response.message || "Đã gửi mã OTP đến email của bạn. Vui lòng kiểm tra hộp thư.");
+            setStep(2);
         } catch (error) {
             console.error("Error sending OTP:", error);
-            setApiError(error.response?.data?.message || "Failed to send OTP. Please try again.");
+            setApiError(getErrorMessage(error, "Không thể gửi mã OTP. Vui lòng thử lại sau."));
         } finally {
             setLoading(prev => ({ ...prev, sendOtp: false }));
         }
@@ -149,25 +148,15 @@ function ForgotPassword({ onBackToLogin }) {
         clearMessages();
 
         try {
-             // IMPORTANT: Use the correct service function based on your API endpoint
-             // Option 1: If resetPassword takes email, newPassword, otp
              const response = await authService.resetPassword(email, newPassword, otp);
-
-             // Option 2: If you have a separate verifyOtp step first (adjust logic if needed)
-             // await authService.verifyOtp(email, otp); // Verify first
-             // const response = await authService.resetPassword(...) // Then reset
-
-            setMessage(response.message || "Password has been reset successfully!");
-            // Optionally clear fields or redirect after success
+            setMessage(response.message || "Đặt lại mật khẩu thành công!");
             setOtp("");
             setNewPassword("");
             setConfirmPassword("");
-            // Maybe call onBackToLogin after a delay?
             setTimeout(onBackToLogin, 2000);
-
         } catch (error) {
             console.error("Error resetting password:", error);
-            setApiError(error.response?.data?.message || "Failed to reset password. The OTP might be incorrect or expired.");
+            setApiError(getErrorMessage(error, "Không thể đặt lại mật khẩu. Mã OTP có thể không đúng hoặc đã hết hạn."));
         } finally {
             setLoading(prev => ({ ...prev, reset: false }));
         }

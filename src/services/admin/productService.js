@@ -22,14 +22,18 @@ export const getAllProducts = (params = {}) => {
     queryParams.append('size', size);
     queryParams.append('sort', `${sortBy},${sortDir}`);
 
-    if (keyword) queryParams.append('keyword', keyword);
-    if (categoryId !== null) queryParams.append('categoryId', categoryId);
+    if (keyword && keyword.trim()) queryParams.append('keyword', keyword.trim());
+    if (categoryId !== null && categoryId !== undefined && categoryId !== '') queryParams.append('categoryId', categoryId);
     if (color) queryParams.append('color', color);
-    if (minPrice !== null) queryParams.append('minPrice', minPrice);
-    if (maxPrice !== null) queryParams.append('maxPrice', maxPrice);
+    if (minPrice !== null && minPrice !== undefined && minPrice !== '' && !isNaN(Number(minPrice))) {
+        queryParams.append('minPrice', Number(minPrice));
+    }
+    if (maxPrice !== null && maxPrice !== undefined && maxPrice !== '' && !isNaN(Number(maxPrice))) {
+        queryParams.append('maxPrice', Number(maxPrice));
+    }
     if (brand) queryParams.append('brand', brand);
-    if (inStock !== null) queryParams.append('inStock', inStock);
-    if (minRating !== null) queryParams.append('minRating', minRating);
+    if (inStock !== null && inStock !== undefined) queryParams.append('inStock', inStock);
+    if (minRating !== null && minRating !== undefined) queryParams.append('minRating', minRating);
 
     return api.get(`/admin/products?${queryParams.toString()}`);
 };
