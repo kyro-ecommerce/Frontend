@@ -5,7 +5,7 @@ import { useCartContext } from "../../../store/user/CartContext";
 import { useToast } from "../../../store/user/ToastContext.jsx";
 
 const ProductInfo = ({ item }) => {
-  const [selectedSize, setSelectedSize] = useState(null);
+  const [selectedVariant, setSelectedVariant] = useState(null);
   const { addItemToCart, isLoading: isCartLoadingGlobal } = useCartContext();
   const { showToast } = useToast();
   const [isAddingToCart, setIsAddingToCart] = useState(false);
@@ -21,7 +21,7 @@ const ProductInfo = ({ item }) => {
         showToast("Thông tin sản phẩm không hợp lệ.", "error");
         return;
     }
-    if (item?.sizes?.length > 0 && !selectedSize) {
+    if (item?.variants?.length > 0 && !selectedVariant) {
       showToast("Vui lòng chọn cấu hình sản phẩm.", "warning");
       return;
     }
@@ -29,7 +29,7 @@ const ProductInfo = ({ item }) => {
     try {
       const cartData = {
         productId: item.id,
-        size: selectedSize ? selectedSize.name : "Default",
+        variantId: selectedVariant.id,
         quantity: quantity
       };
       await addItemToCart(cartData);
@@ -43,21 +43,11 @@ const ProductInfo = ({ item }) => {
 
   const brandName = item?.brand?.name || item?.brand || "Kyro Store";
 
-  const basicInfo = [
-    { label: "Thương hiệu", value: item?.brand?.name || item?.brand || "Chưa rõ" },
-    { label: "Màu sắc", value: item?.color || "Chưa rõ" },
-  ];
-
-  const extendedInfo = [
-    { label: "Dung lượng pin", value: item?.batteryCapacity || "N/A" },
-    { label: "Loại pin", value: item?.batteryType || "N/A" },
-    { label: "Cổng kết nối", value: item?.connectionPort || "N/A font-medium" },
-    { label: "Kích thước", value: item?.dimension || "N/A" },
-    { label: "Dung lượng RAM", value: item?.ramCapacity || "N/A" },
-    { label: "Bộ nhớ trong", value: item?.romCapacity || "N/A" },
-    { label: "Kích thước màn hình", value: item?.screenSize || "N/A" },
-    { label: "Trọng lượng", value: item?.weight || "N/A" },
-  ];
+  const basicInfo = [{ label: "Thương hiệu", value: item?.brand || "Chưa rõ" }];
+  const extendedInfo = (item?.attributes || []).map(attribute => ({
+    label: attribute.name,
+    value: `${attribute.value}${attribute.unit ? ` ${attribute.unit}` : ""}`
+  }));
 
   if (!item) {
     return (
@@ -94,12 +84,12 @@ const ProductInfo = ({ item }) => {
       {/* 4. Price */}
       <div className="flex items-baseline gap-3 mb-6">
         <span className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">
-          {formatCurrency(item?.discountedPrice || item?.price)}
+          {formatCurrency(selectedVariant?.salePrice ?? item?.minSalePrice)}
         </span>
-        {item?.price > item?.discountedPrice && (
+        {(selectedVariant?.price ?? item?.minPrice) > (selectedVariant?.salePrice ?? item?.minSalePrice) && (
           <>
             <span className="text-base line-through text-gray-400 font-medium">
-              {formatCurrency(item?.price)}
+              {formatCurrency(selectedVariant?.price ?? item?.minPrice)}
             </span>
             <span className="text-xs bg-red-50 text-red-600 font-bold px-2 py-0.5 rounded-full">
               -{item?.discountPercent || 0}%
@@ -109,27 +99,27 @@ const ProductInfo = ({ item }) => {
       </div>
 
       {/* 6. Configuration Selector (If sizes/configs available) */}
-      {item?.sizes && item.sizes.length > 0 && (
+      {item?.variants && item.variants.length > 0 && (
         <div className="mb-5">
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-bold text-gray-900">Cấu hình</span>
-            {selectedSize && (
-              <span className="text-xs text-green-600 font-medium">Còn {selectedSize.quantity} sản phẩm</span>
+            {selectedVariant && (
+              <span className="text-xs text-green-600 font-medium">Còn {selectedVariant.stock} sản phẩm</span>
             )}
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-            {item.sizes.map((size) => (
+            {item.variants.filter(variant => variant.active).map((variant) => (
               <button
-                key={size.name}
-                disabled={size.quantity <= 0}
-                onClick={() => setSelectedSize(size)}
+                key={variant.id}
+                disabled={variant.stock <= 0}
+                onClick={() => setSelectedVariant(variant)}
                 className={`px-3 py-2.5 rounded-xl border text-sm font-semibold transition-all cursor-pointer flex items-center justify-between ${
-                  selectedSize?.name === size.name
+                  selectedVariant?.id === variant.id
                     ? 'border-indigo-600 bg-indigo-50/40 text-indigo-900 ring-2 ring-indigo-600/20'
                     : 'border-gray-200 bg-white text-gray-800 hover:border-gray-300'
-                } ${size.quantity <= 0 ? 'opacity-40 cursor-not-allowed line-through' : ''}`}
+                } ${variant.stock <= 0 ? 'opacity-40 cursor-not-allowed line-through' : ''}`}
               >
-                <span>{size.name}</span>
+                <span>{variant.variantName}</span>
                 <span className="text-xs opacity-60">↕</span>
               </button>
             ))}
@@ -151,16 +141,16 @@ const ProductInfo = ({ item }) => {
           <span>{quantity}</span>
           <button
             onClick={() => {
-              const maxStock = selectedSize?.quantity ?? item?.quantityInStock ?? item?.stock ?? item?.quantityAvailable ?? null;
+              const maxStock = selectedVariant?.stock ?? null;
               if (maxStock !== null && quantity >= maxStock) {
                 showToast(`Đã đạt số lượng tồn kho tối đa (${maxStock})`, "warning");
                 return;
               }
               setQuantity(quantity + 1);
             }}
-            disabled={(selectedSize?.quantity ?? item?.quantityInStock ?? item?.stock ?? item?.quantityAvailable ?? null) !== null && quantity >= (selectedSize?.quantity ?? item?.quantityInStock ?? item?.stock ?? item?.quantityAvailable)}
+            disabled={selectedVariant !== null && quantity >= selectedVariant.stock}
             className="w-6 h-6 flex items-center justify-center hover:bg-gray-200 rounded-md cursor-pointer transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            title={(selectedSize?.quantity ?? item?.quantityInStock ?? item?.stock ?? item?.quantityAvailable ?? null) !== null && quantity >= (selectedSize?.quantity ?? item?.quantityInStock ?? item?.stock ?? item?.quantityAvailable) ? "Đã đạt số lượng tồn kho tối đa" : ""}
+            title={selectedVariant !== null && quantity >= selectedVariant.stock ? "Đã đạt số lượng tồn kho tối đa" : ""}
           >
             +
           </button>

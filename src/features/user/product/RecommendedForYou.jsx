@@ -130,7 +130,7 @@ const RecommendedForYou = () => {
           products.map((product) => {
             const pid = product.product_id || product.id;
             const origPrice = Number(product.original_price || product.originalPrice || product.price || 0);
-            const discPrice = Number(product.discounted_price || product.discountedPrice || 0);
+            const discPrice = Number(product.minSalePrice || 0);
             const price = discPrice > 0 ? discPrice : (origPrice > 0 ? origPrice : Number(product.price || 0));
             const originalPrice = discPrice > 0 && origPrice > discPrice ? origPrice : null;
             let discountPercent = Number(product.discount_percent || product.discountPercent || 0);

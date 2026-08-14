@@ -134,7 +134,7 @@ const CartItem = ({ item, isSelected, onToggleSelect, onRemove, formatCurrency, 
                         {item?.productName || "Sản phẩm"}
                     </h3>
                     <p className="text-xs sm:text-sm text-gray-500 mb-1.5">
-                        Cấu hình: <span className="text-gray-700 font-normal">{item?.size || "Một cỡ"}</span>
+                        Cấu hình: <span className="text-gray-700 font-normal">{item?.variantName}</span>
                     </p>
                     <button
                         className="text-xs sm:text-sm text-red-600 hover:text-red-700 transition-colors font-semibold cursor-pointer underline text-left disabled:opacity-50"
@@ -150,9 +150,9 @@ const CartItem = ({ item, isSelected, onToggleSelect, onRemove, formatCurrency, 
             <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100">
                 <div className="flex items-baseline gap-2">
                     <span className="text-base sm:text-lg font-bold text-red-600 underline underline-offset-2 decoration-red-600">
-                        {formatCurrency(item.discountedPrice * item.quantity)}
+                        {formatCurrency(item.salePrice * item.quantity)}
                     </span>
-                    {item?.price > item.discountedPrice && (
+                    {item?.price > item.salePrice && (
                         <span className="text-xs sm:text-sm line-through text-gray-400">
                             {formatCurrency(item.price * item.quantity)}
                         </span>
@@ -385,7 +385,7 @@ const Cart = () => {
     const selectedItems = cart?.cartItems?.filter(i => selectedItemIds.includes(i.id)) || [];
     const selectedTotalQuantity = selectedItems.reduce((acc, item) => acc + (item.quantity || 1), 0);
     const totalOriginalPrice = selectedItems.reduce((acc, item) => acc + (item.price * item.quantity), 0);
-    const totalDiscountedPrice = selectedItems.reduce((acc, item) => acc + (item.discountedPrice * item.quantity), 0);
+    const totalDiscountedPrice = selectedItems.reduce((acc, item) => acc + (item.salePrice * item.quantity), 0);
     const totalDiscount = totalOriginalPrice - totalDiscountedPrice;
 
     return (

@@ -33,14 +33,16 @@ export const CartProvider = ({ children }) => {
         imageUrl: item.productImageUrl || item.imageUrl || item.image || "/Placeholder2.png",
         productImageUrl: item.productImageUrl || item.imageUrl || item.image || "/Placeholder2.png",
         price: item.price || 0,
-        discountedPrice: item.discountedPrice != null ? item.discountedPrice : (item.price || 0),
+        salePrice: item.salePrice != null ? item.salePrice : (item.price || 0),
         quantity: item.quantity || 1,
-        size: item.size || null,
+        variantId: item.variantId,
+        variantName: item.variantName,
+        sku: item.sku,
         stock: item.stock ?? item.quantityInStock ?? item.quantityAvailable ?? item.availableQuantity ?? item.maxQuantity ?? null,
       }));
 
       const totalOriginalPrice = dataFromApi.totalOriginalPrice ?? dataFromApi.totalPrice ?? 0;
-      const totalDiscountedPrice = dataFromApi.totalDiscountedPrice ?? (dataFromApi.totalPrice || 0);
+      const totalDiscountedPrice = dataFromApi.totalSalePrice ?? (dataFromApi.totalPrice || 0);
       const discount = dataFromApi.discount ?? (totalOriginalPrice - totalDiscountedPrice);
       const totalItems = normalizedItems.length;
 

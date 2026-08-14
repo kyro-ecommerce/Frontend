@@ -86,7 +86,7 @@ const ZeroResultsRecommendations = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-4">
         {trending.map((product, index) => {
           const pid = product.product_id || product.id;
-          const price = product.discounted_price || product.discountedPrice || product.original_price || product.price;
+          const price = product.minSalePrice;
           const origPrice = product.original_price || product.price;
           const imageUrl = extractImageUrl(product);
 

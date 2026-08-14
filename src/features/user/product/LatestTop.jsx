@@ -55,7 +55,7 @@ const LatestTop = () => {
               image={product.imageUrls?.[0]?.downloadUrl || "/Placeholder2.png"}
               stockStatus={product.quantity > 0 ? "in stock" : "out of stock"}
               title={product.title}
-              price={formatPrice(product.discountedPrice)}
+              price={formatPrice(product.minSalePrice)}
               originalPrice={formatPrice(product.price)}
               reviewCount={product.numRatings || 0}
               ratingImage={product.averageRating || 0} // Truyền averageRating

@@ -70,20 +70,20 @@ const ProductDetailModal = ({ product, onClose, onEdit }) => {
                             </div>
 
                             <div className="flex items-baseline gap-3">
-                                {product.discountedPrice && product.discountedPrice < product.price ? (
+                                {product.minSalePrice < product.minPrice ? (
                                     <>
-                                        <span className="text-2xl font-extrabold text-[#1D7461]">{formatCurrency(product.discountedPrice)}</span>
-                                        <span className="text-xs font-bold text-slate-400 line-through">{formatCurrency(product.price)}</span>
+                                        <span className="text-2xl font-extrabold text-[#1D7461]">{formatCurrency(product.minSalePrice)}</span>
+                                        <span className="text-xs font-bold text-slate-400 line-through">{formatCurrency(product.minPrice)}</span>
                                     </>
                                 ) : (
-                                    <span className="text-2xl font-extrabold text-[#1D7461]">{formatCurrency(product.price)}</span>
+                                    <span className="text-2xl font-extrabold text-[#1D7461]">{formatCurrency(product.minPrice)}</span>
                                 )}
                             </div>
 
                             <div className="grid grid-cols-2 gap-4 py-3 border-y border-slate-100 text-xs">
                                 <div>
                                     <span className="text-slate-400 font-bold block mb-0.5">Tồn kho</span>
-                                    <span className="font-extrabold text-slate-800 text-sm">{product.quantity || 0} sản phẩm</span>
+                                    <span className="font-extrabold text-slate-800 text-sm">{product.totalStock || 0} sản phẩm</span>
                                 </div>
                                 <div>
                                     <span className="text-slate-400 font-bold block mb-0.5">Đã bán</span>
@@ -91,16 +91,16 @@ const ProductDetailModal = ({ product, onClose, onEdit }) => {
                                 </div>
                             </div>
 
-                            {product.sizes && product.sizes.length > 0 && (
+                            {product.variants && product.variants.length > 0 && (
                                 <div>
                                     <span className="text-xs font-extrabold text-slate-700 block mb-2">Kích cỡ có sẵn</span>
                                     <div className="flex flex-wrap gap-1.5">
-                                        {product.sizes.map((size, index) => {
+                                        {product.variants.map((size, index) => {
                                             let displayText = '';
                                             if (typeof size === 'object' && size !== null) {
-                                                displayText = size.name || 'Unknown Size';
-                                                if (size.quantity !== undefined) {
-                                                    displayText += ` (${size.quantity})`;
+                                                displayText = size.variantName || size.sku;
+                                                if (size.stock !== undefined) {
+                                                    displayText += ` (${size.stock})`;
                                                 }
                                             } else {
                                                 displayText = String(size);
