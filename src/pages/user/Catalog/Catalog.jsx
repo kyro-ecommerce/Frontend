@@ -279,7 +279,7 @@ const Catalog = ({ category: categoryProp }) => {
                         key={pid || index}
                         productId={pid}
                         image={imageUrl}
-                        stockStatus={product.quantity > 0 || product.is_active !== false ? "in stock" : "out of stock"}
+                        stockStatus={product.totalStock > 0 ? "in stock" : "out of stock"}
                         title={product.title}
                         price={formatPrice(price)}
                         originalPrice={origPrice > price ? formatPrice(origPrice) : null}

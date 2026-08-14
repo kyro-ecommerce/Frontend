@@ -63,7 +63,7 @@ const ProductList = ({
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {products.map((product) => {
-                                const stockStatus = getStockStatus(product.quantity || 0);
+                                const stockStatus = getStockStatus(product.totalStock || 0);
 
                                 return (
                                     <tr
