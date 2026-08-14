@@ -288,7 +288,7 @@ export const AIChatWidget = () => {
                     <span style={{ fontSize: "12px", fontWeight: "700", color: "#4b5563" }}>✨ Sản phẩm tư vấn phù hợp nhất:</span>
                     {msg.recommendedProducts.map((prod) => {
                       const pid = prod.product_id || prod.id;
-                      const price = prod.discounted_price || prod.discountedPrice || prod.original_price || prod.price;
+                      const price = prod.minSalePrice;
                       const priceStr = typeof price === 'number' ? price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' }) : price;
                       const rating = prod.average_rating ? `${prod.average_rating.toFixed(1)}⭐` : null;
 

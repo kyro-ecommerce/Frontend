@@ -63,7 +63,7 @@ const ProductList = ({
                         </thead>
                         <tbody className="divide-y divide-slate-100">
                             {products.map((product) => {
-                                const stockStatus = getStockStatus(product.quantity || 0);
+                                const stockStatus = getStockStatus(product.totalStock || 0);
 
                                 return (
                                     <tr
@@ -82,8 +82,8 @@ const ProductList = ({
                                                 <div className="text-left">
                                                     <div className="font-bold text-xs text-slate-800 line-clamp-1">{product.title}</div>
                                                     <div className="text-[11px] font-medium text-slate-400 mt-0.5">
-                                                        {product.sizes && Array.isArray(product.sizes) && product.sizes.length > 0
-                                                            ? `${product.sizes.length} kích cỡ`
+                                                        {product.variants && Array.isArray(product.variants) && product.variants.length > 0
+                                                            ? `${product.variants.length} variants`
                                                             : "Không có kích cỡ"}
                                                     </div>
                                                 </div>
@@ -95,8 +95,8 @@ const ProductList = ({
                                         <td className="p-3.5 px-5 text-center text-xs font-semibold text-slate-600">{translateCategoryName(product.topLevelCategory)}</td>
                                         <td className="p-3.5 px-5 text-center">
                                             <div className="flex flex-col items-center">
-                                                <div className="font-extrabold text-xs text-[#1D7461]">{formatCurrency(product.discountedPrice || product.price)}</div>
-                                                {product.discountedPrice && product.discountedPrice < product.price && (
+                                                <div className="font-extrabold text-xs text-[#1D7461]">{formatCurrency(product.minSalePrice)}</div>
+                                                {product.minSalePrice < product.minPrice && (
                                                     <div className="line-through text-slate-400 text-[10px] font-normal m-0">{formatCurrency(product.price)}</div>
                                                 )}
                                             </div>

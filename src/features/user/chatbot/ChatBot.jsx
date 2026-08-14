@@ -172,7 +172,7 @@ const ChatBot = () => {
                     </span>
                     {message.recommendedProducts.map((prod) => {
                       const pid = prod.product_id || prod.id;
-                      const price = prod.discounted_price || prod.discountedPrice || prod.original_price || prod.price;
+                      const price = prod.minSalePrice;
                       const priceStr = typeof price === 'number' ? price.toLocaleString('vi-VN') + ' đ' : price;
 
                       return (

@@ -157,7 +157,7 @@ const SearchBar = () => {
                         </p>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-xs font-bold text-blue-600">
-                            {formatPrice(product.discountedPrice || product.price)}
+                            {formatPrice(product.minSalePrice)}
                           </span>
                           {product.discountPercent > 0 && (
                             <span className="text-[10px] text-gray-400 line-through">

@@ -267,7 +267,7 @@ const Catalog = ({ category: categoryProp }) => {
                   // Hiển thị sản phẩm thực khi đã load xong
                   currentProducts.map((product, index) => {
                     const pid = product.id || product.product_id;
-                    const price = Number(product.discountedPrice || product.discounted_price || product.price || product.original_price || 0);
+                    const price = Number(product.minSalePrice || 0);
                     const origPrice = Number(product.originalPrice || product.original_price || product.price || 0);
                     const imageUrl = extractImageUrl(product);
                     const rating = Number(product.averageRating || product.average_rating || 5);
@@ -279,7 +279,7 @@ const Catalog = ({ category: categoryProp }) => {
                         key={pid || index}
                         productId={pid}
                         image={imageUrl}
-                        stockStatus={product.quantity > 0 || product.is_active !== false ? "in stock" : "out of stock"}
+                        stockStatus={product.totalStock > 0 ? "in stock" : "out of stock"}
                         title={product.title}
                         price={formatPrice(price)}
                         originalPrice={origPrice > price ? formatPrice(origPrice) : null}

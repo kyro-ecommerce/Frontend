@@ -32,8 +32,8 @@ const TopSellingProducts = ({ products = [] }) => {
                         {safeProducts.map((product, index) => {
                             const img = product.imageUrl || product.imageUrls?.[0]?.imageUrl || product.imageUrls?.[0]?.downloadUrl || product.images?.[0]?.downloadUrl || product.images?.[0]?.url;
                             const title = product.title || product.name;
-                            const discountedPrice = product.discountedPrice ?? product.discounted_price;
-                            const price = product.price || 0;
+                            const discountedPrice = product.minSalePrice;
+                            const price = product.minPrice || 0;
                             const sold = product.quantitySold ?? product.quantity_sold ?? 0;
                             const hasDiscount = discountedPrice !== undefined && discountedPrice !== null && discountedPrice < price;
 

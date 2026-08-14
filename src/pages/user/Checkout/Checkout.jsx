@@ -43,7 +43,7 @@ const Checkout = () => {
     const selectedCartItems = cartData?.cartItems?.filter(item => selectedItemIds.includes(item.id)) || [];
     const selectedTotalOriginalPrice = selectedCartItems.reduce((total, item) => total + item.price * item.quantity, 0);
     const selectedTotalDiscountedPrice = selectedCartItems.reduce(
-        (total, item) => total + item.discountedPrice * item.quantity,
+        (total, item) => total + item.salePrice * item.quantity,
         0
     );
 
@@ -539,7 +539,7 @@ const Checkout = () => {
                                     <p className='font-medium text-gray-800'>{item.productName}</p>
                                     <p className='text-sm text-gray-500'>SL: x{item.quantity} {item.size ? `(${item.size})` : ''}</p>
                                 </div>
-                                <p className="font-semibold text-red-600 whitespace-nowrap">{formatCurrency(item.discountedPrice * item.quantity)}</p>
+                                <p className="font-semibold text-red-600 whitespace-nowrap">{formatCurrency(item.salePrice * item.quantity)}</p>
                             </div>
                         ))}
                         <div className="border-t border-gray-300 pt-4 mt-4 space-y-2">

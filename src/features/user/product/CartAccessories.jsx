@@ -95,7 +95,7 @@ const CartAccessories = ({ cartItems = [] }) => {
           const id = item.id || item.product_id || item.productId;
           const img = extractImageUrl(item);
           const title = item.productTitle || item.title || item.name || "Phụ kiện";
-          const price = Number(item.discountedPrice || item.discounted_price || item.price || 0);
+          const price = Number(item.minSalePrice || 0);
           const origPrice = Number(item.originalPrice || item.original_price || item.price || 0);
           const rating = Number(item.averageRating || item.average_rating || 5);
           const discount = Number(item.discountPercent || item.discount_percent || 0);
