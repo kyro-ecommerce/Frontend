@@ -47,9 +47,9 @@ const RelatedProducts = ({ productId }) => {
             const id = item.id || item.product_id || item.productId;
             const img = item.imageUrl || item.image_url || item.image || (Array.isArray(item.images) ? item.images[0] : null) || "/Placeholder2.png";
             const title = item.productTitle || item.title || item.name || "Sản phẩm";
-            const origPrice = Number(item.original_price || item.originalPrice || item.price || 0);
-            const discPrice = Number(item.minSalePrice || 0);
-            const price = discPrice > 0 ? discPrice : (origPrice > 0 ? origPrice : Number(item.price || 0));
+            const origPrice = Number(item.original_price || item.originalPrice || item.minPrice || item.price || 0);
+            const discPrice = Number(item.discounted_price || item.discountedPrice || item.minSalePrice || item.salePrice || item.sale_price || item.discountPrice || 0);
+            const price = discPrice > 0 && discPrice < origPrice ? discPrice : (origPrice > 0 ? origPrice : Number(item.price || 0));
             const originalPrice = discPrice > 0 && origPrice > discPrice ? origPrice : null;
             let discount = Number(item.discount_percent || item.discountPercent || 0);
             if (!discount && origPrice > 0 && discPrice > 0 && origPrice > discPrice) {

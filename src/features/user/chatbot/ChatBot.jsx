@@ -97,6 +97,13 @@ const ChatBot = () => {
     }
   };
 
+  const handleFeedback = (msgIndex, type, text) => {
+    setMessages((prev) =>
+      prev.map((msg, idx) => (idx === msgIndex ? { ...msg, feedback: type } : msg))
+    );
+    aiService.sendFeedback(type, text);
+  };
+
   const handleKeyPress = (e) => {
     if (e.key === "Enter" && !isTyping) { 
       e.preventDefault();
@@ -163,6 +170,35 @@ const ChatBot = () => {
                     </div>
                   )}
                 </div>
+
+                {/* Feedback Buttons (Thumbs Up / Thumbs Down) for Bot Messages */}
+                {message.sender === "bot" && message.content && (
+                  <div className="mt-1.5 pl-9 flex items-center gap-2">
+                    <span className="text-[11px] text-gray-400 font-medium">Đánh giá:</span>
+                    <button
+                      onClick={() => handleFeedback(index, "thumbs_up", message.content)}
+                      className={`px-2 py-0.5 rounded text-[11px] font-semibold border transition-all flex items-center gap-1 ${
+                        message.feedback === "thumbs_up"
+                          ? "bg-green-100 border-green-300 text-green-700"
+                          : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
+                      }`}
+                      title="Câu trả lời hữu ích"
+                    >
+                      👍 {message.feedback === "thumbs_up" ? "Đã thích" : "Thích"}
+                    </button>
+                    <button
+                      onClick={() => handleFeedback(index, "thumbs_down", message.content)}
+                      className={`px-2 py-0.5 rounded text-[11px] font-semibold border transition-all flex items-center gap-1 ${
+                        message.feedback === "thumbs_down"
+                          ? "bg-red-100 border-red-300 text-red-700"
+                          : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
+                      }`}
+                      title="Câu trả lời chưa phù hợp"
+                    >
+                      👎 {message.feedback === "thumbs_down" ? "Đã bỏ qua" : "Chưa tốt"}
+                    </button>
+                  </div>
+                )}
 
                 {/* Render Product Cards for Bot Messages */}
                 {message.sender === "bot" && message.recommendedProducts && message.recommendedProducts.length > 0 && (

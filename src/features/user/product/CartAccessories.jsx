@@ -95,30 +95,27 @@ const CartAccessories = ({ cartItems = [] }) => {
           const id = item.id || item.product_id || item.productId;
           const img = extractImageUrl(item);
           const title = item.productTitle || item.title || item.name || "Phụ kiện";
-          const price = Number(item.minSalePrice || 0);
-          const origPrice = Number(item.originalPrice || item.original_price || item.price || 0);
+          const origPrice = Number(item.original_price || item.originalPrice || item.minPrice || item.price || 0);
+          const discPrice = Number(item.discounted_price || item.discountedPrice || item.minSalePrice || item.salePrice || item.sale_price || item.discountPrice || 0);
+          const price = discPrice > 0 && discPrice < origPrice ? discPrice : (origPrice > 0 ? origPrice : Number(item.price || 0));
+          const originalPrice = discPrice > 0 && origPrice > discPrice ? origPrice : null;
+          let discount = Number(item.discount_percent || item.discountPercent || 0);
+          if (!discount && origPrice > 0 && discPrice > 0 && origPrice > discPrice) {
+            discount = Math.round(((origPrice - discPrice) / origPrice) * 100);
+          }
           const rating = Number(item.averageRating || item.average_rating || 5);
-          const discount = Number(item.discountPercent || item.discount_percent || 0);
 
           return (
-            <div key={id || index} className="relative group">
-              {item.reason && (
-                <div className="absolute top-3 left-3 z-10 max-w-[75%] pointer-events-none">
-                  <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2.5 py-1 rounded-full bg-gradient-to-r from-blue-800 to-indigo-800 text-white shadow-md backdrop-blur-md truncate max-w-full">
-                    ✨ {item.reason}
-                  </span>
-                </div>
-              )}
-              <ProductCard
-                productId={id}
-                image={img}
-                title={title}
-                price={price}
-                originalPrice={origPrice > price ? origPrice : null}
-                ratingImage={rating}
-                discountPercent={discount}
-              />
-            </div>
+            <ProductCard
+              key={id || index}
+              productId={id}
+              image={img}
+              title={title}
+              price={price}
+              originalPrice={originalPrice}
+              ratingImage={rating}
+              discountPercent={discount}
+            />
           );
         })}
       </div>

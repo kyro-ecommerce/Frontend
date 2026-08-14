@@ -129,9 +129,9 @@ const RecommendedForYou = () => {
         ) : (
           products.map((product) => {
             const pid = product.product_id || product.id;
-            const origPrice = Number(product.original_price || product.originalPrice || product.price || 0);
-            const discPrice = Number(product.minSalePrice || 0);
-            const price = discPrice > 0 ? discPrice : (origPrice > 0 ? origPrice : Number(product.price || 0));
+            const origPrice = Number(product.original_price || product.originalPrice || product.minPrice || product.price || 0);
+            const discPrice = Number(product.discounted_price || product.discountedPrice || product.minSalePrice || product.salePrice || product.sale_price || product.discountPrice || 0);
+            const price = discPrice > 0 && discPrice < origPrice ? discPrice : (origPrice > 0 ? origPrice : Number(product.price || 0));
             const originalPrice = discPrice > 0 && origPrice > discPrice ? origPrice : null;
             let discountPercent = Number(product.discount_percent || product.discountPercent || 0);
             if (!discountPercent && origPrice > 0 && discPrice > 0 && origPrice > discPrice) {
