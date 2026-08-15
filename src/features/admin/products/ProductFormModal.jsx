@@ -17,6 +17,9 @@ const ProductFormModal = ({ product, categories = [], onClose, onSave }) => {
   }));
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [newImageFiles, setNewImageFiles] = useState([]);
+  const [newImageUrl, setNewImageUrl] = useState("");
+  const [removedImageIds, setRemovedImageIds] = useState([]);
   const parents = categories.filter(c => !c.parentId && (c.level === 1 || c.isParent));
   const parent = categories.find(c => c.name === form.topLevelCategory);
   const children = parent?.subCategories || categories.filter(c => c.parentId === parent?.categoryId);
@@ -27,11 +30,18 @@ const ProductFormModal = ({ product, categories = [], onClose, onSave }) => {
     event.preventDefault(); setError("");
     if (!form.title.trim() || !form.brand.trim() || !form.topLevelCategory || !form.secondLevelCategory) return setError("Vui lòng nhập đủ thông tin sản phẩm và danh mục.");
     if (!form.variants.some(v => v.active) || form.variants.some(v => !v.sku.trim() || !v.variantName.trim() || Number(v.price) < 0 || Number(v.stock) < 0)) return setError("Cần ít nhất một variant active; SKU, tên, giá và stock phải hợp lệ.");
+    const urls = newImageUrl.split('\n').map(value => value.trim()).filter(Boolean);
+    const remainingImages = (product?.imageUrls?.length || 0) - removedImageIds.length + newImageFiles.length + urls.length;
+    if (remainingImages > 10) return setError("Một sản phẩm có tối đa 10 ảnh.");
+    if (newImageFiles.some(file => file.size > 10 * 1024 * 1024 || !['image/jpeg', 'image/png', 'image/webp'].includes(file.type))) return setError("Ảnh phải là JPEG, PNG hoặc WebP và không quá 10 MB.");
     setSaving(true);
     const result = await onSave({ ...form,
       variants: form.variants.map(v => ({ ...v, price: Number(v.price), stock: Number(v.stock) })),
       attributes: form.attributes.filter(a => a.name.trim() && a.value.trim()),
       discountPercent: Number(form.discountPercent),
+      newImageFiles,
+      newImageUrls: urls,
+      removedImageIds,
     });
     setSaving(false); if (!result?.success) setError(result?.error || "Không thể lưu sản phẩm"); else onClose();
   };
@@ -48,6 +58,18 @@ const ProductFormModal = ({ product, categories = [], onClose, onSave }) => {
         <input className="border rounded-lg p-2" type="number" min="0" max="100" placeholder="Giảm giá %" value={form.discountPercent} onChange={e=>set("discountPercent",e.target.value)} />
       </div>
       <textarea className="border rounded-lg p-2 w-full" placeholder="Mô tả" value={form.description} onChange={e=>set("description",e.target.value)} />
+      {product && <section className="space-y-2"><h3 className="font-bold">Ảnh sản phẩm</h3>
+        <div className="flex flex-wrap gap-3">{(product.imageUrls || []).map(image => {
+          const id = image.imageId ?? image.id;
+          const removed = removedImageIds.includes(id);
+          return <button type="button" key={id} onClick={()=>setRemovedImageIds(current=>removed?current.filter(value=>value!==id):[...current,id])} className={`relative border rounded-lg p-1 ${removed?'opacity-40 border-red-500':'border-slate-200'}`}>
+            <img src={image.downloadUrl} alt="Ảnh sản phẩm" className="w-20 h-20 object-cover rounded" />
+            <span className="text-xs">{removed?'Hoàn tác':'Xóa'}</span>
+          </button>;
+        })}</div>
+        <input type="file" multiple accept="image/jpeg,image/png,image/webp" onChange={event=>setNewImageFiles([...event.target.files])} />
+        <textarea className="border rounded-lg p-2 w-full" placeholder="URL ảnh mới, mỗi dòng một URL" value={newImageUrl} onChange={event=>setNewImageUrl(event.target.value)} />
+      </section>}
       <section><div className="flex justify-between mb-2"><h3 className="font-bold">Variants</h3><button type="button" onClick={()=>set("variants",[...form.variants,emptyVariant()])}>+ Variant</button></div>
         {form.variants.map((v,i)=><div key={i} className="grid grid-cols-2 md:grid-cols-6 gap-2 mb-2">
           <input className="border p-2" placeholder="SKU" value={v.sku} onChange={e=>updateRow("variants",i,"sku",e.target.value)} />

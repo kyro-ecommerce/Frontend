@@ -28,49 +28,10 @@ const UserManagement = () => {
     const [selectedUser, setSelectedUser] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
 
-    // Client-side status filtering & sorting
-    const processedUsers = React.useMemo(() => {
-        let list = [...users];
-
-        // Lọc theo trạng thái
-        if (selectedStatus === 'active') {
-            list = list.filter(u => !u.banned);
-        } else if (selectedStatus === 'banned') {
-            list = list.filter(u => u.banned);
-        }
-
-        // Sắp xếp theo cột
-        if (sortBy) {
-            list.sort((a, b) => {
-                let valA = a[sortBy];
-                let valB = b[sortBy];
-
-                if (sortBy === 'name') {
-                    valA = `${a.firstName || ''} ${a.lastName || ''}`.trim().toLowerCase();
-                    valB = `${b.firstName || ''} ${b.lastName || ''}`.trim().toLowerCase();
-                } else if (sortBy === 'email') {
-                    valA = (a.email || '').toLowerCase();
-                    valB = (b.email || '').toLowerCase();
-                } else if (sortBy === 'createdAt') {
-                    valA = new Date(a.createdAt || 0).getTime();
-                    valB = new Date(b.createdAt || 0).getTime();
-                } else if (sortBy === 'id') {
-                    valA = Number(a.id || 0);
-                    valB = Number(b.id || 0);
-                }
-
-                if (valA < valB) return sortDir === 'asc' ? -1 : 1;
-                if (valA > valB) return sortDir === 'asc' ? 1 : -1;
-                return 0;
-            });
-        }
-
-        return list;
-    }, [users, selectedStatus, sortBy, sortDir]);
-
     // Xử lý khi lọc theo trạng thái trên header
     const handleStatusFilter = (status) => {
         setSelectedStatus(status);
+        setCurrentPage(0);
     };
 
     // Xử lý khi bấm sắp xếp cột trên header
@@ -81,6 +42,7 @@ const UserManagement = () => {
             setSortBy(field);
             setSortDir('asc');
         }
+        setCurrentPage(0);
     };
 
     const fetchUsers = async () => {
@@ -96,7 +58,10 @@ const UserManagement = () => {
                 pageNumber,
                 pageSizeNumber,
                 searchTerm,
-                selectedRole
+                selectedRole,
+                selectedStatus,
+                sortBy,
+                sortDir
             );
 
             if (response.status === 200) {
@@ -131,7 +96,7 @@ const UserManagement = () => {
         if (!loading && user) {
             fetchUsers();
         }
-    }, [loading, user, currentPage, searchTerm, selectedRole]);
+    }, [loading, user, currentPage, searchTerm, selectedRole, selectedStatus, sortBy, sortDir]);
 
     // Xử lý khi người dùng thay đổi trang
     const handlePageChange = (newPage) => {
@@ -322,7 +287,7 @@ const UserManagement = () => {
 
                         {/* Danh sách người dùng với header filter và sắp xếp */}
                         <UserList
-                            users={processedUsers}
+                            users={users}
                             isLoading={isLoading}
                             currentPage={currentPage}
                             totalPages={totalPages}
@@ -338,7 +303,7 @@ const UserManagement = () => {
                             sortBy={sortBy}
                             sortDir={sortDir}
                             onSort={handleSort}
-                            totalElements={totalElements || stats.totalUsers || processedUsers.length}
+                            totalElements={totalElements || stats.totalUsers || users.length}
                         />
                     </div>
                 </div>

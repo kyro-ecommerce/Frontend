@@ -349,6 +349,7 @@ const ProductManagementContent = () => {
                                                 <option value="id" className="bg-white text-slate-900" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>ID</option>
                                                 <option value="price" className="bg-white text-slate-900" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>Giá bán</option>
                                                 <option value="quantity" className="bg-white text-slate-900" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>Kho hàng</option>
+                                                <option value="quantitySold" className="bg-white text-slate-900" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>Đã bán</option>
                                             </select>
                                             
                                             {/* Sleek Sort Direction Toggle Button */}
