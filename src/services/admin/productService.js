@@ -45,9 +45,13 @@ export const createProduct = (productData) => {
     return api.post("/admin/products", postPayload);
 };
 
-export const updateProduct = (productId, productData) => {
-    const { images, imageUrls, ...patchPayload } = productData;
-    return api.patch(`/admin/products/${productId}`, patchPayload);
+export const updateProduct = async (productId, productData) => {
+    const { images, imageUrls, newImageFiles = [], newImageUrls = [], removedImageIds = [], ...patchPayload } = productData;
+    const response = await api.patch(`/admin/products/${productId}`, patchPayload);
+    for (const file of newImageFiles) await uploadProductImage(productId, file);
+    for (const url of newImageUrls) await addProductImageUrl(productId, url);
+    for (const imageId of removedImageIds) await deleteProductImage(imageId);
+    return response;
 };
 
 export const uploadProductImage = (productId, file) => {

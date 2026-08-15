@@ -226,6 +226,7 @@ export const useProducts = () => {
             console.error("Error updating product:", err);
             const errorMsg = getErrorMessage(err, "Không thể cập nhật sản phẩm.");
             setError(`Không thể cập nhật sản phẩm: ${errorMsg}`);
+            await fetchProducts(pagination.currentPage, pagination.pageSize).catch(() => {});
             return { success: false, error: errorMsg };
         }
     }, [fetchProducts, pagination.currentPage, pagination.pageSize]);
