@@ -1,18 +1,21 @@
 // src/pages/UserAccount/OrderDetail.jsx
-import React, { useEffect } from "react"; // Bỏ useState nếu currentOrder từ context
+import React, { useEffect, useState } from "react"; // Bỏ useState nếu currentOrder từ context
 import { useParams, useNavigate } from "react-router-dom";
 import BreadcrumbNav from "../../../layouts/user/BreadcrumbNav";
 import AccountSidebar from "../../../features/user/user/AccountSidebar";
 import { useOrderContext } from "../../../store/user/OrderContext"; // THÊM
 import { useToast } from "../../../store/user/ToastContext";
 import { useConfirm } from "../../../context/ConfirmContext.jsx";
+import { orderService } from "../../../services/user/order.service";
 import { CircularProgress, Typography, Button as MuiButton, Box, Paper, Chip, Alert } from '@mui/material'; // THÊM MUI
+import VnpayExpirationNotice from '../../../components/user/checkout/VnpayExpirationNotice';
 
 const OrderDetail = () => {
   const { orderId } = useParams();
   const navigate = useNavigate();
   const { showToast } = useToast();
   const confirm = useConfirm();
+  const [isRetryingPayment, setIsRetryingPayment] = useState(false);
   const {
     currentOrder: order, // Đổi tên để sử dụng trực tiếp
     isLoading,
@@ -29,6 +32,19 @@ const OrderDetail = () => {
       fetchOrderById(orderId);
     }
   }, [orderId, fetchOrderById, clearOrderError]);
+
+  useEffect(() => {
+    if (
+      !orderId ||
+      order?.paymentMethod !== "VNPAY" ||
+      order?.orderStatus !== "PENDING" ||
+      order?.paymentStatus === "COMPLETED"
+    ) {
+      return undefined;
+    }
+    const timer = setInterval(() => fetchOrderById(orderId), 30000);
+    return () => clearInterval(timer);
+  }, [orderId, order?.paymentMethod, order?.orderStatus, order?.paymentStatus, fetchOrderById]);
 
   const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', minimumFractionDigits: 0 }).format(amount || 0);
   const getStatusText = (status) => { /* ... (giữ nguyên) ... */
@@ -51,6 +67,15 @@ const OrderDetail = () => {
       default: return "default";
     }
   };
+  const getPaymentStatusText = (status) => {
+    switch (status) {
+      case "COMPLETED": return "Đã thanh toán";
+      case "CANCELLED": return "Đã hủy";
+      case "FAILED": return "Thanh toán thất bại";
+      case "REFUNDED": return "Đã hoàn tiền";
+      default: return "Chờ thanh toán";
+    }
+  };
 
   const handleCancelOrder = async () => {
     const isConfirmed = await confirm({
@@ -69,6 +94,22 @@ const OrderDetail = () => {
       } catch (err) {
         showToast(err.message || "Có lỗi xảy ra khi hủy đơn hàng.", "error");
       }
+    }
+  };
+
+  const handleRetryPayment = async () => {
+    setIsRetryingPayment(true);
+    try {
+      const response = await orderService.createVNPayPayment(order.id);
+      const paymentUrl = response?.data?.paymentUrl || response?.paymentUrl;
+      if (typeof paymentUrl !== "string" || !/^https?:\/\//.test(paymentUrl)) {
+        throw new Error("Không nhận được link thanh toán VNPAY hợp lệ từ hệ thống.");
+      }
+      window.location.href = paymentUrl;
+    } catch (err) {
+      const message = err.response?.data?.message || err.response?.data?.detail || err.message;
+      showToast(message || "Không thể tạo lại thanh toán VNPAY.", "error");
+      setIsRetryingPayment(false);
     }
   };
 
@@ -228,8 +269,13 @@ const OrderDetail = () => {
               <Paper elevation={0} sx={{ p: 3, border: '1px solid #e0e0e0', borderRadius: 2 }}>
                 <h2 className="text-lg font-semibold mb-3 text-gray-700">Thông tin thanh toán</h2>
                 <p><strong>Phương thức:</strong> {order.paymentMethod === "COD" ? "Thanh toán khi nhận hàng (COD)" : (order.paymentMethod || "Chưa rõ")}</p>
-                <p><strong>Trạng thái TT:</strong> {order.paymentStatus === "COMPLETED" ? "Đã thanh toán" : "Chưa thanh toán"}</p>
+                <p><strong>Trạng thái TT:</strong> {getPaymentStatusText(order.paymentStatus)}</p>
                 <p><strong>Ngày đặt:</strong> {new Date(order.orderDate).toLocaleString('vi-VN')}</p>
+                <VnpayExpirationNotice
+                  order={order}
+                  onRetry={handleRetryPayment}
+                  isRetrying={isRetryingPayment}
+                />
               </Paper>
             </div>
 
@@ -240,7 +286,7 @@ const OrderDetail = () => {
                 </MuiButton>
               )}
               {["PENDING", "CONFIRMED"].includes(order.orderStatus) && (
-                <MuiButton variant="contained" color="error" onClick={handleCancelOrder} disabled={isLoading}>
+                <MuiButton variant="contained" color="error" onClick={handleCancelOrder} disabled={isLoading || isRetryingPayment}>
                   {isLoading ? <CircularProgress size={20} color="inherit"/> : "Hủy đơn hàng"}
                 </MuiButton>
               )}

@@ -11,6 +11,7 @@ import AddressStep from './AddressStep';
 import { CircularProgress, Typography, Button as MuiButton, Box, Alert } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ErrorOutlineIcon from '@mui/icons-material/ErrorOutline';
+import VnpayExpirationNotice from '../../../components/user/checkout/VnpayExpirationNotice';
 
 const API_LOCATION_BASE_URL = "https://provinces.open-api.vn/api";
 
@@ -179,10 +180,14 @@ const Checkout = () => {
                             setVnpayStatus('success');
                             setVnpayMessage('Thanh toán VNPAY thành công!');
                             showToast('Thanh toán VNPAY thành công!', 'success');
+                        } else if (vnp_ResponseCode === '24') {
+                            setVnpayStatus('failed');
+                            setVnpayMessage('Bạn đã hủy lần thanh toán này. Đơn hàng vẫn được giữ và có thể thanh toán lại trước thời hạn.');
+                            showToast('Đơn hàng vẫn được giữ để bạn thanh toán lại.', 'info');
                         } else {
                             setVnpayStatus('failed');
-                            setVnpayMessage(`Thanh toán qua VNPAY thất bại. Mã lỗi: ${vnp_ResponseCode}.`);
-                            showToast('Thanh toán VNPAY thất bại.', 'error');
+                            setVnpayMessage(`Lần thanh toán chưa thành công (mã ${vnp_ResponseCode}). Đơn hàng vẫn được giữ và có thể thanh toán lại trước thời hạn.`);
+                            showToast('Thanh toán chưa thành công. Bạn có thể thử lại.', 'warning');
                         }
                     } catch (error) {
                         console.error("Lỗi khi xử lý VNPAY callback:", error);
@@ -575,6 +580,24 @@ const Checkout = () => {
                 </button>
             </div>
         </div>);
+
+    const handleRetryVNPay = async (orderId) => {
+        if (!orderId) return;
+        setIsPlacingOrder(true);
+        try {
+            const response = await orderService.createVNPayPayment(orderId);
+            const paymentUrl = response?.data?.paymentUrl || response?.paymentUrl;
+            if (typeof paymentUrl !== 'string' || !/^https?:\/\//.test(paymentUrl)) {
+                throw new Error('Không nhận được link thanh toán VNPAY hợp lệ từ hệ thống.');
+            }
+            window.location.href = paymentUrl;
+        } catch (error) {
+            const message = error.response?.data?.message || error.response?.data?.detail || error.message;
+            showToast(message || 'Không thể tạo lại thanh toán VNPAY.', 'error');
+            setIsPlacingOrder(false);
+        }
+    };
+
     const CompleteStep = () => { /* ... (Giữ nguyên) ... */ const orderDetails = orderFromContext;
         const orderIdToDisplay = processedOrderId || orderDetails?.id;
 
@@ -587,14 +610,26 @@ const Checkout = () => {
             );
         }
         if (vnpayStatus === 'failed') {
+            const cancelledByCustomer = new URLSearchParams(locationHook.search).get('vnp_ResponseCode') === '24';
             return (
                 <Box sx={{ textAlign: 'center', py: 10 }}>
                     <svg className="mx-auto mb-4 h-16 w-16 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <Typography variant="h5" component="h2" sx={{ mb: 1, fontWeight: 'bold', color: 'error.main' }}>Thanh toán thất bại</Typography>
+                    <Typography variant="h5" component="h2" sx={{ mb: 1, fontWeight: 'bold', color: 'error.main' }}>
+                        {cancelledByCustomer ? 'Đã hủy lần thanh toán' : 'Thanh toán chưa thành công'}
+                    </Typography>
                     <Typography sx={{ mb: 3, color: 'text.secondary' }}>{vnpayMessage || "Đã có lỗi xảy ra với thanh toán VNPAY."}</Typography>
-                    <MuiButton variant="outlined" onClick={() => navigate(`/my-order/${orderIdToDisplay || ''}`)}>Xem chi tiết đơn hàng</MuiButton>
+                    <Box sx={{ maxWidth: 600, mx: 'auto', mb: 3, textAlign: 'left' }}>
+                        <VnpayExpirationNotice
+                            order={orderDetails}
+                            onRetry={() => handleRetryVNPay(orderIdToDisplay)}
+                            isRetrying={isPlacingOrder}
+                        />
+                    </Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, flexWrap: 'wrap' }}>
+                        <MuiButton variant="outlined" onClick={() => navigate(`/my-order/${orderIdToDisplay || ''}`)}>Xem chi tiết đơn hàng</MuiButton>
+                    </Box>
                 </Box>
             );
         }
@@ -650,7 +685,7 @@ const Checkout = () => {
                             )}
                             {orderDetails?.orderStatus === 'CANCELLED' && (
                                 <span className="bg-red-50 text-red-700 border border-red-200 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-xs">
-                                    <ErrorOutlineIcon sx={{ fontSize: 16 }} /> Đã hủy (Hết kho)
+                                    <ErrorOutlineIcon sx={{ fontSize: 16 }} /> Đã hủy
                                 </span>
                             )}
                         </h3>
