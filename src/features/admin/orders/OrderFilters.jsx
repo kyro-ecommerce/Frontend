@@ -76,7 +76,7 @@ const OrderFilters = ({
                         <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
                         <input
                             type="text"
-                            placeholder="Tìm kiếm mã đơn (#101), tên khách hàng, số điện thoại..."
+                            placeholder="Tìm mã đơn, khách hàng, sản phẩm, email, số điện thoại..."
                             value={searchTerm}
                             onChange={(e) => {
                                 setSearchTerm(e.target.value);

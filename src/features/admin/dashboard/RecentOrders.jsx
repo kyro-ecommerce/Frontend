@@ -34,7 +34,7 @@ const RecentOrders = ({ orders = [] }) => {
                     <tbody>
                     {safeOrders.map((order) => {
                         const firstItem = order.orderItems?.[0];
-                        const trackingNo = order.trackingNo || (order.id ? `ORD-${order.id}` : 'N/A');
+                        const trackingNo = order.orderCode || 'N/A';
                         const productImg = firstItem?.imageUrl || firstItem?.productImageUrl || firstItem?.image || firstItem?.images?.[0]?.downloadUrl || order.productImg || order.imageUrl;
                         const mainTitle = firstItem?.productTitle || firstItem?.productName || order.productName || 'Đơn hàng';
                         const extraCount = (order.orderItems?.length || 1) - 1;

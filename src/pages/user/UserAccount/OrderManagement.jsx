@@ -35,20 +35,19 @@ const OrderManagement = () => {
     memoizedFetchUserOrders(selectedStatus, currentPage);
   }, [selectedStatus, currentPage, memoizedFetchUserOrders, memoizedClearOrderError]);
 
-  // Client-side filtering by order ID and product title
+  // Client-side filtering by order code and product title
   const filteredOrders = orders.filter((order) => {
     if (!searchTerm.trim()) return true;
-    const term = searchTerm.trim().toLowerCase().replace(/^#/, '');
+    const term = searchTerm.trim().toLowerCase();
 
-    // Match order ID
-    const matchId = order.id?.toString().includes(term);
+    const matchCode = order.orderCode?.toLowerCase().includes(term);
 
     // Match product title in order items
     const matchProduct = order.orderItems?.some((item) =>
       item.productTitle?.toLowerCase().includes(term)
     );
 
-    return matchId || matchProduct;
+    return matchCode || matchProduct;
   });
 
   const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', minimumFractionDigits: 0 }).format(amount || 0);
@@ -210,7 +209,7 @@ const OrderManagement = () => {
               {/* Header card */}
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center p-4 sm:p-5 bg-gray-50/70 border-b border-gray-100 gap-2">
                 <div>
-                  <h3 className="font-extrabold text-gray-900 text-base">Mã đơn: #{order.id}</h3>
+                  <h3 className="font-extrabold text-gray-900 text-base">Mã đơn: {order.orderCode}</h3>
                   <p className="text-xs text-gray-500 font-medium mt-0.5">
                     Ngày đặt: {order?.orderDate ? new Date(order.orderDate).toLocaleString('vi-VN') : "N/A"}
                   </p>
@@ -298,4 +297,3 @@ const OrderManagement = () => {
 };
 
 export default OrderManagement;
-

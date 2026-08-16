@@ -16,7 +16,7 @@ const OrderDetailModal = ({ order, onClose, onStatusChange, onDeleteOrder }) => 
     const handleDelete = async () => {
         const isConfirmed = await confirm({
             title: "Xóa đơn hàng",
-            message: `Bạn có chắc chắn muốn xóa đơn hàng #${order.id} không? Thao tác này không thể hoàn tác.`,
+            message: `Bạn có chắc chắn muốn xóa đơn hàng ${order.orderCode} không? Thao tác này không thể hoàn tác.`,
             confirmText: "Xóa đơn hàng",
             cancelText: "Hủy",
             type: "danger"
@@ -32,7 +32,7 @@ const OrderDetailModal = ({ order, onClose, onStatusChange, onDeleteOrder }) => 
         <div className="fixed inset-0 bg-black/50 flex justify-center items-center overflow-y-auto py-10 z-1000" onClick={onClose}>
             <div className="bg-white rounded-lg w-[90%] max-w-250 max-h-[90vh] overflow-y-auto shadow-[0_5px_20px_rgba(0,0,0,0.2)] flex flex-col" onClick={(e) => e.stopPropagation()}>
                 <div className="p-5 border-b border-gray-200 flex justify-between items-center sticky top-0 bg-white z-10">
-                    <h2 className="text-xl font-semibold m-0">Chi tiết đơn hàng #{order.id}</h2>
+                    <h2 className="text-xl font-semibold m-0">Chi tiết đơn hàng {order.orderCode}</h2>
                     <button className="bg-transparent border-none text-2xl cursor-pointer text-gray-500 hover:text-gray-800" onClick={onClose}>×</button>
                 </div>
 
@@ -42,7 +42,7 @@ const OrderDetailModal = ({ order, onClose, onStatusChange, onDeleteOrder }) => 
                             <h3 className="text-base font-semibold m-0 mb-4 text-gray-800">Thông tin đơn hàng</h3>
                             <div className="flex flex-col md:flex-row mb-3">
                                 <div className="w-full md:w-37.5 text-sm text-gray-500 mb-1 md:mb-0">Mã đơn hàng:</div>
-                                <div className="text-sm font-medium text-gray-800">#{order.id}</div>
+                                <div className="text-sm font-medium text-gray-800">{order.orderCode}</div>
                             </div>
                             <div className="flex flex-col md:flex-row mb-3">
                                 <div className="w-full md:w-37.5 text-sm text-gray-500 mb-1 md:mb-0">Ngày đặt hàng:</div>

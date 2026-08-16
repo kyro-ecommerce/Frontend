@@ -186,7 +186,7 @@ const OrderDetail = () => {
           <AccountSidebar />
           <div className="flex-1 bg-white p-6 rounded-3xl border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
             <div className="flex flex-col sm:flex-row justify-between items-center mb-6 pb-4 border-b border-gray-200">
-              <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Chi tiết đơn hàng #{order.id}</h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Chi tiết đơn hàng {order.orderCode}</h1>
               <MuiButton variant="outlined" onClick={() => navigate('/my-order')} size="small">Quay lại danh sách</MuiButton>
             </div>
 
