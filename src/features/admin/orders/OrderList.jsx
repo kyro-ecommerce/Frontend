@@ -79,7 +79,7 @@ const OrderList = ({
                         e.stopPropagation();
                         const isConfirmed = await confirm({
                             title: "Xóa đơn hàng",
-                            message: `Bạn có chắc chắn muốn xóa đơn hàng #${order.id} không? Thao tác này không thể hoàn tác.`,
+                            message: `Bạn có chắc chắn muốn xóa đơn hàng ${order.orderCode} không? Thao tác này không thể hoàn tác.`,
                             confirmText: "Xóa đơn hàng",
                             cancelText: "Hủy",
                             type: "danger"
@@ -134,7 +134,7 @@ const OrderList = ({
                             <tr className="border-b border-slate-200/80 bg-slate-50/90 text-[11px] font-extrabold text-slate-500 uppercase tracking-wider">
                                 {/* MÃ ĐƠN */}
                                 <th className="py-3.5 px-4 text-center">
-                                    {renderSortButton("id", "MÃ ĐƠN")}
+                                    {renderSortButton("orderCode", "MÃ ĐƠN")}
                                 </th>
 
                                 {/* KHÁCH HÀNG */}
@@ -212,13 +212,13 @@ const OrderList = ({
                                     <tr key={order.id} onClick={() => onViewOrder && onViewOrder(order.id)} className="hover:bg-slate-50/80 transition-colors cursor-pointer">
                                         <td className="py-3.5 px-4 text-center">
                                             <span className="bg-slate-100 text-slate-800 px-2.5 py-1 rounded-xl border border-slate-200/80 font-mono font-bold text-xs">
-                                                #{order.id}
+                                                {order.orderCode}
                                             </span>
                                         </td>
                                         <td className="py-3.5 px-4">
                                             <div className="flex flex-col">
                                                 <span className="font-bold text-slate-900 text-xs sm:text-sm">
-                                                    {order.shippingAddress?.fullName || `Khách hàng #${order.userId}`}
+                                                    {order.shippingAddress?.fullName || "Khách hàng"}
                                                 </span>
                                                 <span className="text-[11px] font-medium text-slate-400 mt-0.5">
                                                     {order.shippingAddress?.phoneNumber || order.userEmail || ''}

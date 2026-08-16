@@ -599,7 +599,8 @@ const Checkout = () => {
     };
 
     const CompleteStep = () => { /* ... (Giữ nguyên) ... */ const orderDetails = orderFromContext;
-        const orderIdToDisplay = processedOrderId || orderDetails?.id;
+        const orderId = processedOrderId || orderDetails?.id;
+        const orderCode = orderDetails?.orderCode;
 
         if (vnpayStatus === 'processing' || (isOrderContextLoadingGlobal && !orderDetails && !orderContextError && step === 4)) {
             return (
@@ -623,12 +624,12 @@ const Checkout = () => {
                     <Box sx={{ maxWidth: 600, mx: 'auto', mb: 3, textAlign: 'left' }}>
                         <VnpayExpirationNotice
                             order={orderDetails}
-                            onRetry={() => handleRetryVNPay(orderIdToDisplay)}
+                            onRetry={() => handleRetryVNPay(orderId)}
                             isRetrying={isPlacingOrder}
                         />
                     </Box>
                     <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, flexWrap: 'wrap' }}>
-                        <MuiButton variant="outlined" onClick={() => navigate(`/my-order/${orderIdToDisplay || ''}`)}>Xem chi tiết đơn hàng</MuiButton>
+                        <MuiButton variant="outlined" onClick={() => navigate(`/my-order/${orderId || ''}`)}>Xem chi tiết đơn hàng</MuiButton>
                     </Box>
                 </Box>
             );
@@ -638,14 +639,14 @@ const Checkout = () => {
                 <Box sx={{ textAlign: 'center', py: 10 }}>
                     <Typography variant="h5" color="error" gutterBottom>Không thể tải thông tin đơn hàng</Typography>
                     <Typography sx={{ mb: 2 }}>{orderContextError}</Typography>
-                    {orderIdToDisplay && <MuiButton variant="outlined" onClick={() => fetchOrderByIdContext(orderIdToDisplay)}>Thử lại</MuiButton>}
+                    {orderId && <MuiButton variant="outlined" onClick={() => fetchOrderByIdContext(orderId)}>Thử lại</MuiButton>}
                 </Box>
             );
         }
         if (!orderDetails && !isOrderContextLoadingGlobal && !orderContextError && step === 4 && vnpayStatus !== 'success') {
             return (
                  <Box sx={{ textAlign: 'center', py: 10 }}>
-                    <Typography sx={{ mb: 2 }}>Không tìm thấy thông tin cho đơn hàng #{orderIdToDisplay}.</Typography>
+                    <Typography sx={{ mb: 2 }}>Không tìm thấy thông tin đơn hàng.</Typography>
                     <MuiButton variant="outlined" onClick={() => navigate('/my-order')}>Xem lịch sử đơn hàng</MuiButton>
                  </Box>
             );
@@ -661,7 +662,7 @@ const Checkout = () => {
         return (
             <div className="text-center py-10 bg-white p-6 md:p-10 rounded-lg shadow-xl max-w-2xl mx-auto">
                 <div className="mb-6">
-                    {(vnpayStatus === 'success' || (orderDetails?.paymentMethod === 'COD' && orderDetails?.id?.toString() === orderIdToDisplay) ) && (
+                    {(vnpayStatus === 'success' || (orderDetails?.paymentMethod === 'COD' && String(orderDetails?.id) === String(orderId)) ) && (
                         <svg className="mx-auto mb-4 h-16 w-16 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
@@ -672,7 +673,7 @@ const Checkout = () => {
                     <p className="text-lg text-gray-600 mb-6">Cảm ơn bạn đã đặt hàng tại Kyro Store.</p>
                     <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 mb-6 text-left space-y-3 text-sm sm:text-base">
                         <h3 className="text-xl font-semibold mb-3 text-gray-700 flex justify-between items-center">
-                            <span>Thông tin đơn hàng #{orderIdToDisplay}</span>
+                            <span>Thông tin đơn hàng {orderCode}</span>
                             {orderDetails?.orderStatus === 'PENDING' && (
                                 <span className="bg-amber-50 text-amber-700 border border-amber-200 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1.5 shadow-xs">
                                     <CircularProgress size={12} color="inherit" /> Đang xác nhận đơn hàng...
@@ -712,7 +713,7 @@ const Checkout = () => {
                             TIẾP TỤC MUA SẮM
                         </button>
                         <button
-                            onClick={() => navigate(`/my-order/${orderIdToDisplay || ''}`)}
+                            onClick={() => navigate(`/my-order/${orderId || ''}`)}
                             className="px-8 py-3 rounded-2xl border border-gray-200 hover:bg-gray-50 text-gray-700 text-xs font-bold transition-all cursor-pointer"
                         >
                             XEM ĐƠN HÀNG
