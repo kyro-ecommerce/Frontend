@@ -89,13 +89,15 @@ export const OrderProvider = ({ children }) => {
     }
   }, [isAuthenticated]);
 
-  const fetchOrderById = useCallback(async (orderId) => {
+  const fetchOrderById = useCallback(async (orderId, silent = false) => {
     if (!isAuthenticated || !orderId) {
-        setCurrentOrder(null);
+        if (!silent) setCurrentOrder(null);
         return;
     }
-    setIsLoading(true);
-    setError(null);
+    if (!silent) {
+      setIsLoading(true);
+      setError(null);
+    }
     try {
       const response = await orderService.getOrderById(orderId);
       const responseBody = response.data;
@@ -118,11 +120,13 @@ export const OrderProvider = ({ children }) => {
       }
       setCurrentOrder(orderData);
     } catch (err) {
-      console.error(`Lỗi khi lấy chi tiết đơn hàng ${orderId} (Context):`, err);
-      setError(getErrorMessage(err, "Không thể tải chi tiết đơn hàng."));
-      setCurrentOrder(null);
+      if (!silent) {
+        console.error(`Lỗi khi lấy chi tiết đơn hàng ${orderId} (Context):`, err);
+        setError(getErrorMessage(err, "Không thể tải chi tiết đơn hàng."));
+        setCurrentOrder(null);
+      }
     } finally {
-      setIsLoading(false);
+      if (!silent) setIsLoading(false);
     }
   }, [isAuthenticated]);
 

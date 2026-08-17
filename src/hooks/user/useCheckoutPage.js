@@ -98,6 +98,19 @@ export const useCheckoutPage = () => {
                 setProcessedOrderId(currentOrderIdFromUrl);
                 fetchOrderByIdContext(currentOrderIdFromUrl);
             }
+
+            // Tự động poll ngầm mỗi 3s nếu đơn hàng đang ở trạng thái chờ xác nhận (PENDING)
+            let intervalId = null;
+            const isPending = !orderFromContext || orderFromContext.orderStatus === 'PENDING' || orderFromContext.orderStatus === 'WAITING_FOR_CONFIRMATION';
+            if (isPending) {
+                intervalId = setInterval(() => {
+                    fetchOrderByIdContext(currentOrderIdFromUrl, true);
+                }, 3000);
+            }
+
+            return () => {
+                if (intervalId) clearInterval(intervalId);
+            };
         }
     }, [step, locationHook.search, queryParams, fetchOrderByIdContext, processedOrderId, orderFromContext]);
 
