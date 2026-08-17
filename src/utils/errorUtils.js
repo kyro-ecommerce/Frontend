@@ -127,6 +127,9 @@ const translateKnownErrorMessages = (msg) => {
   if (/Giỏ hàng đã thay đổi/i.test(msg)) {
     return "Giỏ hàng đã thay đổi, vui lòng tải lại.";
   }
+  if (/Category name already exists|Category already exists|Tên danh mục đã tồn tại/i.test(msg)) {
+    return "Tên danh mục này đã tồn tại trong hệ thống. Vui lòng chọn tên khác.";
+  }
   return msg;
 };
 

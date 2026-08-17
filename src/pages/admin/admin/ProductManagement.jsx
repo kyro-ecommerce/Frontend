@@ -10,6 +10,7 @@ import ProductDetailModal from "../../../features/admin/products/ProductDetailMo
 import ProductFormModal from "../../../features/admin/products/ProductFormModal";
 import { translateCategoryName } from "../../../utils/admin/format.js";
 import { getErrorMessage } from "../../../utils/errorUtils";
+import { productService } from "../../../services/admin/index.js";
 
 // Wrapper component to use toast in main component
 const ProductManagementContent = () => {
@@ -67,8 +68,15 @@ const ProductManagementContent = () => {
         setIsFormModalOpen(true);
     };
 
-    const handleOpenEditModal = (product) => {
-        setEditingProduct(product);
+    const handleOpenEditModal = async (product) => {
+        try {
+            const response = await productService.getProductById(product.id);
+            const fullProduct = response.data?.data || response.data || product;
+            setEditingProduct(fullProduct);
+        } catch (err) {
+            console.error("Lỗi khi tải chi tiết sản phẩm để sửa:", err);
+            setEditingProduct(product);
+        }
         setIsFormModalOpen(true);
         setIsDetailModalOpen(false);
     };

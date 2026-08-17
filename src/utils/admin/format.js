@@ -137,7 +137,8 @@ const categoryNameMap = {
     "Cable": "Cáp sạc",
     "Uncategorized": "Chưa phân loại",
     "Other-Products": "Sản phẩm khác",
-    "other-products": "Sản phẩm khác"
+    "other-products": "Sản phẩm khác",
+    "desktop-computers": "Máy tính để bàn"
 };
 
 const translateCategoryName = (name) => {

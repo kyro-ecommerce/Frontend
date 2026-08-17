@@ -40,17 +40,50 @@ export const getAllProducts = (params = {}) => {
 
 export const getProductById = (productId) => api.get(`/admin/products/${productId}`);
 
-export const createProduct = (productData) => {
-    const { images, imageUrls, id, ...postPayload } = productData;
-    return api.post("/admin/products", postPayload);
+export const createProduct = async (productData) => {
+    const { images, imageUrls, newImageFiles = [], newImageUrls = [], removedImageIds = [], id, ...postPayload } = productData;
+    const response = await api.post("/admin/products", postPayload);
+    const createdProductId = response.data?.data?.id || response.data?.id || response.data?.productId;
+    if (createdProductId) {
+        for (const file of newImageFiles) {
+            try { await uploadProductImage(createdProductId, file); } catch (err) { console.error("Lỗi khi tải ảnh file:", err); }
+        }
+        for (const url of newImageUrls) {
+            try { await addProductImageUrl(createdProductId, url); } catch (err) { console.error("Lỗi khi thêm URL ảnh:", err); }
+        }
+    }
+    return response;
 };
 
 export const updateProduct = async (productId, productData) => {
-    const { images, imageUrls, newImageFiles = [], newImageUrls = [], removedImageIds = [], ...patchPayload } = productData;
+    const {
+        images,
+        imageUrls,
+        newImageFiles = [],
+        newImageUrls = [],
+        removedImageIds = [],
+        id,
+        createdAt,
+        updatedAt,
+        ratings,
+        reviews,
+        averageRating,
+        numRatings,
+        category,
+        ...patchPayload
+    } = productData;
+
     const response = await api.patch(`/admin/products/${productId}`, patchPayload);
-    for (const file of newImageFiles) await uploadProductImage(productId, file);
-    for (const url of newImageUrls) await addProductImageUrl(productId, url);
-    for (const imageId of removedImageIds) await deleteProductImage(imageId);
+
+    for (const file of newImageFiles) {
+        try { await uploadProductImage(productId, file); } catch (err) { console.error("Lỗi khi tải ảnh file:", err); }
+    }
+    for (const url of newImageUrls) {
+        try { await addProductImageUrl(productId, url); } catch (err) { console.error("Lỗi khi thêm URL ảnh:", err); }
+    }
+    for (const imageId of removedImageIds) {
+        try { await deleteProductImage(imageId); } catch (err) { console.error("Lỗi khi xoá ảnh:", err); }
+    }
     return response;
 };
 
