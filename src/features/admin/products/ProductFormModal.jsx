@@ -69,6 +69,14 @@ const ProductFormModal = ({ product, categories = [], onClose, onSave }) => {
     if (!form.variants.some(v => v.active) || form.variants.some(v => !v.sku.trim() || !v.variantName.trim() || Number(v.price) < 0 || Number(v.stock) < 0)) {
       return setError("Cần ít nhất một variant kích hoạt; SKU, tên cấu hình, giá bán và tồn kho phải hợp lệ.");
     }
+    const variantSkus = form.variants.map(v => v.sku.trim());
+    if (new Set(variantSkus).size !== variantSkus.length) {
+      return setError("SKU của các variant không được trùng nhau.");
+    }
+    const variantNames = form.variants.map(v => v.variantName.trim());
+    if (new Set(variantNames).size !== variantNames.length) {
+      return setError("Tên cấu hình của các variant không được trùng nhau.");
+    }
 
     const urls = newImageUrl.split('\n').map(value => value.trim()).filter(Boolean);
     const remainingImages = (product?.imageUrls?.length || 0) - removedImageIds.length + newImageFiles.length + urls.length;
