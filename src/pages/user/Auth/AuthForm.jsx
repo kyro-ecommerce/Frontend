@@ -5,6 +5,7 @@ import { useAuthContext } from '../../../store/user/AuthContext';
 import ForgotPassword from "./ForgotPassword";
 import { authService } from "../../../services/user/auth.service";
 import { getErrorMessage } from "../../../utils/errorUtils";
+import { useAuthForms } from "../../../hooks/user/useAuthForms";
 import {
   TextField,
   InputAdornment,
@@ -24,23 +25,17 @@ import CloseIcon from '@mui/icons-material/Close';
 const BACKEND_URL = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
 const AuthForms = ({ handleClose = () => {} }) => {
-  const [isLogin, setIsLogin] = useState(true);
-  const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const { login, register, isAuthenticated, isLoading: authIsLoading, error: authError, clearAuthError } = useAuthContext();
-
-  const toggleTab = (loginTab) => {
-    setIsLogin(loginTab);
-    clearAuthError();
-  };
-
-  const handleForgotPasswordOpen = () => setShowForgotPassword(true);
-  const handleForgotPasswordClose = () => setShowForgotPassword(false);
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      handleClose?.();
-    }
-  }, [isAuthenticated, handleClose]);
+  const {
+    isLogin,
+    showForgotPassword,
+    authIsLoading,
+    authError,
+    login,
+    clearAuthError,
+    toggleTab,
+    handleForgotPasswordOpen,
+    handleForgotPasswordClose
+  } = useAuthForms(handleClose);
 
   return (
     <div className="w-full relative bg-white rounded-3xl overflow-hidden p-3 sm:p-5" onClick={(e) => e.stopPropagation()}>

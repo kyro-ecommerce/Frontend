@@ -59,7 +59,8 @@ export const useProducts = () => {
                 ids: Object.fromEntries(tree.flatMap(category => [
                     [category.name, category.categoryId],
                     ...(category.subCategories || []).map(sub => [sub.name, sub.categoryId])
-                ]))
+                ])),
+                rawCategories: tree || []
             };
             setCategories(catData);
             return catData;

@@ -19,6 +19,7 @@ const OrderDetail = () => {
     getPaymentStatusText,
     handleCancelOrder,
     handleRetryPayment,
+    fetchOrderById,
     clearOrderError,
     navigate
   } = useOrderDetailPage();
