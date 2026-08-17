@@ -1,4 +1,3 @@
-// src/pages/Checkout/Checkout.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -7,6 +6,7 @@ import { useCartContext } from '../../../store/user/CartContext';
 import { orderService } from '../../../services/user/order.service';
 import { useAuthContext } from '../../../store/user/AuthContext';
 import { useToast } from '../../../store/user/ToastContext';
+import { useCheckoutPage } from '../../../hooks/user/useCheckoutPage';
 import AddressStep from './AddressStep';
 import { CircularProgress, Typography, Button as MuiButton, Box, Alert } from '@mui/material';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
@@ -16,275 +16,72 @@ import VnpayExpirationNotice from '../../../components/user/checkout/VnpayExpira
 const API_LOCATION_BASE_URL = "https://provinces.open-api.vn/api";
 
 const Checkout = () => {
-    const navigate = useNavigate();
-    const locationHook = useLocation();
-    const { showToast } = useToast();
-    const queryParams = new URLSearchParams(locationHook.search);
-    const initialStep = parseInt(queryParams.get('step') || '2'); // Bắt đầu từ bước 2 (Địa chỉ)
-    const orderIdFromUrl = queryParams.get('orderId');
-
     const {
-        addresses: savedAddressesContext,
-        currentOrder: orderFromContext,
-        isLoading: isOrderContextLoadingGlobal,
-        error: orderContextError,
-        fetchAddresses,
-        addNewAddress: addNewAddressContext,
-        createNewOrder: createNewOrderContext,
-        fetchOrderById: fetchOrderByIdContext,
-        clearOrderError
-    } = useOrderContext();
-
-    const { cart: cartData, isLoading: isCartContextLoading, fetchCart } = useCartContext();
-    const { isLoading: authIsLoading } = useAuthContext();
-    const selectedItemIds = (queryParams.get('cartItemIds') || '')
-        .split(',')
-        .map(Number)
-        .filter(id => Number.isInteger(id) && id > 0);
-    const selectedCartItems = cartData?.cartItems?.filter(item => selectedItemIds.includes(item.id)) || [];
-    const selectedTotalOriginalPrice = selectedCartItems.reduce((total, item) => total + item.price * item.quantity, 0);
-    const selectedTotalDiscountedPrice = selectedCartItems.reduce(
-        (total, item) => total + item.salePrice * item.quantity,
-        0
-    );
-
-    const [step, setStep] = useState(initialStep < 2 ? 2 : initialStep);
-    const [selectedAddress, setSelectedAddress] = useState(null);
-    const [shippingInfo, setShippingInfo] = useState({
-        fullName: "", phone: "", email: "", address: "",
-        city: "", district: "", ward: "", note: ""
-    });
-
-    const [provinces, setProvinces] = useState([]);
-    const [districts, setDistricts] = useState([]);
-    const [wards, setWards] = useState([]);
-
-    const [selectedProvinceCode, setSelectedProvinceCode] = useState('');
-    const [selectedDistrictCode, setSelectedDistrictCode] = useState('');
-    const [selectedWardCode, setSelectedWardCode] = useState('');
-
-    const [isLoadingProvinces, setIsLoadingProvinces] = useState(false);
-    const [isLoadingDistricts, setIsLoadingDistricts] = useState(false);
-    const [isLoadingWards, setIsLoadingWards] = useState(false);
-    const [paymentMethod, setPaymentMethod] = useState("COD");
-    const [isPlacingOrder, setIsPlacingOrder] = useState(false);
-
-    const [vnpayStatus, setVnpayStatus] = useState(null);
-    const [vnpayMessage, setVnpayMessage] = useState('');
-    const [processedOrderId, setProcessedOrderId] = useState(orderIdFromUrl);
-    const [orderIdForPostProcessing, setOrderIdForPostProcessing] = useState(null);
-    const [orderProcessedForEmailAndCartClear, setOrderProcessedForEmailAndCartClear] = useState(false);
-    const [emailSentForOrderId, setEmailSentForOrderId] = useState(null); // Cờ theo dõi email đã gửi
-    const [isProcessingPostOrder, setIsProcessingPostOrder] = useState(false);
-
-    useEffect(() => {
-        if (step < 4 && !isCartContextLoading && selectedItemIds.length === 0) {
-            navigate('/cart', { replace: true });
-        }
-    }, [step, isCartContextLoading, selectedItemIds.length, navigate]);
-
-    useEffect(() => {
-        fetchAddresses();
-    }, [fetchAddresses]);
-
-    useEffect(() => {
-        const addressIdFromQuery = queryParams.get('addressId');
-        if (addressIdFromQuery && savedAddressesContext.length > 0 && !shippingInfo.fullName) {
-            const foundAddress = savedAddressesContext.find(addr => addr.id.toString() === addressIdFromQuery);
-            if (foundAddress) {
-                setSelectedAddress(foundAddress);
-            }
-        }
-    }, [savedAddressesContext, locationHook.search, step, shippingInfo.fullName]); // Thêm queryParams
-
-    useEffect(() => {
-        const currentOrderIdFromUrl = queryParams.get('orderId');
-        if (step === 4 && currentOrderIdFromUrl) {
-            if (currentOrderIdFromUrl !== processedOrderId || !orderFromContext || orderFromContext.id?.toString() !== currentOrderIdFromUrl) {
-                setProcessedOrderId(currentOrderIdFromUrl);
-                fetchOrderByIdContext(currentOrderIdFromUrl);
-            }
-        }
-    }, [step, locationHook.search, queryParams, fetchOrderByIdContext, processedOrderId, orderFromContext]); // Thêm queryParams
-
-    useEffect(() => {
-        const fetchProvincesAPI = async () => {
-            setIsLoadingProvinces(true);
-            try {
-                const response = await axios.get(`${API_LOCATION_BASE_URL}/p/`);
-                setProvinces(response.data || []);
-            } catch (error) { console.error("Error fetching provinces:", error); setProvinces([]); }
-            finally { setIsLoadingProvinces(false); }
-        };
-        fetchProvincesAPI();
-    }, []);
-
-    useEffect(() => {
-        if (!selectedProvinceCode) {
-            setDistricts([]); setSelectedDistrictCode('');
-            setWards([]); setSelectedWardCode('');
-            return;
-        }
-        const fetchDistrictsAPI = async () => {
-            setIsLoadingDistricts(true);
-            setWards([]); setSelectedWardCode('');
-            try {
-                const response = await axios.get(`${API_LOCATION_BASE_URL}/p/${selectedProvinceCode}?depth=2`);
-                setDistricts(response.data?.districts || []);
-            } catch (error) { console.error("Error fetching districts:", error); setDistricts([]); }
-            finally { setIsLoadingDistricts(false); }
-        };
-        fetchDistrictsAPI();
-    }, [selectedProvinceCode]);
-
-    useEffect(() => {
-        if (!selectedDistrictCode) {
-            setWards([]); setSelectedWardCode('');
-            return;
-        }
-        const fetchWardsAPI = async () => {
-            setIsLoadingWards(true);
-            try {
-                const response = await axios.get(`${API_LOCATION_BASE_URL}/d/${selectedDistrictCode}?depth=2`);
-                setWards(response.data?.wards || []);
-            } catch (error) { console.error("Error fetching wards:", error); setWards([]); }
-            finally { setIsLoadingWards(false); }
-        };
-        fetchWardsAPI();
-    }, [selectedDistrictCode]);
-
-    useEffect(() => {
-        const searchParams = new URLSearchParams(locationHook.search);
-        const isVNPayReturn = searchParams.has('vnp_ResponseCode');
-        const currentStepFromUrl = parseInt(searchParams.get('step') || '0', 10);
-
-        if (isVNPayReturn && currentStepFromUrl === 4 && vnpayStatus === null) {
-            setVnpayStatus('processing');
-            setVnpayMessage('Đang xác nhận kết quả thanh toán VNPAY...');
-            const paramsObject = Object.fromEntries(searchParams);
-            const vnp_ResponseCode = paramsObject['vnp_ResponseCode'];
-            const vnp_TxnRef = paramsObject['vnp_TxnRef'];
-            const extractedOrderId = vnp_TxnRef ? vnp_TxnRef.split('_')[0] : null;
-
-            if (extractedOrderId) {
-                setProcessedOrderId(extractedOrderId);
-                setOrderIdForPostProcessing(extractedOrderId); // Quan trọng: Set để effect sau xử lý
-                setEmailSentForOrderId(null); // Reset cờ email cho order mới này (nếu là flow mới)
-                setOrderProcessedForEmailAndCartClear(false); // Reset cờ xử lý
-
-                const processCallback = async () => {
-                    try {
-                        await orderService.handleVNPayCallback(paramsObject);
-                        await fetchOrderByIdContext(extractedOrderId);
-                        if (vnp_ResponseCode === '00') {
-                            setVnpayStatus('success');
-                            setVnpayMessage('Thanh toán VNPAY thành công!');
-                            showToast('Thanh toán VNPAY thành công!', 'success');
-                        } else if (vnp_ResponseCode === '24') {
-                            setVnpayStatus('failed');
-                            setVnpayMessage('Bạn đã hủy lần thanh toán này. Đơn hàng vẫn được giữ và có thể thanh toán lại trước thời hạn.');
-                            showToast('Đơn hàng vẫn được giữ để bạn thanh toán lại.', 'info');
-                        } else {
-                            setVnpayStatus('failed');
-                            setVnpayMessage(`Lần thanh toán chưa thành công (mã ${vnp_ResponseCode}). Đơn hàng vẫn được giữ và có thể thanh toán lại trước thời hạn.`);
-                            showToast('Thanh toán chưa thành công. Bạn có thể thử lại.', 'warning');
-                        }
-                    } catch (error) {
-                        console.error("Lỗi khi xử lý VNPAY callback:", error);
-                        setVnpayStatus('failed');
-                        setVnpayMessage('Lỗi khi xác nhận kết quả thanh toán VNPAY.');
-                        showToast('Lỗi xác nhận thanh toán VNPAY.', 'error');
-                        fetchOrderByIdContext(extractedOrderId);
-                    }
-                };
-                processCallback();
-            } else {
-                setVnpayStatus('failed');
-                setVnpayMessage('Lỗi: Không tìm thấy mã đơn hàng từ VNPAY.');
-                showToast('Lỗi xử lý thanh toán VNPAY.', 'error');
-            }
-        } else if (currentStepFromUrl === 4 && !isVNPayReturn && orderIdFromUrl) {
-            setProcessedOrderId(orderIdFromUrl);
-            if ((!orderFromContext || orderFromContext.id?.toString() !== orderIdFromUrl) && !isOrderContextLoadingGlobal) {
-                fetchOrderByIdContext(orderIdFromUrl);
-            }
-            // Nếu là COD và chưa xử lý, set orderIdForPostProcessing
-            if (orderFromContext?.paymentMethod === 'COD' && orderFromContext?.id.toString() === orderIdFromUrl) {
-                setOrderIdForPostProcessing(orderIdFromUrl);
-                 // Không reset emailSentForOrderId ở đây vì có thể là refresh trang
-            }
-        }
-    }, [locationHook.search, vnpayStatus, showToast, fetchOrderByIdContext, orderIdFromUrl, orderFromContext, isOrderContextLoadingGlobal, queryParams]);
-
-    // Polling effect: khi đang ở step 4 và đơn hàng ở trạng thái PENDING, tự động gọi API 2s/lần để cập nhật trạng thái Saga
-    useEffect(() => {
-        let timer;
-        const currentOrderId = processedOrderId || orderFromContext?.id?.toString();
-        if (step === 4 && currentOrderId && orderFromContext?.orderStatus === 'PENDING') {
-            timer = setInterval(() => {
-                fetchOrderByIdContext(currentOrderId);
-            }, 2000);
-        }
-        return () => {
-            if (timer) clearInterval(timer);
-        };
-    }, [step, processedOrderId, orderFromContext?.orderStatus, fetchOrderByIdContext]);
-
-
-    useEffect(() => {
-        const performPostProcessing = async () => {
-            // Nếu một quá trình đã bắt đầu, không chạy lại
-            if (isProcessingPostOrder) {
-                console.log(`[POST_PROCESSING_EFFECT] Skipped: A process is already running.`);
-                return;
-            }
-
-            if (step === 4 && orderIdForPostProcessing && !authIsLoading && !orderProcessedForEmailAndCartClear) {
-                if (orderFromContext && orderFromContext.id?.toString() === orderIdForPostProcessing) {
-                    const isVNPaySuccessAndCompleted = orderFromContext.paymentMethod === 'VNPAY' && orderFromContext.paymentStatus === 'COMPLETED';
-                    const isCOD = orderFromContext.paymentMethod === 'COD';
-
-                    if (isVNPaySuccessAndCompleted || isCOD) {
-                        if (emailSentForOrderId !== orderIdForPostProcessing) {
-                            
-                            // ---- BẮT ĐẦU KHÓA ----
-                            setIsProcessingPostOrder(true);
-                            
-                            try {
-                                console.log(`[POST_PROCESSING_EFFECT] Order post-processing for order ${orderIdForPostProcessing}`);
-                                
-                                setEmailSentForOrderId(orderIdForPostProcessing);
-                                fetchCart();
-                                setOrderProcessedForEmailAndCartClear(true);
-                            } catch (error) {
-                                console.error(`[POST_PROCESSING_EFFECT] Error during post-processing for order ${orderIdForPostProcessing}:`, error);
-                            } finally {
-                                // ---- MỞ KHÓA ----
-                                setIsProcessingPostOrder(false);
-                            }
-                        }
-                    }
-                } else if (!orderFromContext && !isOrderContextLoadingGlobal) {
-                    fetchOrderByIdContext(orderIdForPostProcessing);
-                }
-            }
-        };
-
-        performPostProcessing();
-    }, [
+        navigate,
+        locationHook,
+        queryParams,
         step,
+        setStep,
+        selectedAddress,
+        setSelectedAddress,
+        shippingInfo,
+        setShippingInfo,
+        provinces,
+        districts,
+        wards,
+        selectedProvinceCode,
+        setSelectedProvinceCode,
+        selectedDistrictCode,
+        setSelectedDistrictCode,
+        selectedWardCode,
+        setSelectedWardCode,
+        isLoadingProvinces,
+        isLoadingDistricts,
+        isLoadingWards,
+        paymentMethod,
+        setPaymentMethod,
+        isPlacingOrder,
+        setIsPlacingOrder,
         vnpayStatus,
+        setVnpayStatus,
+        vnpayMessage,
+        setVnpayMessage,
+        processedOrderId,
+        orderIdFromUrl,
         orderIdForPostProcessing,
-        authIsLoading,
+        setOrderIdForPostProcessing,
         orderProcessedForEmailAndCartClear,
+        setOrderProcessedForEmailAndCartClear,
         emailSentForOrderId,
+        setEmailSentForOrderId,
+        isProcessingPostOrder,
+        setIsProcessingPostOrder,
+        savedAddressesContext,
         orderFromContext,
         isOrderContextLoadingGlobal,
+        orderContextError,
+        fetchAddresses,
+        addNewAddressContext,
+        createNewOrderContext,
         fetchOrderByIdContext,
+        clearOrderError,
+        cartData,
+        isCartContextLoading,
         fetchCart,
-        showToast,
-        isProcessingPostOrder 
-    ]);
+        authIsLoading,
+        selectedItemIds,
+        selectedCartItems,
+        selectedTotalOriginalPrice,
+        selectedTotalDiscountedPrice,
+        formatCurrency,
+        handleSelectExistingAddress,
+        handleStepChange,
+        showToast
+    } = useCheckoutPage();
+
+
+
+
 
     const clearAddressIdQueryParam = () => {
         setSelectedAddress(null);
@@ -481,7 +278,7 @@ const Checkout = () => {
         }
     };
 
-    const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', minimumFractionDigits: 0 }).format(amount || 0);
+
 
     const formatDate = (dateInput) => {
         if (!dateInput) return "Đang cập nhật...";

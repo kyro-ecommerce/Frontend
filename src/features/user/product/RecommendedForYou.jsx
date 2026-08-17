@@ -42,19 +42,18 @@ const RecommendedForYou = () => {
 
   const fetchRecommendations = async () => {
     setIsLoading(true);
+    let userId = null;
     try {
-      // Retrieve logged-in user from localStorage if available
-      let userId = null;
-      try {
-        const storedUser = localStorage.getItem("user") || localStorage.getItem("userInfo");
-        if (storedUser) {
-          const parsed = JSON.parse(storedUser);
-          userId = parsed.id || parsed.userId || parsed.user_id;
-        }
-      } catch (e) {
-        console.debug("Could not parse stored user:", e);
+      const storedUser = localStorage.getItem("user") || localStorage.getItem("userInfo");
+      if (storedUser) {
+        const parsed = JSON.parse(storedUser);
+        userId = parsed.id || parsed.userId || parsed.user_id;
       }
+    } catch (e) {
+      console.debug("Could not parse stored user:", e);
+    }
 
+    try {
       let res;
       if (userId && userId > 0) {
         res = await aiService.getPersonalizedProducts(userId, 5);
@@ -66,13 +65,18 @@ const RecommendedForYou = () => {
       setProducts(items);
       setStrategy(res?.strategy || "");
     } catch (error) {
-      console.warn("Could not fetch AI recommendations, trying fallback trending:", error);
-      try {
-        const fallbackRes = await aiService.getTrendingProducts(5);
-        const fallbackItems = fallbackRes?.recommendations || [];
-        setProducts(fallbackItems);
-      } catch (fallbackError) {
-        console.error("AI service unreachable:", fallbackError);
+      console.warn("Could not fetch AI recommendations:", error);
+      // Chỉ thử gọi fallback trending nếu trước đó đã thử gọi personalized products (user đăng nhập)
+      if (userId && userId > 0) {
+        try {
+          const fallbackRes = await aiService.getTrendingProducts(5);
+          const fallbackItems = fallbackRes?.recommendations || [];
+          setProducts(fallbackItems);
+        } catch (fallbackError) {
+          console.error("AI service unreachable:", fallbackError);
+          setProducts([]);
+        }
+      } else {
         setProducts([]);
       }
     } finally {

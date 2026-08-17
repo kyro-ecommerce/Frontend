@@ -235,7 +235,7 @@ export const AuthProvider = ({ children }) => {
     }
   }, [fetchUserProfileInternal]);
 
-  const value = {
+  const value = React.useMemo(() => ({
     user,
     jwt,
     isLoading,
@@ -244,16 +244,16 @@ export const AuthProvider = ({ children }) => {
     login,
     register,
     logout,
-    fetchUserProfile: useCallback(() => {
+    fetchUserProfile: () => {
       if (jwt) {
         return fetchUserProfileInternal(jwt);
       }
       return Promise.resolve();
-    }, [jwt, fetchUserProfileInternal]),
+    },
     checkAuthStatus,
     clearAuthError: () => setError(null),
     setAuthTokenAndFetchUser,
-  };
+  }), [user, jwt, isLoading, error, login, register, logout, checkAuthStatus, setAuthTokenAndFetchUser]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

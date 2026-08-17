@@ -1,64 +1,23 @@
-import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import React from "react";
 import ProductGallery from "../../../features/user/product/ProductGallery";
 import ProductInfo from "../../../features/user/product/ProductInfo";
 import ProductReviews from "../../../features/user/product/ProductReviews";
 import RelatedProducts from "../../../features/user/product/RelatedProducts";
 import ComplementaryAccessories from "../../../features/user/product/ComplementaryAccessories";
-import { productService } from "../../../services/user/product.service";
+import { useProductDetailPage } from "../../../hooks/user/useProductDetailPage";
 import { Alert, CircularProgress, Typography } from "@mui/material";
 
 const ProductDetail = () => {
-  const { productId } = useParams();
-  const [product, setProduct] = useState(null); // State cho toàn bộ dữ liệu sản phẩm
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  // State riêng cho rating để dễ dàng cập nhật từ ProductReviews
-  const [currentAverageRating, setCurrentAverageRating] = useState(0);
-  const [currentTotalReviews, setCurrentTotalReviews] = useState(0);
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-
-    if (!productId || productId === "undefined") {
-      setError("Product ID is required");
-      setLoading(false);
-      return;
-    }
-
-    const fetchProduct = async () => {
-      setLoading(true); // Bắt đầu loading khi fetch
-      setError(null); // Reset lỗi cũ
-      try {
-        const response = await productService.getProductById(productId);
-        const productData = response?.data?.data ?? response?.data;
-        if (!productData || typeof productData !== "object") {
-          throw new Error("Product data not found");
-        }
-        console.log('productttttttt :>> ', productData);
-        if (productData) {
-          setProduct(productData);
-          setCurrentAverageRating(productData.averageRating || 0);
-          setCurrentTotalReviews(productData.numRatings || 0);
-        }
-      } catch (err) {
-        console.error("Error fetching product:", err); // Log lỗi chi tiết
-        setError("Product not found or error loading data."); // Thông báo lỗi chung
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProduct();
-  }, [productId]);
-
-  // Hàm callback để ProductReviews cập nhật rating lên ProductDetail
-  const handleRatingUpdate = (newAverageRating, newTotalReviews) => {
-    console.log("ProductDetail received rating update:", newAverageRating, newTotalReviews);
-    setCurrentAverageRating(newAverageRating);
-    setCurrentTotalReviews(newTotalReviews);
-  };
+  const {
+    productId,
+    product,
+    loading,
+    error,
+    currentAverageRating,
+    currentTotalReviews,
+    productInfoData,
+    handleRatingUpdate
+  } = useProductDetailPage();
 
   if (loading) {
     return (
@@ -82,15 +41,6 @@ const ProductDetail = () => {
     );
   }
 
-  // Tạo một đối tượng product mới để truyền xuống ProductInfo,
-  // bao gồm cả rating đã được cập nhật
-  const productInfoData = product ? {
-    ...product,
-    averageRating: currentAverageRating, // Sử dụng rating đã cập nhật
-    numRatings: currentTotalReviews,     // Sử dụng số lượng đánh giá đã cập nhật
-  } : null;
-
-
   return (
     <div className="flex overflow-hidden flex-col pt-3 bg-white w-full">
       <main className="w-full max-w-screen-xl mx-auto px-4 md:px-8">
@@ -105,9 +55,7 @@ const ProductDetail = () => {
 
             <ProductReviews
               productId={productId}
-              // Truyền hàm callback xuống ProductReviews
               onRatingUpdate={handleRatingUpdate}
-              // Truyền rating và total ban đầu xuống để ProductReviews có thể hiển thị ngay lập tức
               initialAverageRating={currentAverageRating}
               initialTotalReviews={currentTotalReviews}
             />
@@ -124,6 +72,5 @@ const ProductDetail = () => {
     </div>
   );
 };
-
 
 export default ProductDetail;

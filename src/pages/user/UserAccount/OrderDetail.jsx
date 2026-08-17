@@ -1,117 +1,27 @@
 // src/pages/UserAccount/OrderDetail.jsx
-import React, { useEffect, useState } from "react"; // Bỏ useState nếu currentOrder từ context
-import { useParams, useNavigate } from "react-router-dom";
+import React from "react";
 import BreadcrumbNav from "../../../layouts/user/BreadcrumbNav";
 import AccountSidebar from "../../../features/user/user/AccountSidebar";
-import { useOrderContext } from "../../../store/user/OrderContext"; // THÊM
-import { useToast } from "../../../store/user/ToastContext";
-import { useConfirm } from "../../../context/ConfirmContext.jsx";
-import { orderService } from "../../../services/user/order.service";
-import { CircularProgress, Typography, Button as MuiButton, Box, Paper, Chip, Alert } from '@mui/material'; // THÊM MUI
+import { useOrderDetailPage } from "../../../hooks/user/useOrderDetailPage";
+import { CircularProgress, Typography, Button as MuiButton, Box, Paper, Chip, Alert } from '@mui/material';
 import VnpayExpirationNotice from '../../../components/user/checkout/VnpayExpirationNotice';
 
 const OrderDetail = () => {
-  const { orderId } = useParams();
-  const navigate = useNavigate();
-  const { showToast } = useToast();
-  const confirm = useConfirm();
-  const [isRetryingPayment, setIsRetryingPayment] = useState(false);
   const {
-    currentOrder: order, // Đổi tên để sử dụng trực tiếp
+    orderId,
+    order,
     isLoading,
     error,
-    fetchOrderById,
-    cancelUserOrder,
-    clearOrderError
-  } = useOrderContext(); // THÊM
-
-  useEffect(() => {
-    window.scrollTo(0, 0);
-    if (orderId) {
-      clearOrderError();
-      fetchOrderById(orderId);
-    }
-  }, [orderId, fetchOrderById, clearOrderError]);
-
-  useEffect(() => {
-    if (
-      !orderId ||
-      order?.paymentMethod !== "VNPAY" ||
-      order?.orderStatus !== "PENDING" ||
-      order?.paymentStatus === "COMPLETED"
-    ) {
-      return undefined;
-    }
-    const timer = setInterval(() => fetchOrderById(orderId), 30000);
-    return () => clearInterval(timer);
-  }, [orderId, order?.paymentMethod, order?.orderStatus, order?.paymentStatus, fetchOrderById]);
-
-  const formatCurrency = (amount) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', minimumFractionDigits: 0 }).format(amount || 0);
-  const getStatusText = (status) => { /* ... (giữ nguyên) ... */
-    switch(status) {
-      case "DELIVERED": return "Đã giao hàng";
-      case "SHIPPED": return "Đang vận chuyển";
-      case "PENDING": return "Chờ xử lý";
-      case "CONFIRMED": return "Đã xác nhận";
-      case "CANCELLED": return "Đã hủy";
-      default: return status || "Không xác định";
-    }
-  };
-  const getStatusColor = (status) => { /* ... (giữ nguyên) ... */
-    switch(status) {
-      case "DELIVERED": return "success"; // MUI Chip colors
-      case "SHIPPED": return "info";
-      case "PENDING": return "warning";
-      case "CONFIRMED": return "secondary";
-      case "CANCELLED": return "error";
-      default: return "default";
-    }
-  };
-  const getPaymentStatusText = (status) => {
-    switch (status) {
-      case "COMPLETED": return "Đã thanh toán";
-      case "CANCELLED": return "Đã hủy";
-      case "FAILED": return "Thanh toán thất bại";
-      case "REFUNDED": return "Đã hoàn tiền";
-      default: return "Chờ thanh toán";
-    }
-  };
-
-  const handleCancelOrder = async () => {
-    const isConfirmed = await confirm({
-      title: "Hủy đơn hàng",
-      message: "Bạn có chắc chắn muốn hủy đơn hàng này không?",
-      confirmText: "Hủy đơn hàng",
-      cancelText: "Không",
-      type: "warning"
-    });
-
-    if (isConfirmed) {
-      try {
-        await cancelUserOrder(orderId);
-        showToast("Đơn hàng đã được hủy thành công", "success");
-        fetchOrderById(orderId);
-      } catch (err) {
-        showToast(err.message || "Có lỗi xảy ra khi hủy đơn hàng.", "error");
-      }
-    }
-  };
-
-  const handleRetryPayment = async () => {
-    setIsRetryingPayment(true);
-    try {
-      const response = await orderService.createVNPayPayment(order.id);
-      const paymentUrl = response?.data?.paymentUrl || response?.paymentUrl;
-      if (typeof paymentUrl !== "string" || !/^https?:\/\//.test(paymentUrl)) {
-        throw new Error("Không nhận được link thanh toán VNPAY hợp lệ từ hệ thống.");
-      }
-      window.location.href = paymentUrl;
-    } catch (err) {
-      const message = err.response?.data?.message || err.response?.data?.detail || err.message;
-      showToast(message || "Không thể tạo lại thanh toán VNPAY.", "error");
-      setIsRetryingPayment(false);
-    }
-  };
+    isRetryingPayment,
+    formatCurrency,
+    getStatusText,
+    getStatusColor,
+    getPaymentStatusText,
+    handleCancelOrder,
+    handleRetryPayment,
+    clearOrderError,
+    navigate
+  } = useOrderDetailPage();
 
   // Tạo order history timeline
   const orderHistory = [];

@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useCallback, useEffect } from "react";
+import { debounce } from "lodash";
 import { Search, Calendar, RotateCcw, Filter } from "lucide-react";
 
 const OrderFilters = ({
@@ -10,10 +11,40 @@ const OrderFilters = ({
     const [endDate, setEndDate] = useState("");
     const [activePreset, setActivePreset] = useState("all");
 
+    // Tạo hàm debounce cho việc tìm kiếm với độ trễ 500ms
+    const debouncedSearch = useCallback(
+        debounce((term, start, end) => {
+            onSearch(term, start, end);
+        }, 500),
+        [onSearch]
+    );
+
+    // Hủy debounce khi component unmount
+    useEffect(() => {
+        return () => {
+            debouncedSearch.cancel();
+        };
+    }, [debouncedSearch]);
+
+    // Handle search input change with debounce
+    const handleSearchInput = (e) => {
+        const term = e.target.value;
+        setSearchTerm(term);
+        debouncedSearch(term, startDate, endDate);
+    };
+
     // Handle search submit
     const handleSearchSubmit = (e) => {
         e.preventDefault();
+        debouncedSearch.cancel();
         onSearch(searchTerm, startDate, endDate);
+    };
+
+    // Clear single search term
+    const handleClearSearch = () => {
+        setSearchTerm("");
+        debouncedSearch.cancel();
+        onSearch("", startDate, endDate);
     };
 
     // Apply quick date preset
@@ -41,17 +72,20 @@ const OrderFilters = ({
 
         setStartDate(start);
         setEndDate(end);
+        debouncedSearch.cancel();
         onSearch(searchTerm, start, end);
     };
 
     // Manual date filter click
     const handleManualDateFilter = () => {
         setActivePreset("custom");
+        debouncedSearch.cancel();
         onSearch(searchTerm, startDate, endDate);
     };
 
     // Clear all filters
     const handleClearFilters = () => {
+        debouncedSearch.cancel();
         setSearchTerm("");
         setStartDate("");
         setEndDate("");
@@ -78,18 +112,13 @@ const OrderFilters = ({
                             type="text"
                             placeholder="Tìm mã đơn, khách hàng, sản phẩm, email, số điện thoại..."
                             value={searchTerm}
-                            onChange={(e) => {
-                                setSearchTerm(e.target.value);
-                            }}
+                            onChange={handleSearchInput}
                             className="w-full py-2.5 pr-9 pl-10 bg-white border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-800 outline-none focus:border-[#1D7461] focus:ring-2 focus:ring-[#1D7461]/20 transition-all placeholder-slate-400 shadow-2xs"
                         />
                         {searchTerm && (
                             <button
                                 type="button"
-                                onClick={() => {
-                                    setSearchTerm("");
-                                    onSearch("", startDate, endDate);
-                                }}
+                                onClick={handleClearSearch}
                                 className="absolute right-3 text-slate-400 hover:text-slate-600 text-xs border-none bg-transparent cursor-pointer p-1"
                             >
                                 ✕
