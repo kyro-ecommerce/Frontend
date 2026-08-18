@@ -102,7 +102,7 @@ export const useOrderDetailPage = () => {
     if (!orderId) return;
     setIsRetryingPayment(true);
     try {
-      const response = await orderService.retryPayment(orderId);
+      const response = await orderService.createVNPayPayment(orderId);
       const data = response?.data?.data || response?.data || response;
       const paymentUrl = data?.paymentUrl || data?.vnpayUrl || data?.url;
       if (paymentUrl) {

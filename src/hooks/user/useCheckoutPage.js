@@ -70,6 +70,7 @@ export const useCheckoutPage = () => {
     const [orderProcessedForEmailAndCartClear, setOrderProcessedForEmailAndCartClear] = useState(false);
     const [emailSentForOrderId, setEmailSentForOrderId] = useState(null);
     const [isProcessingPostOrder, setIsProcessingPostOrder] = useState(false);
+    const isProcessingVNPayCallback = useRef(false);
 
     useEffect(() => {
         if (step < 4 && !isCartContextLoading && selectedItemIds.length === 0) {
@@ -92,11 +93,11 @@ export const useCheckoutPage = () => {
     }, [savedAddressesContext, locationHook.search, step, shippingInfo.fullName]);
 
     useEffect(() => {
-        const currentOrderIdFromUrl = queryParams.get('orderId');
-        if (step === 4 && currentOrderIdFromUrl) {
-            if (currentOrderIdFromUrl !== processedOrderId || !orderFromContext || orderFromContext.id?.toString() !== currentOrderIdFromUrl) {
-                setProcessedOrderId(currentOrderIdFromUrl);
-                fetchOrderByIdContext(currentOrderIdFromUrl);
+        const currentOrderId = queryParams.get('orderId') || processedOrderId;
+        if (step === 4 && currentOrderId) {
+            if (currentOrderId !== processedOrderId || !orderFromContext || orderFromContext.id?.toString() !== currentOrderId) {
+                setProcessedOrderId(currentOrderId);
+                fetchOrderByIdContext(currentOrderId);
             }
 
             // Tự động poll ngầm mỗi 3s nếu đơn hàng đang ở trạng thái chờ xác nhận (PENDING)
@@ -104,7 +105,7 @@ export const useCheckoutPage = () => {
             const isPending = !orderFromContext || orderFromContext.orderStatus === 'PENDING' || orderFromContext.orderStatus === 'WAITING_FOR_CONFIRMATION';
             if (isPending) {
                 intervalId = setInterval(() => {
-                    fetchOrderByIdContext(currentOrderIdFromUrl, true);
+                    fetchOrderByIdContext(currentOrderId, true);
                 }, 3000);
             }
 
@@ -113,6 +114,61 @@ export const useCheckoutPage = () => {
             };
         }
     }, [step, locationHook.search, queryParams, fetchOrderByIdContext, processedOrderId, orderFromContext]);
+
+    useEffect(() => {
+        const searchParams = new URLSearchParams(locationHook.search);
+        if (
+            step !== 4 ||
+            !searchParams.has('vnp_ResponseCode') ||
+            isProcessingVNPayCallback.current
+        ) {
+            return;
+        }
+
+        const params = Object.fromEntries(searchParams);
+        const responseCode = params.vnp_ResponseCode;
+        const orderId = params.vnp_TxnRef?.split('_')[0];
+
+        if (!orderId) {
+            setVnpayStatus('failed');
+            setVnpayMessage('Lỗi: Không tìm thấy mã đơn hàng từ VNPAY.');
+            showToast('Lỗi xử lý thanh toán VNPAY.', 'error');
+            return;
+        }
+
+        isProcessingVNPayCallback.current = true;
+        setVnpayStatus('processing');
+        setVnpayMessage('Đang xác nhận kết quả thanh toán VNPAY...');
+        setProcessedOrderId(orderId);
+
+        const processCallback = async () => {
+            try {
+                await orderService.handleVNPayCallback(params);
+                await fetchOrderByIdContext(orderId);
+                if (responseCode === '00') {
+                    setVnpayStatus('success');
+                    setVnpayMessage('Thanh toán VNPAY thành công!');
+                    showToast('Thanh toán VNPAY thành công!', 'success');
+                } else if (responseCode === '24') {
+                    setVnpayStatus('failed');
+                    setVnpayMessage('Bạn đã hủy lần thanh toán này. Đơn hàng vẫn được giữ và có thể thanh toán lại trước thời hạn.');
+                    showToast('Đơn hàng vẫn được giữ để bạn thanh toán lại.', 'info');
+                } else {
+                    setVnpayStatus('failed');
+                    setVnpayMessage(`Lần thanh toán chưa thành công (mã ${responseCode}). Đơn hàng vẫn được giữ và có thể thanh toán lại trước thời hạn.`);
+                    showToast('Thanh toán chưa thành công. Bạn có thể thử lại.', 'warning');
+                }
+            } catch (error) {
+                console.error('Lỗi khi xử lý VNPAY callback:', error);
+                setVnpayStatus('failed');
+                setVnpayMessage('Lỗi khi xác nhận kết quả thanh toán VNPAY.');
+                showToast('Lỗi xác nhận thanh toán VNPAY.', 'error');
+                fetchOrderByIdContext(orderId);
+            }
+        };
+
+        processCallback();
+    }, [step, locationHook.search, fetchOrderByIdContext, showToast]);
 
     useEffect(() => {
         const fetchProvincesAPI = async () => {
