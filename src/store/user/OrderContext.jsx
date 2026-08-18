@@ -1,6 +1,7 @@
 // src/contexts/OrderContext.jsx
 import React, { createContext, useState, useEffect, useContext, useCallback, useRef } from 'react';
 import { orderService } from '../../services/user/order.service';
+import { aiService } from '../../services/user/ai.service';
 import { useAuthContext } from './AuthContext'; // Giả sử bạn có AuthContext
 import { getErrorMessage } from '../../utils/errorUtils';
 
@@ -78,6 +79,15 @@ export const OrderProvider = ({ children }) => {
       }
       actualOrderObject.id = orderIdValue;
       setCurrentOrder(actualOrderObject);
+
+      // Record PURCHASE interaction (weight 5.0) to AI Service for personalization & Adminer DB logging
+      try {
+        const orderCat = actualOrderObject.categoryName || actualOrderObject.category || "";
+        aiService.recordInteraction("PURCHASE", `Order #${orderIdValue} completed`, orderCat);
+      } catch (e) {
+        console.debug("Could not record purchase interaction:", e);
+      }
+
       return actualOrderObject;
     } catch (err) {
       const errorMessage = getErrorMessage(err, "Không thể tạo đơn hàng.");

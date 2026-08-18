@@ -23,14 +23,27 @@ export const aiService = {
    * @param {function} onDone ()
    * @param {function} onError (err)
    */
-  chatStream: async (message, onMetadata, onChunk, onDone, onError) => {
+  chatStream: async (message, onMetadata, onChunk, onDone, onError, userId = null) => {
     try {
+      let activeUserId = userId;
+      if (!activeUserId) {
+        try {
+          const storedUser = localStorage.getItem("user") || localStorage.getItem("userInfo");
+          if (storedUser) {
+            const parsed = JSON.parse(storedUser);
+            activeUserId = parsed.id || parsed.userId || parsed.user_id || 0;
+          }
+        } catch (e) {
+          console.debug("Could not parse stored user:", e);
+        }
+      }
+
       const response = await fetch(`${API_BASE_URL}/ai/chat/stream`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ message }),
+        body: JSON.stringify({ message, user_id: activeUserId || 0 }),
       });
 
       if (!response.ok) {
@@ -116,10 +129,23 @@ export const aiService = {
    * @param {string} query 
    * @param {number} limit 
    */
-  search: async (query, limit = 10) => {
+  search: async (query, limit = 10, userId = null) => {
     try {
+      let activeUserId = userId;
+      if (!activeUserId) {
+        try {
+          const storedUser = localStorage.getItem("user") || localStorage.getItem("userInfo");
+          if (storedUser) {
+            const parsed = JSON.parse(storedUser);
+            activeUserId = parsed.id || parsed.userId || parsed.user_id || 0;
+          }
+        } catch (e) {
+          console.debug("Could not parse stored user:", e);
+        }
+      }
+
       const response = await api.get(`${API_BASE_URL}/ai/search`, {
-        params: { q: query, limit },
+        params: { q: query, limit, user_id: activeUserId || 0 },
       });
       return response.data;
     } catch (error) {
@@ -182,16 +208,39 @@ export const aiService = {
    * Get Cold-Start Trending Products
    * @param {number} limit 
    */
-  getTrendingProducts: async (limit = 5) => {
+  /**
+   * Record explicit user interaction (VIEW / CART) to AI Service
+   * @param {string} type ("VIEW" | "CART")
+   * @param {string} queryText 
+   * @param {string} categoryName 
+   * @param {number|null} userId 
+   */
+  recordInteraction: async (type, queryText = "", categoryName = "", userId = null) => {
     try {
-      const response = await api.get(`${API_BASE_URL}/ai/recommendations/trending`, {
-        params: { limit },
+      let activeUserId = userId;
+      if (!activeUserId) {
+        try {
+          const storedUser = localStorage.getItem("user") || localStorage.getItem("userInfo");
+          if (storedUser) {
+            const parsed = JSON.parse(storedUser);
+            activeUserId = parsed.id || parsed.userId || parsed.user_id || 0;
+          }
+        } catch (e) {
+          console.debug("Could not parse stored user:", e);
+        }
+      }
+      const response = await api.post(`${API_BASE_URL}/ai/interactions/record`, {
+        user_id: activeUserId || 0,
+        interaction_type: type,
+        query_text: queryText,
+        category_name: categoryName,
       });
       return response.data;
     } catch (error) {
-      console.error("Lỗi khi lấy gợi ý sản phẩm bán chạy:", error);
-      throw error;
+      console.debug("Could not record interaction:", error);
+      return null;
     }
   },
 };
+
 

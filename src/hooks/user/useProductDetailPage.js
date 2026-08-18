@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { productService } from "../../services/user/product.service";
+import { aiService } from "../../services/user/ai.service";
 
 export const useProductDetailPage = () => {
     const { productId } = useParams();
@@ -10,6 +11,7 @@ export const useProductDetailPage = () => {
 
     const [currentAverageRating, setCurrentAverageRating] = useState(0);
     const [currentTotalReviews, setCurrentTotalReviews] = useState(0);
+    const recordedProductRef = useRef(null);
 
     useEffect(() => {
         window.scrollTo(0, 0);
@@ -33,6 +35,14 @@ export const useProductDetailPage = () => {
                     setProduct(productData);
                     setCurrentAverageRating(productData.averageRating || 0);
                     setCurrentTotalReviews(productData.numRatings || 0);
+
+                    // Record VIEW interaction to AI Service once per product page load
+                    if (recordedProductRef.current !== productId) {
+                        recordedProductRef.current = productId;
+                        const catName = productData.categoryName || productData.category_name || productData.category?.name || (typeof productData.category === "string" ? productData.category : "") || "";
+                        const titleStr = productData.title || productData.name || `Product ID ${productId}`;
+                        aiService.recordInteraction("VIEW", `View product ${titleStr}`, catName);
+                    }
                 }
             } catch (err) {
                 console.error("Error fetching product:", err);
