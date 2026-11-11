@@ -4,6 +4,7 @@ import ProductControls from "../../../features/user/catalog/ProductControls";
 import FilterSidebar from "../../../features/user/catalog/FilterSidebar";
 import Filter from "../../../features/user/catalog/Filter";
 import ProductCard from "../../../features/user/product/ProductCard";
+import { normalizeCatalogRating } from "../../../features/user/product/recommendationCard.js";
 import ProductSkeleton from "../../../features/user/product/ProductSkeleton";
 import Pagination from "../../../components/user/common/Pagination";
 import ZeroResultsRecommendations from "../../../features/user/catalog/ZeroResultsRecommendations";
@@ -70,7 +71,7 @@ const Catalog = ({ category: categoryProp }) => {
                     const price = Number(product.minSalePrice || 0);
                     const origPrice = Number(product.originalPrice || product.original_price || product.price || 0);
                     const imageUrl = extractImageUrl(product);
-                    const rating = Number(product.averageRating || product.average_rating || 5);
+                    const rating = normalizeCatalogRating(product.averageRating ?? product.average_rating);
                     const numRatings = Number(product.numRatings || product.num_ratings || 0);
                     const discount = Number(product.discountPercent || product.discount_percent || 0);
 

@@ -1,5 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
+import { useAuthContext } from "../../../store/user/AuthContext";
+import { useRecoveringRecommendations } from "../../../hooks/user/useRecoveringRecommendations.js";
+import { recommendationItems } from "../../../services/user/recommendationRecovery.js";
+import RecommendationStatus from "./RecommendationStatus";
 import ProductCard from "./ProductCard";
+import { normalizeCatalogRating } from "./recommendationCard.js";
 import { aiService } from "../../../services/user/ai.service";
 
 const formatPrice = (price) => {
@@ -36,64 +41,21 @@ const extractImageUrl = (product) => {
 };
 
 const RecommendedForYou = () => {
-  const [products, setProducts] = useState([]);
-  const [strategy, setStrategy] = useState("");
-  const [isLoading, setIsLoading] = useState(true);
-
-  const fetchRecommendations = async () => {
-    setIsLoading(true);
-    let userId = null;
-    try {
-      const storedUser = localStorage.getItem("user") || localStorage.getItem("userInfo");
-      if (storedUser) {
-        const parsed = JSON.parse(storedUser);
-        userId = parsed.id || parsed.userId || parsed.user_id;
-      }
-    } catch (e) {
-      console.debug("Could not parse stored user:", e);
-    }
-
-    try {
-      let res;
-      if (userId && userId > 0) {
-        res = await aiService.getPersonalizedProducts(userId, 5);
-      } else {
-        res = await aiService.getTrendingProducts(5);
-      }
-
-      const items = res?.recommendations || res?.data || (Array.isArray(res) ? res : []);
-      setProducts(items);
-      setStrategy(res?.strategy || "");
-    } catch (error) {
-      console.warn("Could not fetch AI recommendations:", error);
-      // Chỉ thử gọi fallback trending nếu trước đó đã thử gọi personalized products (user đăng nhập)
-      if (userId && userId > 0) {
-        try {
-          const fallbackRes = await aiService.getTrendingProducts(5);
-          const fallbackItems = fallbackRes?.recommendations || [];
-          setProducts(fallbackItems);
-        } catch (fallbackError) {
-          console.error("AI service unreachable:", fallbackError);
-          setProducts([]);
-        }
-      } else {
-        setProducts([]);
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchRecommendations();
-  }, []);
-
-  if (!isLoading && products.length === 0) {
-    return null; // Gracefully hide if no recommendations available
-  }
+  const { user, isAuthenticated } = useAuthContext();
+  const userId = user?.id ?? user?.userId ?? user?.user_id;
+  const { data, status } = useRecoveringRecommendations("home", async (signal) => {
+    const res = isAuthenticated
+      ? await aiService.getPersonalizedProducts(userId, 5, { signal })
+      : await aiService.getTrendingProducts(5, { signal });
+    return recommendationItems(res);
+  });
+  const products = data ?? [];
+  const isLoading = status === "loading";
+  if (!products.length && !isLoading) return <RecommendationStatus status={status} />;
 
   return (
     <div className="flex flex-col w-full max-md:max-w-full px-4 my-6">
+      <RecommendationStatus status={status} hasData={products.length > 0} />
       {/* Header Section with AI Badge */}
       <div className="flex flex-wrap gap-4 justify-between items-center mb-3 mt-4 max-md:max-w-full">
         <div className="flex items-center gap-3">
@@ -153,7 +115,7 @@ const RecommendedForYou = () => {
                   price={price}
                   originalPrice={originalPrice}
                   reviewCount={product.num_ratings || product.numRatings || 0}
-                  ratingImage={product.average_rating || product.averageRating || 5.0}
+                  ratingImage={normalizeCatalogRating(product.average_rating ?? product.averageRating)}
                   discountPercent={discountPercent}
                 />
               </div>

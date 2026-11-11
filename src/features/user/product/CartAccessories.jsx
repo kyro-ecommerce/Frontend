@@ -1,6 +1,10 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
+import { useRecoveringRecommendations } from "../../../hooks/user/useRecoveringRecommendations.js";
+import { recommendationItems } from "../../../services/user/recommendationRecovery.js";
+import RecommendationStatus from "./RecommendationStatus";
 import { aiService } from "../../../services/user/ai.service";
 import ProductCard from "./ProductCard";
+import { normalizeCatalogRating } from "./recommendationCard.js";
 
 const extractImageUrl = (product) => {
   if (!product) return "/Placeholder2.png";
@@ -31,48 +35,18 @@ const extractImageUrl = (product) => {
 };
 
 const CartAccessories = ({ cartItems = [] }) => {
-  const [accessories, setAccessories] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    if (!cartItems || cartItems.length === 0) {
-      setAccessories([]);
-      return;
-    }
-
-    // Pick main product ID from cart items
-    const mainItem = cartItems[0];
-    const mainProductId = mainItem?.productId || mainItem?.product?.id || mainItem?.id;
-
-    if (!mainProductId) return;
-
-    const fetchCartAccessories = async () => {
-      setLoading(true);
-      try {
-        const res = await aiService.getComplementaryProducts(mainProductId, 6);
-        const list = res?.recommendations || res?.items || res?.data || (Array.isArray(res) ? res : []);
-        const cartProductIds = new Set(
-          cartItems.map((ci) => String(ci?.productId || ci?.product?.id || ci?.id))
-        );
-        const filteredList = list.filter((item) => {
-          const itemId = item.id || item.product_id || item.productId;
-          return !cartProductIds.has(String(itemId));
-        }).slice(0, 4);
-        setAccessories(filteredList);
-      } catch (err) {
-        console.warn("Could not fetch cart accessories:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchCartAccessories();
-  }, [cartItems]);
-
-  if (loading || !accessories || accessories.length === 0) return null;
+  const ids = (cartItems ?? []).map((item) => String(item?.productId || item?.product?.id || item?.id));
+  const mainProductId = ids[0];
+  const { data, status } = useRecoveringRecommendations(`cart:${JSON.stringify(ids)}`, async (signal) => {
+    const res = await aiService.getComplementaryProducts(mainProductId, 6, { signal });
+    return recommendationItems(res).filter((item) => !ids.includes(String(item.id || item.product_id || item.productId))).slice(0, 4);
+  }, !!mainProductId && mainProductId !== "undefined");
+  const accessories = data ?? [];
+  if (!accessories.length) return <RecommendationStatus status={status} />;
 
   return (
     <div className="w-full mt-10 p-6 bg-gradient-to-r from-blue-50/90 via-indigo-50/50 to-purple-50/90 rounded-2xl border border-indigo-100 shadow-sm">
+      <RecommendationStatus status={status} hasData />
       <div className="flex items-center gap-3 mb-4">
         <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-sm">
           🛒
@@ -103,7 +77,7 @@ const CartAccessories = ({ cartItems = [] }) => {
           if (!discount && origPrice > 0 && discPrice > 0 && origPrice > discPrice) {
             discount = Math.round(((origPrice - discPrice) / origPrice) * 100);
           }
-          const rating = Number(item.averageRating || item.average_rating || 5);
+          const rating = normalizeCatalogRating(item.averageRating ?? item.average_rating);
 
           return (
             <ProductCard

@@ -1,9 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
+import { useRecoveringRecommendations } from "../../../hooks/user/useRecoveringRecommendations.js";
+import { recommendationItems } from "../../../services/user/recommendationRecovery.js";
+import RecommendationStatus from "../product/RecommendationStatus";
 import { aiService } from "../../../services/user/ai.service";
 import ProductCard from "../product/ProductCard";
+import { normalizeCatalogRating } from "../product/recommendationCard.js";
 
 const formatPrice = (price) => {
-  if (typeof price !== "number" || isNaN(price)) return "N/A";
+  if (typeof price !== "number" || !Number.isFinite(price) || price < 0) return "N/A";
   return price.toLocaleString("vi-VN", { style: "currency", currency: "VND" });
 };
 
@@ -36,36 +40,22 @@ const extractImageUrl = (product) => {
 };
 
 const ZeroResultsRecommendations = () => {
-  const [trending, setTrending] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const fetchTrending = async () => {
-      setLoading(true);
-      try {
-        const res = await aiService.getTrendingProducts(4);
-        const list = res?.recommendations || res?.items || res?.data || (Array.isArray(res) ? res : []);
-        setTrending(list);
-      } catch (err) {
-        console.warn("Could not fetch zero results trending fallback:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTrending();
-  }, []);
-
-  if (loading || !trending || trending.length === 0) {
+  const { data, status } = useRecoveringRecommendations("zero-results", async (signal) => {
+    return recommendationItems(await aiService.getTrendingProducts(4, { signal }));
+  });
+  const trending = data ?? [];
+  if (!trending.length) {
     return (
       <div className="text-center p-8 text-gray-500 font-medium">
         Rất tiếc, không tìm thấy sản phẩm nào phù hợp với bộ lọc.
+        <RecommendationStatus status={status} />
       </div>
     );
   }
 
   return (
     <div className="w-full my-6 p-6 bg-gradient-to-br from-gray-50 via-blue-50/30 to-purple-50/40 rounded-2xl border border-gray-200 shadow-sm text-left">
+      <RecommendationStatus status={status} hasData />
       <div className="flex items-center gap-3 mb-4">
         <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-sm">
           🔍
@@ -86,8 +76,8 @@ const ZeroResultsRecommendations = () => {
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-4">
         {trending.map((product, index) => {
           const pid = product.product_id || product.id;
-          const price = product.minSalePrice;
-          const origPrice = product.original_price || product.price;
+          const price = product.discounted_price ?? product.minSalePrice;
+          const origPrice = product.original_price ?? product.price;
           const imageUrl = extractImageUrl(product);
 
           return (
@@ -104,9 +94,9 @@ const ZeroResultsRecommendations = () => {
                 image={imageUrl}
                 title={product.title}
                 price={formatPrice(price)}
-                originalPrice={origPrice > price ? formatPrice(origPrice) : null}
-                ratingImage={product.average_rating || product.averageRating || 5}
-                discountPercent={product.discount_percent || product.discountPercent || 0}
+                originalPrice={Number.isFinite(price) && price >= 0 && Number.isFinite(origPrice) && origPrice > price ? formatPrice(origPrice) : null}
+                ratingImage={normalizeCatalogRating(product.average_rating ?? product.averageRating)}
+                discountPercent={product.discount_percent ?? product.discountPercent ?? 0}
               />
             </div>
           );

@@ -1,13 +1,20 @@
 import { api, API_BASE_URL } from "../../config/user/ApiConfig";
+import { deliverProductView, getAiSessionId, PRODUCT_VIEW_PATH } from "./productViewTracking.js";
+import { getTokenFromLocalStorage, saveTokenToLocalStorage } from "./util";
+import { authService } from "./auth.service";
 
 export const aiService = {
+  // Actor identity is asserted by the gateway, never copied from localStorage.
+  recordProductView: (event) => deliverProductView(event, {
+    post: (payload) => api.post(`${API_BASE_URL}${PRODUCT_VIEW_PATH}`, payload),
+  }),
   /**
    * Send chat message to AI shopping consultant (Gemini RAG)
    * @param {string} message 
    */
   chat: async (message) => {
     try {
-      const response = await api.post(`${API_BASE_URL}/ai/chat`, { message });
+      const response = await api.post(`${API_BASE_URL}/ai/chat`, { message, session_id: getAiSessionId() });
       return response.data;
     } catch (error) {
       console.error("Lỗi khi kết nối AI Chatbot:", error);
@@ -23,28 +30,28 @@ export const aiService = {
    * @param {function} onDone ()
    * @param {function} onError (err)
    */
-  chatStream: async (message, onMetadata, onChunk, onDone, onError, userId = null) => {
+  chatStream: async (message, onMetadata, onChunk, onDone, onError) => {
     try {
-      let activeUserId = userId;
-      if (!activeUserId) {
-        try {
-          const storedUser = localStorage.getItem("user") || localStorage.getItem("userInfo");
-          if (storedUser) {
-            const parsed = JSON.parse(storedUser);
-            activeUserId = parsed.id || parsed.userId || parsed.user_id || 0;
-          }
-        } catch (e) {
-          console.debug("Could not parse stored user:", e);
-        }
-      }
-
-      const response = await fetch(`${API_BASE_URL}/ai/chat/stream`, {
+      const token = getTokenFromLocalStorage();
+      const body = JSON.stringify({ message, session_id: getAiSessionId() });
+      const send = (accessToken) => fetch(`${API_BASE_URL}/ai/chat/stream`, {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
+          ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
         },
-        body: JSON.stringify({ message, user_id: activeUserId || 0 }),
+        body,
       });
+      let response = await send(token);
+      // Retry only a rejected (not yet streamed) authenticated request, once.
+      // Never silently downgrade an expired/invalid login to guest.
+      if (response.status === 401 && token) {
+        const refreshed = await authService.refreshToken();
+        if (!refreshed) throw new Error("Could not refresh AI chat authentication");
+        saveTokenToLocalStorage(refreshed);
+        response = await send(refreshed);
+      }
 
       if (!response.ok) {
         throw new Error(`HTTP error ${response.status}`);
@@ -115,6 +122,7 @@ export const aiService = {
       const response = await api.post(`${API_BASE_URL}/ai/chat/feedback`, {
         feedback,
         message_text: messageText,
+        session_id: getAiSessionId(),
       });
       return response.data;
     } catch (error) {
@@ -129,23 +137,10 @@ export const aiService = {
    * @param {string} query 
    * @param {number} limit 
    */
-  search: async (query, limit = 10, userId = null) => {
+  search: async (query, limit = 10) => {
     try {
-      let activeUserId = userId;
-      if (!activeUserId) {
-        try {
-          const storedUser = localStorage.getItem("user") || localStorage.getItem("userInfo");
-          if (storedUser) {
-            const parsed = JSON.parse(storedUser);
-            activeUserId = parsed.id || parsed.userId || parsed.user_id || 0;
-          }
-        } catch (e) {
-          console.debug("Could not parse stored user:", e);
-        }
-      }
-
       const response = await api.get(`${API_BASE_URL}/ai/search`, {
-        params: { q: query, limit, user_id: activeUserId || 0 },
+        params: { q: query, limit, session_id: getAiSessionId() },
       });
       return response.data;
     } catch (error) {
@@ -159,9 +154,10 @@ export const aiService = {
    * @param {number} productId 
    * @param {number} limit 
    */
-  getSimilarProducts: async (productId, limit = 5) => {
+  getSimilarProducts: async (productId, limit = 5, options = {}) => {
     try {
       const response = await api.get(`${API_BASE_URL}/ai/recommendations/similar/${productId}`, {
+        timeout: 15000, signal: options.signal,
         params: { limit },
       });
       return response.data;
@@ -176,9 +172,10 @@ export const aiService = {
    * @param {number} productId 
    * @param {number} limit 
    */
-  getComplementaryProducts: async (productId, limit = 5) => {
+  getComplementaryProducts: async (productId, limit = 5, options = {}) => {
     try {
       const response = await api.get(`${API_BASE_URL}/ai/recommendations/complementary/${productId}`, {
+        timeout: 15000, signal: options.signal,
         params: { limit },
       });
       return response.data;
@@ -192,9 +189,10 @@ export const aiService = {
    * @param {number} userId 
    * @param {number} limit 
    */
-  getPersonalizedProducts: async (userId, limit = 5) => {
+  getPersonalizedProducts: async (userId, limit = 5, options = {}) => {
     try {
       const response = await api.get(`${API_BASE_URL}/ai/recommendations/personalized/${userId}`, {
+        timeout: 15000, signal: options.signal,
         params: { limit },
       });
       return response.data;
@@ -208,6 +206,14 @@ export const aiService = {
    * Get Cold-Start Trending Products
    * @param {number} limit 
    */
+  getTrendingProducts: async (limit = 5, options = {}) => {
+    const response = await api.get(`${API_BASE_URL}/ai/recommendations/trending`, {
+      timeout: 15000, signal: options.signal,
+      params: { limit },
+    });
+    return response.data;
+  },
+
   /**
    * Record explicit user interaction (VIEW / CART) to AI Service
    * @param {string} type ("VIEW" | "CART")

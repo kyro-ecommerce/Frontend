@@ -5,7 +5,7 @@ import { productService } from "../../../services/user/product.service";
 import { useNavigate } from 'react-router-dom'; // Thêm useNavigate nếu chưa có
 
 const formatPrice = (price) => {
-  if (typeof price !== 'number') return "N/A";
+  if (!Number.isFinite(price) || price <= 0) return null;
   return price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' });
 };
 
@@ -56,7 +56,7 @@ const LatestTop = () => {
               stockStatus={product.totalStock > 0 ? "in stock" : "out of stock"}
               title={product.title}
               price={formatPrice(product.minSalePrice)}
-              originalPrice={formatPrice(product.price)}
+              originalPrice={Number.isFinite(product.minSalePrice) && product.minSalePrice > 0 && product.minPrice > product.minSalePrice ? formatPrice(product.minPrice) : null}
               reviewCount={product.numRatings || 0}
               ratingImage={product.averageRating || 0} // Truyền averageRating
               discountPercent={product.discountPercent || 0}

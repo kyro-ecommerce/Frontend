@@ -2,6 +2,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Rating } from '@mui/material';
+import { normalizeCatalogRating, variantCapacityLabel } from './recommendationCard.js';
 
 const formatPrice = (value) => {
   if (value === null || value === undefined || value === "") return null;
@@ -29,7 +30,9 @@ const ProductCard = ({
   originalPrice,
   reviewCount,
   ratingImage, // averageRating
-  discountPercent
+  discountPercent,
+  selectedVariant,
+  recommendationReason,
 }) => {
   const navigate = useNavigate();
 
@@ -40,7 +43,7 @@ const ProductCard = ({
   };
 
   const isOutOfStock = stockStatus !== "in stock";
-  const displayRating = typeof ratingImage === 'number' && ratingImage > 0 ? ratingImage : 5;
+  const displayRating = normalizeCatalogRating(ratingImage);
   const formattedPrice = formatPrice(price);
   const formattedOriginalPrice = formatPrice(originalPrice);
 
@@ -84,7 +87,7 @@ const ProductCard = ({
       <div className="flex flex-col items-center text-center w-full mt-auto">
         {/* Rating Stars */}
         <div className="flex items-center justify-center gap-1 mb-1.5">
-          <Rating
+          {displayRating !== null ? <Rating
             value={displayRating}
             readOnly
             precision={0.5}
@@ -93,8 +96,8 @@ const ProductCard = ({
               color: '#F59E0B',
               fontSize: '1.1rem',
             }}
-          />
-          {reviewCount > 0 && (
+          /> : <span className="text-xs text-gray-500">Chưa có đánh giá</span>}
+          {displayRating !== null && reviewCount > 0 && (
             <span className="text-[11px] font-medium text-gray-400">({reviewCount})</span>
           )}
         </div>
@@ -106,6 +109,22 @@ const ProductCard = ({
         >
           {title || "Tên sản phẩm"}
         </h3>
+
+        {selectedVariant && (
+          <div className="w-full mb-2 text-left text-xs text-gray-600 break-words" aria-label="Cấu hình SKU được gợi ý">
+            <p>SKU: {selectedVariant.sku} (variant {selectedVariant.variant_id})</p>
+            <p>{variantCapacityLabel(selectedVariant)}</p>
+            <p>
+              {[selectedVariant.ram_source, selectedVariant.storage_source].includes("variantName")
+                ? "Cấu hình diễn giải từ tên catalog; chưa xác minh độc lập."
+                : "Thông số theo catalog; chưa xác minh độc lập."}
+            </p>
+            <p>Giá theo snapshot SKU; mở sản phẩm và chọn đúng SKU khi mua. Chưa xác nhận giá/tồn kho checkout.</p>
+          </div>
+        )}
+        {recommendationReason && (
+          <p className="w-full mb-2 text-left text-xs text-gray-600 break-words" aria-label="Lý do gợi ý">{recommendationReason}</p>
+        )}
 
         {/* Price Section */}
         <div className="flex items-baseline justify-center gap-2 mt-auto pt-1">
