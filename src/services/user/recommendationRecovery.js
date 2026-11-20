@@ -26,9 +26,8 @@ export function recoverRecommendations({ load, publish, browser = window, page =
   let attempt = 0;
   let retryAt = 0;
   let retryable = false;
-  let terminal = false;
   let data = null;
-  let lastSuccess = -Infinity;
+  let deadline;
   const active = () => page.visibilityState !== "hidden" && browser.navigator?.onLine !== false;
   const clear = () => { unschedule(timer); timer = undefined; };
   const arm = () => {
@@ -50,45 +49,51 @@ export function recoverRecommendations({ load, publish, browser = window, page =
     controller = new AbortController();
     publish({ data, status: data === null ? "loading" : "refreshing" });
     try {
-      const result = await load(controller.signal);
+      // Bound the whole operation, including an Axios auth-refresh queue and
+      // the two-step complementary->trending request. Per-request timeout is 15s.
+      const result = await Promise.race([
+        load(controller.signal),
+        new Promise((_, reject) => {
+          deadline = schedule(() => {
+            // A normal request already times out at 15s and is retryable. An
+            // overall 35s stall may be the shared auth queue: do not pile more
+            // requests into that queue indefinitely.
+            reject(Object.assign(new Error("Recommendation operation stalled"), { code: "RECOMMENDATION_DEADLINE" }));
+            controller.abort();
+          }, 35000);
+        }),
+      ]);
       if (disposed) return;
       data = result;
-      lastSuccess = now();
       attempt = 0;
       retryable = false;
-      terminal = false;
       publish({ data, status: "success" });
     } catch (error) {
       if (disposed) return;
       const delay = retryDelay(error, ++attempt, now());
       retryable = delay !== null;
-      terminal = !retryable;
       retryAt = now() + (delay ?? 0);
       publish({ data, status: retryable ? "reconnecting" : "error" });
     } finally {
+      unschedule(deadline);
       running = false;
       arm();
     }
   }
   const visibility = () => { if (active()) wake(); else clear(); };
-  // Refresh snapshots on return, at most once a minute; never poll successes.
-  const resume = () => {
-    if (!disposed && !running && active() && !terminal && !retryable && data !== null && now() - lastSuccess >= 60000) run();
-    else wake();
-  };
-  const visibilityChanged = () => { visibility(); if (active()) resume(); };
-  browser.addEventListener("online", resume);
-  browser.addEventListener("focus", resume);
+  browser.addEventListener("online", wake);
+  browser.addEventListener("focus", wake);
   browser.addEventListener("offline", visibility);
-  page.addEventListener("visibilitychange", visibilityChanged);
+  page.addEventListener("visibilitychange", visibility);
   run();
   return () => {
     disposed = true;
     clear();
+    unschedule(deadline);
     controller?.abort();
-    browser.removeEventListener("online", resume);
-    browser.removeEventListener("focus", resume);
+    browser.removeEventListener("online", wake);
+    browser.removeEventListener("focus", wake);
     browser.removeEventListener("offline", visibility);
-    page.removeEventListener("visibilitychange", visibilityChanged);
+    page.removeEventListener("visibilitychange", visibility);
   };
 }

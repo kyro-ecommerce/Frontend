@@ -41,14 +41,14 @@ const extractImageUrl = (product) => {
 };
 
 const RecommendedForYou = () => {
-  const { user, isAuthenticated } = useAuthContext();
+  const { user, isAuthenticated, isLoading: authLoading } = useAuthContext();
   const userId = user?.id ?? user?.userId ?? user?.user_id;
-  const { data, status } = useRecoveringRecommendations("home", async (signal) => {
+  const { data, status } = useRecoveringRecommendations(`home:${isAuthenticated ? userId : "guest"}`, async (signal) => {
     const res = isAuthenticated
       ? await aiService.getPersonalizedProducts(userId, 5, { signal })
       : await aiService.getTrendingProducts(5, { signal });
     return recommendationItems(res);
-  });
+  }, !authLoading);
   const products = data ?? [];
   const isLoading = status === "loading";
   if (!products.length && !isLoading) return <RecommendationStatus status={status} />;

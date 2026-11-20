@@ -1,4 +1,6 @@
 import React from "react";
+import { useSearchParams } from "react-router-dom";
+import { parseProductId } from "../../../services/user/productViewTracking.js";
 import ProductGallery from "../../../features/user/product/ProductGallery";
 import ProductInfo from "../../../features/user/product/ProductInfo";
 import ProductReviews from "../../../features/user/product/ProductReviews";
@@ -18,6 +20,23 @@ const ProductDetail = () => {
     productInfoData,
     handleRatingUpdate
   } = useProductDetailPage();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedVariant = searchParams.get("variant");
+  const selectedVariantId = parseProductId(requestedVariant);
+  const selectedVariant = product?.variants?.find((variant) => variant.id === selectedVariantId && variant.active && variant.stock > 0);
+  const needsVariantChoice = !selectedVariant && (!!requestedVariant || (product?.variants?.length ?? 0) > 0);
+  const chooseVariant = (id) => {
+    const next = new URLSearchParams(searchParams);
+    next.set("variant", String(id));
+    setSearchParams(next, { replace: true });
+  };
+  const recommendationDemo = searchParams.get("recommendation_demo") === "1";
+  const rankingPolicy = recommendationDemo && searchParams.get("similar_policy") === "capacity_first" ? "capacity_first" : "hybrid";
+  const chooseRankingPolicy = (policy) => {
+    const next = new URLSearchParams(searchParams);
+    next.set("similar_policy", policy);
+    setSearchParams(next, { replace: true });
+  };
 
   if (loading) {
     return (
@@ -50,7 +69,7 @@ const ProductDetail = () => {
               {/* ProductGallery */}
               <ProductGallery item={product} />
               {/* ProductInfo */}
-              <ProductInfo item={productInfoData} />
+              <ProductInfo item={productInfoData} selectedVariantId={selectedVariant?.id ?? null} onVariantChange={chooseVariant} />
             </section>
 
             <ProductReviews
@@ -61,7 +80,10 @@ const ProductDetail = () => {
             />
 
             {/* AI Gợi ý sản phẩm tương tự */}
-            <RelatedProducts productId={productId} />
+            {requestedVariant && !selectedVariant && <Alert severity="warning">SKU trong liên kết không còn khả dụng hoặc không thuộc sản phẩm này. Vui lòng chọn lại cấu hình.</Alert>}
+            {needsVariantChoice ? (
+              <p className="my-4 text-sm text-gray-600">Chọn cấu hình để xem sản phẩm tương tự đúng SKU.</p>
+            ) : <RelatedProducts productId={productId} targetVariantId={selectedVariant?.id ?? null} rankingPolicy={rankingPolicy} onRankingPolicyChange={chooseRankingPolicy} showRankingControls={recommendationDemo} />}
 
             {/* AI Gợi ý phụ kiện mua kèm */}
             <ComplementaryAccessories productId={productId} />

@@ -109,36 +109,29 @@ test("valid empty succeeds; malformed payload is terminal, not a transport outag
   }
 });
 
-test("refresh failure retains snapshot, recovers; concurrent resume events coalesce", async () => {
+test("successful results do not refresh on focus, online or tab return", async () => {
   const env = environment();
   const states = [];
   let calls = 0;
-  let finish;
   const stop = recoverRecommendations({ ...env, publish: (state) => states.push(state), load: async () => {
     calls++;
-    if (calls === 1) return [4];
-    if (calls === 2) return new Promise((resolve, reject) => { finish = reject; });
-    return [7];
+    return [4];
   } });
   await flush();
   await env.advance(60000);
   env.event("focus"); env.event("online"); env.event("visibilitychange");
-  assert.equal(calls, 2);
-  assert.deepEqual(states.at(-1), { status: "refreshing", data: [4] });
-  finish(httpError(503));
-  await flush();
-  assert.deepEqual(states.at(-1), { status: "reconnecting", data: [4] });
-  await env.advance(1000);
-  assert.deepEqual(states.at(-1), { status: "success", data: [7] });
+  assert.equal(calls, 1);
+  assert.deepEqual(states.at(-1), { status: "success", data: [4] });
+  assert.equal(env.timers.size, 0);
   stop();
 });
 
-test("401/403/404 remain stopped even after focus/online, including stale snapshots", async () => {
+test("401/403/404 remain stopped even after focus/online", async () => {
   for (const status of [401, 403, 404]) {
     const env = environment();
     let calls = 0;
     const stop = recoverRecommendations({ ...env, publish: () => {}, load: async () => {
-      if (++calls === 1) return [4];
+      calls++;
       throw httpError(status);
     } });
     await flush();
@@ -146,7 +139,7 @@ test("401/403/404 remain stopped even after focus/online, including stale snapsh
     env.event("focus"); await flush();
     await env.advance(60000);
     env.event("online"); env.event("focus"); env.event("visibilitychange"); await flush();
-    assert.equal(calls, 2);
+    assert.equal(calls, 1);
     assert.equal(env.timers.size, 0);
     stop();
   }
@@ -232,7 +225,8 @@ test("all four recommendation transports carry cancellation and finite timeout",
 
 test("real hook clears old actor/product before effects and ignores their late response", async () => {
   const env = environment();
-  let auth = { isLoading: true, isAuthenticated: false };
+  let actor = "guest";
+  let ready = false;
   const slots = [];
   let cursor = 0;
   let cleanup;
@@ -245,28 +239,48 @@ test("real hook clears old actor/product before effects and ignores their late r
       useRef: (initial) => { const i = cursor++; return slots[i] ?? (slots[i] = { current: initial }); },
       useEffect: (callback, deps) => { if (JSON.stringify(previousDeps) !== JSON.stringify(deps)) { previousDeps = deps; effect = callback; } },
     },
-    "../../store/user/AuthContext": { useAuthContext: () => auth },
     "../../services/user/recommendationRecovery.js": { recoverRecommendations: (options) => recoverRecommendations({ ...env, ...options }) },
   });
-  const render = (key) => { cursor = 0; return useRecoveringRecommendations(key, (signal) => new Promise((resolve) => requests.push({ signal, resolve }))); };
+  const render = (key) => { cursor = 0; return useRecoveringRecommendations(`${key}:${actor}`, (signal) => new Promise((resolve) => requests.push({ signal, resolve })), ready); };
   const commit = () => { if (effect) { cleanup?.(); const next = effect; effect = null; cleanup = next(); } };
   assert.equal(render("similar:4").status, "idle"); commit();
   assert.equal(requests.length, 0);
-  auth = { isLoading: false, isAuthenticated: true, user: { id: 42 } };
+  ready = true; actor = "user:42";
   render("similar:4"); commit();
   requests[0].resolve([4]); await flush();
   assert.deepEqual(render("similar:4").data, [4]);
   render("similar:6"); commit();
   assert.equal(render("similar:6").data, null);
-  auth = { ...auth, user: { id: 43 } };
+  actor = "user:43";
   assert.equal(render("similar:6").data, null); commit();
   assert.equal(requests[1].signal.aborted, true);
   requests[2].resolve([7]); await flush();
   requests[1].resolve([99]); await flush();
   assert.deepEqual(render("similar:6").data, [7]);
-  auth = { isLoading: false, isAuthenticated: false };
+  actor = "guest";
   assert.equal(render("similar:6").data, null); commit();
   cleanup();
+});
+
+test("overall deadline bounds a hung auth-refresh/load without filling its queue with retries", async () => {
+  const env = environment();
+  let state;
+  let signal;
+  let calls = 0;
+  const stop = recoverRecommendations({ ...env, publish: (next) => { state = next; }, load: (nextSignal) => {
+    calls++; signal = nextSignal;
+    return calls === 1 ? new Promise(() => {}) : Promise.resolve([4]);
+  } });
+  await env.advance(35000);
+  assert.equal(signal.aborted, true);
+  assert.equal(state.status, "error");
+  await env.advance(1000);
+  env.event("focus"); env.event("online");
+  await env.advance(60000);
+  assert.equal(state.status, "error");
+  assert.equal(calls, 1);
+  assert.equal(env.timers.size, 0);
+  stop();
 });
 
 test("status UI distinguishes retry, terminal failure and stale snapshots", () => {
