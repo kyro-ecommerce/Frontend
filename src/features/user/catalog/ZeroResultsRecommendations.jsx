@@ -1,6 +1,7 @@
 import React from "react";
 import { useRecoveringRecommendations } from "../../../hooks/user/useRecoveringRecommendations.js";
 import { recommendationItems } from "../../../services/user/recommendationRecovery.js";
+import { attachRecommendation, cardTracking } from "../../../services/user/recommendationExposure.js";
 import RecommendationStatus from "../product/RecommendationStatus";
 import { aiService } from "../../../services/user/ai.service";
 import ProductCard from "../product/ProductCard";
@@ -41,7 +42,8 @@ const extractImageUrl = (product) => {
 
 const ZeroResultsRecommendations = () => {
   const { data, status } = useRecoveringRecommendations("zero-results", async (signal) => {
-    return recommendationItems(await aiService.getTrendingProducts(4, { signal }));
+    const res = await aiService.getTrendingProducts(4, { signal });
+    return attachRecommendation(recommendationItems(res), res, "trending");
   });
   const trending = data ?? [];
   if (!trending.length) {
@@ -97,6 +99,7 @@ const ZeroResultsRecommendations = () => {
                 originalPrice={Number.isFinite(price) && price >= 0 && Number.isFinite(origPrice) && origPrice > price ? formatPrice(origPrice) : null}
                 ratingImage={normalizeCatalogRating(product.average_rating ?? product.averageRating)}
                 discountPercent={product.discount_percent ?? product.discountPercent ?? 0}
+                tracking={cardTracking(product, index)}
               />
             </div>
           );

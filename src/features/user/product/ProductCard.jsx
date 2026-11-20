@@ -3,6 +3,8 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Rating } from '@mui/material';
 import { normalizeCatalogRating, variantCapacityLabel } from './recommendationCard.js';
+import { sendRecommendationEvent } from '../../../services/user/recommendationExposure.js';
+import ImpressionTracker from './ImpressionTracker';
 
 const formatPrice = (value) => {
   if (value === null || value === undefined || value === "") return null;
@@ -33,10 +35,11 @@ const ProductCard = ({
   discountPercent,
   selectedVariant,
   recommendationReason,
+  tracking = null, // { recommendationId, position, modelVersion, surface } for recommendation cards
 }) => {
   const navigate = useNavigate();
-
   const handleCardClick = () => {
+    sendRecommendationEvent("CLICK", productId, tracking);
     if (productId) {
     navigate(`/product/${productId}${selectedVariant ? `?variant=${selectedVariant.variant_id}` : ""}`);
     }
@@ -49,7 +52,7 @@ const ProductCard = ({
   const shortReason = recommendationReason?.split(";")[0];
 
 
-  return (
+  const card = (
     <div
       onClick={!isOutOfStock ? handleCardClick : undefined}
       className={`group flex flex-col items-center justify-between p-4 sm:p-5 rounded-3xl bg-white border border-gray-100 hover:border-blue-400/40 shadow-[0_4px_20px_rgba(0,0,0,0.04)] hover:shadow-[0_16px_36px_rgba(37,99,235,0.12)] hover:-translate-y-2 transition-all duration-300 ease-out w-full relative overflow-hidden ${
@@ -149,6 +152,11 @@ const ProductCard = ({
       </div>
     </div>
   );
+
+  // Only recommendation cards are wrapped; plain catalog cards render unchanged.
+  return tracking
+    ? <ImpressionTracker tracking={tracking} productId={productId}>{card}</ImpressionTracker>
+    : card;
 };
 
 export default ProductCard;

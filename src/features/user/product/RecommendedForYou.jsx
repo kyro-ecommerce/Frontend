@@ -2,6 +2,7 @@ import React from "react";
 import { useAuthContext } from "../../../store/user/AuthContext";
 import { useRecoveringRecommendations } from "../../../hooks/user/useRecoveringRecommendations.js";
 import { recommendationItems } from "../../../services/user/recommendationRecovery.js";
+import { attachRecommendation, cardTracking } from "../../../services/user/recommendationExposure.js";
 import RecommendationStatus from "./RecommendationStatus";
 import ProductCard from "./ProductCard";
 import { normalizeCatalogRating } from "./recommendationCard.js";
@@ -47,7 +48,7 @@ const RecommendedForYou = () => {
     const res = isAuthenticated
       ? await aiService.getPersonalizedProducts(userId, 5, { signal })
       : await aiService.getTrendingProducts(5, { signal });
-    return recommendationItems(res);
+    return attachRecommendation(recommendationItems(res), res, isAuthenticated ? "personalized" : "trending");
   }, !authLoading);
   const products = data ?? [];
   const isLoading = status === "loading";
@@ -93,7 +94,7 @@ const RecommendedForYou = () => {
             </div>
           ))
         ) : (
-          products.map((product) => {
+          products.map((product, index) => {
             const pid = product.product_id || product.id;
             const origPrice = Number(product.original_price || product.originalPrice || product.minPrice || product.price || 0);
             const discPrice = Number(product.discounted_price || product.discountedPrice || product.minSalePrice || product.salePrice || product.sale_price || product.discountPrice || 0);
@@ -117,6 +118,7 @@ const RecommendedForYou = () => {
                   reviewCount={product.num_ratings || product.numRatings || 0}
                   ratingImage={normalizeCatalogRating(product.average_rating ?? product.averageRating)}
                   discountPercent={discountPercent}
+                  tracking={cardTracking(product, index)}
                 />
               </div>
             );

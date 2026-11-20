@@ -1,6 +1,7 @@
 import React from "react";
 import { useRecoveringRecommendations } from "../../../hooks/user/useRecoveringRecommendations.js";
 import { recommendationItems } from "../../../services/user/recommendationRecovery.js";
+import { attachRecommendation, cardTracking } from "../../../services/user/recommendationExposure.js";
 import RecommendationStatus from "./RecommendationStatus";
 import { aiService } from "../../../services/user/ai.service";
 import ProductCard from "./ProductCard";
@@ -39,7 +40,7 @@ const CartAccessories = ({ cartItems = [] }) => {
   const mainProductId = ids[0];
   const { data, status } = useRecoveringRecommendations(`cart:${JSON.stringify(ids)}`, async (signal) => {
     const res = await aiService.getComplementaryProducts(mainProductId, 6, { signal });
-    return recommendationItems(res).filter((item) => !ids.includes(String(item.id || item.product_id || item.productId))).slice(0, 4);
+    return attachRecommendation(recommendationItems(res), res, "accessories").filter((item) => !ids.includes(String(item.id || item.product_id || item.productId))).slice(0, 4);
   }, !!mainProductId && mainProductId !== "undefined");
   const accessories = data ?? [];
   if (!accessories.length) return <RecommendationStatus status={status} />;
@@ -89,6 +90,7 @@ const CartAccessories = ({ cartItems = [] }) => {
               originalPrice={originalPrice}
               ratingImage={rating}
               discountPercent={discount}
+              tracking={cardTracking(item, index)}
             />
           );
         })}

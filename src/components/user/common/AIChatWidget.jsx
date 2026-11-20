@@ -1,5 +1,31 @@
 import React, { useState, useRef, useEffect } from "react";
 import { aiService } from "../../../services/user/ai.service";
+import {
+  attachRecommendation,
+  cardTracking,
+  firstImpression,
+  sendRecommendationEvent,
+} from "../../../services/user/recommendationExposure.js";
+
+// Chat cards render as soon as the reply arrives inside the open widget, so they
+// count as shown then; each (reply, product) pair is reported once.
+const trackChatCards = (products, response) => {
+  const tagged = attachRecommendation(products, response, "chat");
+  tagged.forEach((prod, index) => {
+    const tracking = cardTracking(prod, index);
+    const pid = prod?.product_id || prod?.id;
+    if (tracking && pid && firstImpression(tracking.recommendationId, pid)) {
+      sendRecommendationEvent("IMPRESSION", pid, tracking);
+    }
+  });
+  return tagged;
+};
+
+const reportChatClick = (prod, index) => {
+  const tracking = cardTracking(prod, index);
+  const pid = prod?.product_id || prod?.id;
+  sendRecommendationEvent("CLICK", pid, tracking);
+};
 
 const renderMessageText = (text) => {
   if (!text) return null;
@@ -82,7 +108,7 @@ export const AIChatWidget = () => {
         setMessages((prev) =>
           prev.map((msg) =>
             String(msg.id) === String(botMessageId)
-              ? { ...msg, recommendedProducts: metadata.recommended_products || [] }
+              ? { ...msg, recommendedProducts: trackChatCards(metadata.recommended_products || [], metadata) }
               : msg
           )
         );
@@ -286,7 +312,7 @@ export const AIChatWidget = () => {
                 {msg.recommendedProducts && msg.recommendedProducts.length > 0 && (
                   <div style={{ width: "100%", marginTop: "8px", display: "flex", flexDirection: "column", gap: "8px" }}>
                     <span style={{ fontSize: "12px", fontWeight: "700", color: "#4b5563" }}>✨ Sản phẩm tư vấn phù hợp nhất:</span>
-                    {msg.recommendedProducts.map((prod) => {
+                    {msg.recommendedProducts.map((prod, index) => {
                       const pid = prod.product_id || prod.id;
                       const price = prod.minSalePrice;
                       const priceStr = typeof price === 'number' ? price.toLocaleString('vi-VN', { style: 'currency', currency: 'VND' }) : price;
@@ -298,6 +324,7 @@ export const AIChatWidget = () => {
                           href={`/product/${pid}`}
                           target="_blank"
                           rel="noopener noreferrer"
+                          onClick={() => reportChatClick(prod, index)}
                           style={{
                             padding: "10px 12px",
                             backgroundColor: "#ffffff",

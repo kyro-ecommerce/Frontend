@@ -2,7 +2,7 @@ import { v4 as uuidv4 } from "uuid";
 
 export const PRODUCT_VIEW_PATH = "/ai/interactions/view";
 export const BEHAVIOUR_EVENT_PATH = "/ai/interactions/event";
-const BEHAVIOUR_TYPES = new Set(["CLICK", "ADD_TO_CART"]);
+const BEHAVIOUR_TYPES = new Set(["IMPRESSION", "CLICK", "ADD_TO_CART"]);
 const SESSION_KEY = "kyro.product-view.session.v1";
 
 export function parseProductId(value) {
@@ -53,7 +53,7 @@ export function createProductViewEvent(productId, {
   });
 }
 
-/** CLICK / ADD_TO_CART event. The actor is asserted by the gateway, never sent here. */
+/** IMPRESSION / CLICK / ADD_TO_CART event. The actor is asserted by the gateway, never sent here. */
 export function createBehaviourEvent(eventType, productId, {
   recommendationId = null,
   position = null,

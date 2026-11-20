@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import * as exposure from "../src/services/user/recommendationExposure.js";
 import { readFileSync } from "node:fs";
 import { transformSync } from "esbuild";
 import React from "react";
@@ -28,6 +29,8 @@ function load(relativePath, dependencies) {
   const { code } = transformSync(source, { loader: "jsx", format: "cjs", jsx: "transform" });
   const module = { exports: {} };
   new Function("require", "module", "exports", code)((name) => {
+    // The pure exposure module is safe to load for real in every harness.
+    if (name.endsWith("/recommendationExposure.js")) return exposure;
     assert.ok(name in dependencies, `Unexpected dependency: ${name}`);
     return dependencies[name];
   }, module, module.exports);
@@ -47,12 +50,12 @@ test("trending service forwards limit and response; empty data and failures are 
         return { data: payload };
       } },
     },
-    "./productViewTracking.js": {},
+    "./productViewTracking.js": { getAiSessionId: () => "fixture-session" },
     "./util": {},
     "./auth.service": {},
   });
   assert.equal(await aiService.getTrendingProducts(4), payload);
-  assert.deepEqual(calls[0], ["https://fixture.invalid/api/v1/ai/recommendations/trending", { timeout: 15000, signal: undefined, params: { limit: 4 } }]);
+  assert.deepEqual(calls[0], ["https://fixture.invalid/api/v1/ai/recommendations/trending", { timeout: 15000, signal: undefined, params: { limit: 4, session_id: "fixture-session" } }]);
   payload = { recommendations: [] };
   assert.equal(await aiService.getTrendingProducts(), payload);
   assert.equal(calls[1][1].params.limit, 5);

@@ -2,6 +2,32 @@ import React, { useState, useEffect, useRef } from "react";
 import Cookies from "js-cookie";
 import { v4 as uuidv4 } from 'uuid'; // Thư viện để tạo ID duy nhất
 import { aiService } from "../../../services/user/ai.service";
+import {
+  attachRecommendation,
+  cardTracking,
+  firstImpression,
+  sendRecommendationEvent,
+} from "../../../services/user/recommendationExposure.js";
+
+// Chat cards render as soon as the reply arrives inside the open widget, so they
+// count as shown then; each (reply, product) pair is reported once.
+const trackChatCards = (products, response) => {
+  const tagged = attachRecommendation(products, response, "chat");
+  tagged.forEach((prod, index) => {
+    const tracking = cardTracking(prod, index);
+    const pid = prod?.product_id || prod?.id;
+    if (tracking && pid && firstImpression(tracking.recommendationId, pid)) {
+      sendRecommendationEvent("IMPRESSION", pid, tracking);
+    }
+  });
+  return tagged;
+};
+
+const reportChatClick = (prod, index) => {
+  const tracking = cardTracking(prod, index);
+  const pid = prod?.product_id || prod?.id;
+  sendRecommendationEvent("CLICK", pid, tracking);
+};
 
 const ChatBot = () => {
   const [messages, setMessages] = useState([
@@ -80,7 +106,7 @@ const ChatBot = () => {
             sender: "bot",
             content: formattedText,
             isHTML: true,
-            recommendedProducts: data.recommended_products || [],
+            recommendedProducts: trackChatCards(data.recommended_products || [], data),
           },
         ]);
       }
@@ -206,7 +232,7 @@ const ChatBot = () => {
                     <span className="text-[11px] font-bold text-gray-600 flex items-center gap-1">
                       ✨ Thẻ sản phẩm gợi ý:
                     </span>
-                    {message.recommendedProducts.map((prod) => {
+                    {message.recommendedProducts.map((prod, index) => {
                       const pid = prod.product_id || prod.id;
                       const price = prod.minSalePrice;
                       const priceStr = typeof price === 'number' ? price.toLocaleString('vi-VN') + ' đ' : price;
@@ -217,6 +243,7 @@ const ChatBot = () => {
                           href={`/product/${pid}`}
                           target="_blank"
                           rel="noopener noreferrer"
+                          onClick={() => reportChatClick(prod, index)}
                           className="flex items-center gap-3 p-2.5 bg-white border border-gray-200 rounded-xl hover:border-blue-500 hover:shadow-md transition-all text-decoration-none group"
                         >
                           <img

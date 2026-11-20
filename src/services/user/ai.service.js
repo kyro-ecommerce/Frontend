@@ -6,6 +6,7 @@ import {
   getAiSessionId,
   PRODUCT_VIEW_PATH,
 } from "./productViewTracking.js";
+import { registerExposureSender } from "./recommendationExposure.js";
 import { getTokenFromLocalStorage, saveTokenToLocalStorage } from "./util";
 import { authService } from "./auth.service";
 
@@ -171,7 +172,7 @@ export const aiService = {
     try {
       const response = await api.get(`${API_BASE_URL}/ai/recommendations/similar/${productId}`, {
         timeout: 15000, signal: options.signal,
-        params: { limit, ...(options.targetVariantId != null ? { target_variant_id: options.targetVariantId } : {}), ...(options.rankingPolicy ? { ranking_policy: options.rankingPolicy } : {}) },
+        params: { limit, session_id: getAiSessionId(), ...(options.targetVariantId != null ? { target_variant_id: options.targetVariantId } : {}), ...(options.rankingPolicy ? { ranking_policy: options.rankingPolicy } : {}) },
       });
       return response.data;
     } catch (error) {
@@ -189,7 +190,7 @@ export const aiService = {
     try {
       const response = await api.get(`${API_BASE_URL}/ai/recommendations/accessories/${productId}`, {
         timeout: 15000, signal: options.signal,
-        params: { limit },
+        params: { limit, session_id: getAiSessionId() },
       });
       return response.data;
     } catch (error) {
@@ -206,7 +207,7 @@ export const aiService = {
     try {
       const response = await api.get(`${API_BASE_URL}/ai/recommendations/personalized/${userId}`, {
         timeout: 15000, signal: options.signal,
-        params: { limit },
+        params: { limit, session_id: getAiSessionId() },
       });
       return response.data;
     } catch (error) {
@@ -222,10 +223,11 @@ export const aiService = {
   getTrendingProducts: async (limit = 5, options = {}) => {
     const response = await api.get(`${API_BASE_URL}/ai/recommendations/trending`, {
       timeout: 15000, signal: options.signal,
-      params: { limit },
+      params: { limit, session_id: getAiSessionId() },
     });
     return response.data;
   },
 };
 
-
+// Recommendation cards report IMPRESSION/CLICK through this sender.
+registerExposureSender((eventType, productId, options) => aiService.recordProductEvent(eventType, productId, options));
