@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import * as exposure from "../src/services/user/recommendationExposure.js";
 import { readFileSync } from "node:fs";
 import { createServer } from "node:http";
 import { transformSync } from "esbuild";
@@ -168,6 +169,8 @@ function loadModule(path, dependencies) {
   const { code } = transformSync(readFileSync(new URL(path, import.meta.url), "utf8"), { loader: "jsx", format: "cjs" });
   const module = { exports: {} };
   new Function("require", "module", "exports", code)((name) => {
+    // The pure exposure module is safe to load for real in every harness.
+    if (name.endsWith("/recommendationExposure.js")) return exposure;
     assert.ok(name in dependencies, `Unexpected dependency: ${name}`);
     return dependencies[name];
   }, module, module.exports);
@@ -212,7 +215,7 @@ test("all four recommendation transports carry cancellation and finite timeout",
   const calls = [];
   const { aiService } = loadModule("../src/services/user/ai.service.js", {
     "../../config/user/ApiConfig": { API_BASE_URL: "https://fixture.invalid/api/v1", api: { get: async (...args) => { calls.push(args); return { data: { recommendations: [] } }; } } },
-    "./productViewTracking.js": {}, "./util": {}, "./auth.service": {},
+    "./productViewTracking.js": { getAiSessionId: () => "fixture-session" }, "./util": {}, "./auth.service": {},
   });
   const signal = new AbortController().signal;
   await aiService.getSimilarProducts(4, 6, { signal });
@@ -220,7 +223,7 @@ test("all four recommendation transports carry cancellation and finite timeout",
   await aiService.getPersonalizedProducts(42, 6, { signal });
   await aiService.getTrendingProducts(6, { signal });
   assert.deepEqual(calls.map(([url]) => url.split("/recommendations/")[1]), ["similar/4", "accessories/4", "personalized/42", "trending"]);
-  for (const [, options] of calls) assert.deepEqual(options, { signal, timeout: 15000, params: { limit: 6 } });
+  for (const [, options] of calls) assert.deepEqual(options, { signal, timeout: 15000, params: { limit: 6, session_id: "fixture-session" } });
 });
 
 test("real hook clears old actor/product before effects and ignores their late response", async () => {

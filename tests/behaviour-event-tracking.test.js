@@ -41,6 +41,7 @@ test("CLICK keeps recommendation attribution only when well-formed", () => {
 
 test("unsupported types and invalid product ids are rejected", () => {
   assert.throws(() => createBehaviourEvent("PURCHASE", 1, fixed));
+  assert.throws(() => createBehaviourEvent("VIEW", 1, fixed));
   assert.throws(() => createBehaviourEvent("CLICK", "abc", fixed));
   assert.throws(() => createBehaviourEvent("CLICK", 0, fixed));
 });

@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
+import * as exposure from "../src/services/user/recommendationExposure.js";
 import { readFileSync } from "node:fs";
 import { transformSync } from "esbuild";
 import React from "react";
@@ -10,6 +11,8 @@ function load(path, deps) {
   const { code } = transformSync(readFileSync(new URL(path, import.meta.url), "utf8"), { loader: "jsx", format: "cjs" });
   const module = { exports: {} };
   new Function("require", "module", "exports", code)((name) => {
+    // The pure exposure module is safe to load for real in every harness.
+    if (name.endsWith("/recommendationExposure.js")) return exposure;
     assert.ok(name in deps, `Unexpected dependency ${name}`);
     return deps[name];
   }, module, module.exports);
@@ -96,6 +99,7 @@ test("card keeps compact configuration/reason, folds evidence, and disclosure cl
     "react-router-dom": { useNavigate: () => (path) => destinations.push(path) },
     "@mui/material": { Rating: () => null },
     "./recommendationCard.js": { normalizeCatalogRating, variantCapacityLabel },
+    "./ImpressionTracker": stub,
   });
   const tree = Card({ productId: 4, title: "Fixture", price: 100,
     selectedVariant: { variant_id: 9, sku: "FIXTURE-9", ram_gb: 16, storage_gb: 1000, ram_source: "variantName" },
@@ -120,10 +124,35 @@ test("similar transport sends optional target_variant_id without changing BE fie
   let options;
   const { aiService } = load("../src/services/user/ai.service.js", {
     "../../config/user/ApiConfig": { API_BASE_URL: "https://fixture.invalid", api: { get: async (_url, config) => { options = config; return { data: {} }; } } },
-    "./productViewTracking.js": {}, "./util": {}, "./auth.service": {},
+    "./productViewTracking.js": { getAiSessionId: () => "fixture-session" }, "./util": {}, "./auth.service": {},
   });
   await aiService.getSimilarProducts(4, 6, { targetVariantId: 12 });
-  assert.deepEqual(options.params, { limit: 6, target_variant_id: 12 });
+  assert.deepEqual(options.params, { limit: 6, session_id: "fixture-session", target_variant_id: 12 });
   await aiService.getSimilarProducts(4, 6);
-  assert.deepEqual(options.params, { limit: 6 });
+  assert.deepEqual(options.params, { limit: 6, session_id: "fixture-session" });
+});
+
+test("tracked recommendation card is wrapped for impressions and reports an attributed click", () => {
+  const destinations = [];
+  const sent = [];
+  exposure.registerExposureSender((type, productId, options) => sent.push([type, productId, options]));
+  try {
+    const Tracker = () => null;
+    const { default: Card } = load("../src/features/user/product/ProductCard.jsx", {
+      react: React,
+      "react-router-dom": { useNavigate: () => (path) => destinations.push(path) },
+      "@mui/material": { Rating: () => null },
+      "./recommendationCard.js": { normalizeCatalogRating, variantCapacityLabel },
+      "./ImpressionTracker": { default: Tracker, __esModule: true },
+    });
+    const tracking = { recommendationId: "rec-7", position: 2, modelVersion: "sku:hybrid", surface: "similar" };
+    const tree = Card({ productId: 4, title: "Fixture", price: 100, tracking });
+    assert.equal(tree.type, Tracker);
+    assert.equal(tree.props.tracking, tracking);
+    tree.props.children.props.onClick();
+    assert.deepEqual(sent, [["CLICK", 4, { recommendationId: "rec-7", position: 2, modelVersion: "sku:hybrid", surface: "similar" }]]);
+    assert.deepEqual(destinations, ["/product/4"]);
+  } finally {
+    exposure.registerExposureSender(null);
+  }
 });

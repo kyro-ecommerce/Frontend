@@ -16,6 +16,7 @@ function service({ token = null, refresh = async () => "refreshed-fixture-token"
       },
     },
     "./productViewTracking.js": { getAiSessionId: () => "fixture-session" },
+    "./recommendationExposure.js": { registerExposureSender: () => {} },
     "./util": { getTokenFromLocalStorage: () => token, saveTokenToLocalStorage: (value) => saved.push(value) },
     "./auth.service": { authService: { refreshToken: refresh } },
   };

@@ -1,6 +1,7 @@
 import React from "react";
 import { useRecoveringRecommendations } from "../../../hooks/user/useRecoveringRecommendations.js";
 import { recommendationItems } from "../../../services/user/recommendationRecovery.js";
+import { attachRecommendation, cardTracking } from "../../../services/user/recommendationExposure.js";
 import RecommendationStatus from "./RecommendationStatus";
 import { aiService } from "../../../services/user/ai.service";
 import ProductCard from "./ProductCard";
@@ -42,11 +43,11 @@ const ComplementaryAccessories = ({ productId }) => {
     }).slice(0, 4);
     const res = await aiService.getComplementaryProducts(productId, 6, { signal });
     if (signal.aborted) return null;
-    const items = filterList(recommendationItems(res));
+    const items = filterList(attachRecommendation(recommendationItems(res), res, "accessories"));
     // Only a successful empty result permits general-discovery fallback.
     if (items.length) return { items, source: "complementary" };
     const trending = await aiService.getTrendingProducts(6, { signal });
-    return { items: filterList(recommendationItems(trending)), source: "trending" };
+    return { items: filterList(attachRecommendation(recommendationItems(trending), trending, "trending")), source: "trending" };
   }, !!productId);
   const accessories = data?.items ?? [];
   const recommendationSource = data?.source ?? "complementary";
@@ -91,6 +92,7 @@ const ComplementaryAccessories = ({ productId }) => {
                 originalPrice={originalPrice}
                 ratingImage={rating}
                 discountPercent={discount}
+                tracking={cardTracking(item, index)}
               />
             );
           })}

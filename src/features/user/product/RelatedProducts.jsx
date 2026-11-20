@@ -1,6 +1,7 @@
 import React from "react";
 import { useRecoveringRecommendations } from "../../../hooks/user/useRecoveringRecommendations.js";
 import { recommendationItems } from "../../../services/user/recommendationRecovery.js";
+import { attachRecommendation, cardTracking } from "../../../services/user/recommendationExposure.js";
 import RecommendationStatus from "./RecommendationStatus";
 import { aiService } from "../../../services/user/ai.service";
 import ProductCard from "./ProductCard";
@@ -9,7 +10,7 @@ import { mapSimilarProductCard } from "./recommendationCard.js";
 const RelatedProducts = ({ productId, targetVariantId = null, rankingPolicy = "hybrid", onRankingPolicyChange = () => {}, showRankingControls = false }) => {
   const { data, status } = useRecoveringRecommendations(`similar:${productId}:${targetVariantId}:${rankingPolicy}`, async (signal) => {
     const res = await aiService.getSimilarProducts(productId, 6, { signal, targetVariantId, rankingPolicy });
-    return { items: recommendationItems(res).filter((item) => String(item.id || item.product_id || item.productId) !== String(productId)).slice(0, 4), comparisonStatus: res.comparison_status };
+    return { items: attachRecommendation(recommendationItems(res), res, "similar").filter((item) => String(item.id || item.product_id || item.productId) !== String(productId)).slice(0, 4), comparisonStatus: res.comparison_status };
   }, !!productId);
   const similarProducts = data?.items ?? [];
   if (!similarProducts.length && status !== "success") return <RecommendationStatus status={status} />;
@@ -42,6 +43,7 @@ const RelatedProducts = ({ productId, targetVariantId = null, rankingPolicy = "h
               <ProductCard
                 key={card.productId || index}
                 {...card}
+                tracking={cardTracking(item, index)}
               />
             );
           })}
