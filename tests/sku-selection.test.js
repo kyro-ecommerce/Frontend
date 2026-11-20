@@ -87,7 +87,7 @@ test("similar wiring scopes requests by target SKU and forwards it with AbortSig
   const demoTree = Related({ productId: 4, targetVariantId: 12, showRankingControls: true });
   assert.equal(nodes(demoTree).some((node) => node.type === "select"), true);
   assert.equal(key, "similar:4:12:hybrid");
-  assert.deepEqual(calls[0], [4, 6, { signal, targetVariantId: 12, rankingPolicy: "hybrid" }]);
+  assert.deepEqual(calls[0], [4, 4, { signal, targetVariantId: 12, rankingPolicy: "hybrid" }]);
   Related({ productId: 4, targetVariantId: 11 });
   assert.equal(key, "similar:4:11:hybrid");
 });

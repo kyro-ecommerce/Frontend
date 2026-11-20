@@ -243,7 +243,7 @@ test("complementary cards come only from their API, exclude target and cap at fo
   harness.effect();
   await harness.settle();
   const { cards, text } = harness.render(4);
-  assert.deepEqual(harness.calls, [[4, 6]]);
+  assert.deepEqual(harness.calls, [[4, 4]]);
   assert.deepEqual(cards.map((c) => c.productId), [18, 21, 10, 11]);
   assert.equal(cards[0].price, 100);
   assert.equal(cards[0].originalPrice, 200);
@@ -259,14 +259,14 @@ test("malformed complementary response hides section without disguising it as em
     harness.effect();
     await harness.settle();
     assert.deepEqual(harness.render(4).cards, []);
-    assert.deepEqual(harness.calls, [[4, 6]]);
+    assert.deepEqual(harness.calls, [[4, 4]]);
   }
 });
 
 test("empty/self-only complementary results use trending with a general-discovery heading", async () => {
   for (const response of [{ recommendations: [] }, { recommendations: [{ product_id: 4 }] }]) {
     const harness = complementaryHarness(async () => response, async (limit) => {
-      assert.equal(limit, 6);
+      assert.equal(limit, 5);
       return { recommendations: [4, 1, 2, 3, 5, 6].map((id) => ({ product_id: id, title: `Fixture ${id}`, original_price: 200, discounted_price: 100 })) };
     });
     harness.render(4);
@@ -278,7 +278,7 @@ test("empty/self-only complementary results use trending with a general-discover
     assert.ok(text.includes("Bạn có thể quan tâm"));
     assert.ok(text.includes("Gợi ý chung từ danh mục"));
     assert.ok(!text.includes("Phụ Kiện Gợi Ý Mua Kèm"));
-    assert.deepEqual(harness.calls, [[4, 6], ["trending", 6]]);
+    assert.deepEqual(harness.calls, [[4, 4], ["trending", 5]]);
   }
 });
 
@@ -294,7 +294,7 @@ test("empty/malformed/failed trending fallback hides the section", async (t) => 
     harness.effect();
     await harness.settle();
     assert.deepEqual(harness.render(4).cards, []);
-    assert.deepEqual(harness.calls, [[4, 6], ["trending", 6]]);
+    assert.deepEqual(harness.calls, [[4, 4], ["trending", 5]]);
   }
 });
 
@@ -305,7 +305,7 @@ test("failed complementary request hides section without requesting trending", a
   harness.effect();
   await harness.settle();
   assert.deepEqual(harness.render(4).cards, []);
-  assert.deepEqual(harness.calls, [[4, 6]]);
+  assert.deepEqual(harness.calls, [[4, 4]]);
 });
 
 test("late response from previous product cannot replace current complementary cards", async () => {
@@ -321,7 +321,7 @@ test("late response from previous product cannot replace current complementary c
   pending[4]({ recommendations: [{ product_id: 21 }] });
   await harness.settle();
   assert.deepEqual(harness.render(6).cards.map((c) => c.productId), [18]);
-  assert.deepEqual(harness.calls, [[4, 6], [6, 6]]);
+  assert.deepEqual(harness.calls, [[4, 4], [6, 4]]);
   cleanupCurrent();
   harness.render(null);
   harness.effect();

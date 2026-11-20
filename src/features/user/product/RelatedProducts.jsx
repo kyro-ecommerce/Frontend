@@ -9,7 +9,7 @@ import { mapSimilarProductCard } from "./recommendationCard.js";
 
 const RelatedProducts = ({ productId, targetVariantId = null, rankingPolicy = "hybrid", onRankingPolicyChange = () => {}, showRankingControls = false }) => {
   const { data, status } = useRecoveringRecommendations(`similar:${productId}:${targetVariantId}:${rankingPolicy}`, async (signal) => {
-    const res = await aiService.getSimilarProducts(productId, 6, { signal, targetVariantId, rankingPolicy });
+    const res = await aiService.getSimilarProducts(productId, 4, { signal, targetVariantId, rankingPolicy });
     return { items: attachRecommendation(recommendationItems(res), res, "similar").filter((item) => String(item.id || item.product_id || item.productId) !== String(productId)).slice(0, 4), comparisonStatus: res.comparison_status };
   }, !!productId);
   const similarProducts = data?.items ?? [];
