@@ -158,7 +158,7 @@ export const aiService = {
     try {
       const response = await api.get(`${API_BASE_URL}/ai/recommendations/similar/${productId}`, {
         timeout: 15000, signal: options.signal,
-        params: { limit },
+        params: { limit, ...(options.targetVariantId != null ? { target_variant_id: options.targetVariantId } : {}), ...(options.rankingPolicy ? { ranking_policy: options.rankingPolicy } : {}) },
       });
       return response.data;
     } catch (error) {

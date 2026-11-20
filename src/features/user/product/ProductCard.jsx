@@ -38,7 +38,7 @@ const ProductCard = ({
 
   const handleCardClick = () => {
     if (productId) {
-      navigate(`/product/${productId}`);
+    navigate(`/product/${productId}${selectedVariant ? `?variant=${selectedVariant.variant_id}` : ""}`);
     }
   };
 
@@ -46,6 +46,7 @@ const ProductCard = ({
   const displayRating = normalizeCatalogRating(ratingImage);
   const formattedPrice = formatPrice(price);
   const formattedOriginalPrice = formatPrice(originalPrice);
+  const shortReason = recommendationReason?.split(";")[0];
 
 
   return (
@@ -112,18 +113,25 @@ const ProductCard = ({
 
         {selectedVariant && (
           <div className="w-full mb-2 text-left text-xs text-gray-600 break-words" aria-label="Cấu hình SKU được gợi ý">
-            <p>SKU: {selectedVariant.sku} (variant {selectedVariant.variant_id})</p>
             <p>{variantCapacityLabel(selectedVariant)}</p>
-            <p>
-              {[selectedVariant.ram_source, selectedVariant.storage_source].includes("variantName")
-                ? "Cấu hình diễn giải từ tên catalog; chưa xác minh độc lập."
-                : "Thông số theo catalog; chưa xác minh độc lập."}
-            </p>
-            <p>Giá theo snapshot SKU; mở sản phẩm và chọn đúng SKU khi mua. Chưa xác nhận giá/tồn kho checkout.</p>
+            <p className="text-gray-500">Thông số catalog, chưa xác minh.</p>
           </div>
         )}
-        {recommendationReason && (
-          <p className="w-full mb-2 text-left text-xs text-gray-600 break-words" aria-label="Lý do gợi ý">{recommendationReason}</p>
+        {shortReason && (
+          <p className="w-full mb-2 text-left text-xs text-gray-600 line-clamp-2" aria-label="Lý do gợi ý">{shortReason}</p>
+        )}
+        {(selectedVariant || recommendationReason) && (
+          <details className="w-full mb-2 text-left text-xs text-gray-600 break-words" onClick={(event) => event.stopPropagation()}>
+            <summary className="cursor-pointer text-blue-700 py-1">Chi tiết gợi ý</summary>
+            {selectedVariant && <div className="mt-1 space-y-1">
+              <p>SKU: {selectedVariant.sku} (variant {selectedVariant.variant_id})</p>
+              <p>{[selectedVariant.ram_source, selectedVariant.storage_source].includes("variantName")
+                ? "Cấu hình diễn giải từ tên catalog; chưa xác minh độc lập."
+                : "Thông số theo catalog; chưa xác minh độc lập."}</p>
+              <p>Giá theo snapshot SKU; mở sản phẩm và chọn đúng SKU khi mua. Chưa xác nhận giá/tồn kho checkout.</p>
+            </div>}
+            {recommendationReason && <p className="mt-1">{recommendationReason}</p>}
+          </details>
         )}
 
         {/* Price Section */}

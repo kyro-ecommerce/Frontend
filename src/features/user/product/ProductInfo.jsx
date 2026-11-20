@@ -4,8 +4,8 @@ import { Radio, RadioGroup } from '@headlessui/react';
 import { useCartContext } from "../../../store/user/CartContext";
 import { useToast } from "../../../store/user/ToastContext.jsx";
 
-const ProductInfo = ({ item }) => {
-  const [selectedVariant, setSelectedVariant] = useState(null);
+const ProductInfo = ({ item, selectedVariantId = null, onVariantChange = () => {} }) => {
+  const selectedVariant = item?.variants?.find((variant) => variant.id === selectedVariantId && variant.active && variant.stock > 0) ?? null;
   const { addItemToCart, isLoading: isCartLoadingGlobal } = useCartContext();
   const { showToast } = useToast();
   const [isAddingToCart, setIsAddingToCart] = useState(false);
@@ -112,7 +112,7 @@ const ProductInfo = ({ item }) => {
               <button
                 key={variant.id}
                 disabled={variant.stock <= 0}
-                onClick={() => setSelectedVariant(variant)}
+                onClick={() => { onVariantChange(variant.id); setQuantity(1); }}
                 className={`px-3 py-2.5 rounded-xl border text-sm font-semibold transition-all cursor-pointer flex items-center justify-between ${
                   selectedVariant?.id === variant.id
                     ? 'border-indigo-600 bg-indigo-50/40 text-indigo-900 ring-2 ring-indigo-600/20'
