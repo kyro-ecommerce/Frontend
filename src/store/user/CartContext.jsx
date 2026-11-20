@@ -1,5 +1,6 @@
 import React, { createContext, useState, useEffect, useContext, useCallback } from 'react';
 import { cartService } from '../../services/user/cart.service';
+import { aiService } from '../../services/user/ai.service';
 import { useAuthContext } from './AuthContext';
 import { getErrorMessage } from '../../utils/errorUtils';
 
@@ -107,6 +108,7 @@ export const CartProvider = ({ children }) => {
     setIsLoading(true);
     try {
       const response = await cartService.addToCart(cartData);
+      aiService.recordProductEvent("ADD_TO_CART", cartData?.productId, { surface: "product_detail" });
       const cartDataFromApi = response.data?.data || response.data;
       if (cartDataFromApi && typeof cartDataFromApi === 'object') {
         setCart(normalizeCartData(cartDataFromApi));

@@ -219,7 +219,7 @@ test("all four recommendation transports carry cancellation and finite timeout",
   await aiService.getComplementaryProducts(4, 6, { signal });
   await aiService.getPersonalizedProducts(42, 6, { signal });
   await aiService.getTrendingProducts(6, { signal });
-  assert.deepEqual(calls.map(([url]) => url.split("/recommendations/")[1]), ["similar/4", "complementary/4", "personalized/42", "trending"]);
+  assert.deepEqual(calls.map(([url]) => url.split("/recommendations/")[1]), ["similar/4", "accessories/4", "personalized/42", "trending"]);
   for (const [, options] of calls) assert.deepEqual(options, { signal, timeout: 15000, params: { limit: 6 } });
 });
 
