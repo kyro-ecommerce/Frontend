@@ -1,5 +1,11 @@
 import { api, API_BASE_URL } from "../../config/user/ApiConfig";
-import { deliverProductView, getAiSessionId, PRODUCT_VIEW_PATH } from "./productViewTracking.js";
+import {
+  BEHAVIOUR_EVENT_PATH,
+  createBehaviourEvent,
+  deliverProductView,
+  getAiSessionId,
+  PRODUCT_VIEW_PATH,
+} from "./productViewTracking.js";
 import { getTokenFromLocalStorage, saveTokenToLocalStorage } from "./util";
 import { authService } from "./auth.service";
 
@@ -8,6 +14,13 @@ export const aiService = {
   recordProductView: (event) => deliverProductView(event, {
     post: (payload) => api.post(`${API_BASE_URL}${PRODUCT_VIEW_PATH}`, payload),
   }),
+  // Fire-and-forget: tracking must never block or fail a shopping action.
+  recordProductEvent: (eventType, productId, options = {}) => Promise.resolve()
+    .then(() => createBehaviourEvent(eventType, productId, options))
+    .then((event) => deliverProductView(event, {
+      post: (payload) => api.post(`${API_BASE_URL}${BEHAVIOUR_EVENT_PATH}`, payload),
+    }))
+    .catch(() => null),
   /**
    * Send chat message to AI shopping consultant (Gemini RAG)
    * @param {string} message 
@@ -174,7 +187,7 @@ export const aiService = {
    */
   getComplementaryProducts: async (productId, limit = 5, options = {}) => {
     try {
-      const response = await api.get(`${API_BASE_URL}/ai/recommendations/complementary/${productId}`, {
+      const response = await api.get(`${API_BASE_URL}/ai/recommendations/accessories/${productId}`, {
         timeout: 15000, signal: options.signal,
         params: { limit },
       });
@@ -212,40 +225,6 @@ export const aiService = {
       params: { limit },
     });
     return response.data;
-  },
-
-  /**
-   * Record explicit user interaction (VIEW / CART) to AI Service
-   * @param {string} type ("VIEW" | "CART")
-   * @param {string} queryText 
-   * @param {string} categoryName 
-   * @param {number|null} userId 
-   */
-  recordInteraction: async (type, queryText = "", categoryName = "", userId = null) => {
-    try {
-      let activeUserId = userId;
-      if (!activeUserId) {
-        try {
-          const storedUser = localStorage.getItem("user") || localStorage.getItem("userInfo");
-          if (storedUser) {
-            const parsed = JSON.parse(storedUser);
-            activeUserId = parsed.id || parsed.userId || parsed.user_id || 0;
-          }
-        } catch (e) {
-          console.debug("Could not parse stored user:", e);
-        }
-      }
-      const response = await api.post(`${API_BASE_URL}/ai/interactions/record`, {
-        user_id: activeUserId || 0,
-        interaction_type: type,
-        query_text: queryText,
-        category_name: categoryName,
-      });
-      return response.data;
-    } catch (error) {
-      console.debug("Could not record interaction:", error);
-      return null;
-    }
   },
 };
 

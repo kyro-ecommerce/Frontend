@@ -1,6 +1,8 @@
 import { v4 as uuidv4 } from "uuid";
 
 export const PRODUCT_VIEW_PATH = "/ai/interactions/view";
+export const BEHAVIOUR_EVENT_PATH = "/ai/interactions/event";
+const BEHAVIOUR_TYPES = new Set(["CLICK", "ADD_TO_CART"]);
 const SESSION_KEY = "kyro.product-view.session.v1";
 
 export function parseProductId(value) {
@@ -49,6 +51,33 @@ export function createProductViewEvent(productId, {
     session_id: sessionId(),
     occurred_at: now().toISOString(),
   });
+}
+
+/** CLICK / ADD_TO_CART event. The actor is asserted by the gateway, never sent here. */
+export function createBehaviourEvent(eventType, productId, {
+  recommendationId = null,
+  position = null,
+  modelVersion = null,
+  surface = null,
+  sessionId = getAiSessionId,
+  createId = uuidv4,
+  now = () => new Date(),
+} = {}) {
+  if (!BEHAVIOUR_TYPES.has(eventType)) throw new Error(`Unsupported behaviour event: ${eventType}`);
+  const id = parseProductId(productId);
+  if (id === null) throw new Error("A behaviour event requires a positive, safe integer product ID");
+  const event = {
+    event_type: eventType,
+    product_id: id,
+    event_id: `${eventType.toLowerCase()}-${createId()}`,
+    session_id: sessionId(),
+    occurred_at: now().toISOString(),
+  };
+  if (typeof recommendationId === "string" && recommendationId) event.recommendation_id = recommendationId;
+  if (Number.isSafeInteger(position) && position >= 0) event.position = position;
+  if (typeof modelVersion === "string" && modelVersion) event.model_version = modelVersion;
+  if (typeof surface === "string" && surface) event.surface = surface;
+  return Object.freeze(event);
 }
 
 export async function deliverProductView(event, {
