@@ -3,7 +3,8 @@ import { Outlet, useLocation } from 'react-router-dom';
 import Header from './Header';
 import Footer from './Footer';
 import Features from './Features';
-import ChatBot from '../../features/user/chatbot/ChatBot';
+// Streaming multi-turn assistant (chat v2); the older JSON-only ChatBot is no longer mounted.
+import { AIChatWidget } from '../../components/user/common/AIChatWidget';
 
 const AppLayout = () => {
     const location = useLocation();
@@ -17,7 +18,7 @@ const AppLayout = () => {
             </main>
             <Features />
             <Footer />
-            <ChatBot />
+            <AIChatWidget />
         </div>
     );
 };

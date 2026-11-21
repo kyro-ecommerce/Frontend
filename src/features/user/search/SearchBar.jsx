@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { FiSearch, FiX, FiLoader } from 'react-icons/fi';
 import { productService } from '../../../services/user/product.service';
+import { aiService } from '../../../services/user/ai.service';
+import { loadSuggestions } from '../../../services/user/searchSuggestions.js';
 
 const formatPrice = (price) => {
   if (typeof price !== 'number') return 'N/A';
@@ -17,6 +19,7 @@ const SearchBar = () => {
   const [totalCount, setTotalCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [suggestionSource, setSuggestionSource] = useState('ai');
   const dropdownRef = useRef(null);
 
   // Sync with URL query param
@@ -41,10 +44,14 @@ const SearchBar = () => {
     setIsLoading(true);
     const timer = setTimeout(async () => {
       try {
-        const response = await productService.getProductByFilter({ keyword: trimmed, size: 7 });
-        const productList = response.data?.content || [];
-        setTotalCount(response.data?.totalElements || 0);
-        setResults(productList);
+        const { items, total, source } = await loadSuggestions(trimmed, {
+          aiSearch: aiService.search,
+          catalogSearch: productService.getProductByFilter,
+          limit: 7,
+        });
+        setTotalCount(total);
+        setResults(items);
+        setSuggestionSource(source);
         setIsOpen(true);
       } catch (error) {
         console.error('Lỗi khi tìm kiếm sản phẩm:', error);
@@ -135,11 +142,11 @@ const SearchBar = () => {
           {results.length > 0 ? (
             <div>
               <div className="px-4 py-2 bg-gray-50 border-b border-gray-100 text-xs font-medium text-gray-500 flex justify-between items-center">
-                <span>Gợi ý sản phẩm ({totalCount})</span>
+                <span>{suggestionSource === 'ai' ? 'Gợi ý thông minh' : `Gợi ý sản phẩm (${totalCount})`}</span>
               </div>
               <div className="max-h-80 overflow-y-auto divide-y divide-gray-50 scrollbar-thin scrollbar-thumb-gray-200">
                 {results.map((product) => {
-                  const imgUrl = product.imageUrls?.[0]?.downloadUrl || '/Placeholder2.png';
+                  const imgUrl = product.image;
                   return (
                     <div
                       key={product.id}
@@ -157,11 +164,11 @@ const SearchBar = () => {
                         </p>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-xs font-bold text-blue-600">
-                            {formatPrice(product.minSalePrice)}
+                            {formatPrice(product.salePrice)}
                           </span>
-                          {product.discountPercent > 0 && (
+                          {product.originalPrice && (
                             <span className="text-[10px] text-gray-400 line-through">
-                              {formatPrice(product.price)}
+                              {formatPrice(product.originalPrice)}
                             </span>
                           )}
                         </div>
@@ -170,12 +177,12 @@ const SearchBar = () => {
                   );
                 })}
               </div>
-              {totalCount > 7 && (
+              {(suggestionSource === 'ai' || totalCount > 7) && (
                 <div
                   onClick={() => handleSearchSubmit()}
                   className="px-4 py-2.5 bg-gray-50 hover:bg-blue-50 text-center text-xs font-semibold text-blue-600 cursor-pointer transition-colors border-t border-gray-100"
                 >
-                  Xem tất cả {totalCount} kết quả cho "{searchTerm}" →
+                  {suggestionSource === 'ai' ? `Xem tất cả kết quả cho "${searchTerm}" →` : `Xem tất cả ${totalCount} kết quả cho "${searchTerm}" →`}
                 </div>
               )}
             </div>

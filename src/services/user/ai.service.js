@@ -26,9 +26,13 @@ export const aiService = {
    * Send chat message to AI shopping consultant (Gemini RAG)
    * @param {string} message 
    */
-  chat: async (message) => {
+  chat: async (message, { conversationId = null } = {}) => {
     try {
-      const response = await api.post(`${API_BASE_URL}/ai/chat`, { message, session_id: getAiSessionId() });
+      const response = await api.post(`${API_BASE_URL}/ai/chat`, {
+        message,
+        session_id: getAiSessionId(),
+        ...(conversationId ? { conversation_id: conversationId } : {}),
+      });
       return response.data;
     } catch (error) {
       console.error("Lỗi khi kết nối AI Chatbot:", error);
@@ -44,10 +48,14 @@ export const aiService = {
    * @param {function} onDone ()
    * @param {function} onError (err)
    */
-  chatStream: async (message, onMetadata, onChunk, onDone, onError) => {
+  chatStream: async (message, onMetadata, onChunk, onDone, onError, { conversationId = null } = {}) => {
     try {
       const token = getTokenFromLocalStorage();
-      const body = JSON.stringify({ message, session_id: getAiSessionId() });
+      const body = JSON.stringify({
+        message,
+        session_id: getAiSessionId(),
+        ...(conversationId ? { conversation_id: conversationId } : {}),
+      });
       const send = (accessToken) => fetch(`${API_BASE_URL}/ai/chat/stream`, {
         method: "POST",
         credentials: "include",

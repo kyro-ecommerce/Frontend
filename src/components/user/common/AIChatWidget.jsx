@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { aiService } from "../../../services/user/ai.service";
+import { chatConversation, conditionsOf } from "../../../services/user/chatConversation.js";
 import {
   attachRecommendation,
   cardTracking,
@@ -74,6 +75,7 @@ export const AIChatWidget = () => {
   ]);
   const [inputValue, setInputValue] = useState("");
   const [loading, setLoading] = useState(false);
+  const [conditions, setConditions] = useState([]);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -105,6 +107,8 @@ export const AIChatWidget = () => {
     await aiService.chatStream(
       text,
       (metadata) => {
+        chatConversation.set(metadata.conversation_id);
+        setConditions(conditionsOf(metadata));
         setMessages((prev) =>
           prev.map((msg) =>
             String(msg.id) === String(botMessageId)
@@ -152,7 +156,8 @@ export const AIChatWidget = () => {
           )
         );
         setLoading(false);
-      }
+      },
+      { conversationId: chatConversation.get() }
     );
   };
 
@@ -385,8 +390,38 @@ export const AIChatWidget = () => {
             <div ref={messagesEndRef} />
           </div>
 
+          {/* Active conditions remembered by the assistant */}
+          {conditions.length > 0 && (
+            <div aria-label="Điều kiện đang áp dụng" style={{ padding: "6px 16px", backgroundColor: "#f8fafc", borderTop: "1px solid #f3f4f6", display: "flex", gap: "6px", flexWrap: "wrap", alignItems: "center" }}>
+              {conditions.map((label) => (
+                <span key={label} style={{ fontSize: "11px", padding: "2px 8px", borderRadius: "10px", backgroundColor: "#e0e7ff", color: "#3730a3", fontWeight: 600 }}>
+                  {label}
+                </span>
+              ))}
+              <button
+                type="button"
+                disabled={loading}
+                onClick={() => handleSendMessage("bắt đầu lại")}
+                style={{ fontSize: "11px", marginLeft: "auto", border: "none", background: "none", color: "#2563eb", cursor: "pointer", textDecoration: "underline" }}
+              >
+                Bắt đầu lại
+              </button>
+            </div>
+          )}
+
           {/* Quick Suggestions */}
           <div style={{ padding: "8px 16px", backgroundColor: "#ffffff", borderTop: "1px solid #f3f4f6", display: "flex", gap: "6px", overflowX: "auto" }}>
+            {conditions.length > 0 && ["Còn mẫu nào khác không", "Có con nào rẻ hơn không"].map((prompt) => (
+              <button
+                key={prompt}
+                type="button"
+                disabled={loading}
+                onClick={() => handleSendMessage(prompt)}
+                style={{ fontSize: "12px", padding: "4px 10px", borderRadius: "12px", border: "1px solid #c7d2fe", backgroundColor: "#eef2ff", cursor: "pointer", whiteSpace: "nowrap" }}
+              >
+                {prompt.startsWith("Còn") ? "Mẫu khác" : "Rẻ hơn"}
+              </button>
+            ))}
             <button
               onClick={() => handleSendMessage("Gợi ý laptop học tập dưới 20 triệu")}
               style={{
