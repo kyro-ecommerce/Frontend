@@ -110,3 +110,16 @@ test("failed refresh/repeated 401 cannot retry indefinitely or downgrade to gues
     assert.equal(done, 0);
   }
 });
+
+test("multi-turn chat sends the conversation id but never a user id", async (t) => {
+  const { ai, calls } = service();
+  const requests = [];
+  t.mock.method(globalThis, "fetch", async (url, options) => { requests.push([url, options]); return streamResponse(); });
+  const conversationId = "conv-27f43d67-998c-4aeb-89f7-48a27a4bf321";
+  await ai.chatStream("RAM 16GB", null, null, null, assert.fail, { conversationId });
+  assert.deepEqual(JSON.parse(requests[0][1].body), {
+    message: "RAM 16GB", session_id: "fixture-session", conversation_id: conversationId,
+  });
+  await ai.chat("RAM 16GB", { conversationId });
+  assert.deepEqual(calls.at(-1)[2], { message: "RAM 16GB", session_id: "fixture-session", conversation_id: conversationId });
+});
