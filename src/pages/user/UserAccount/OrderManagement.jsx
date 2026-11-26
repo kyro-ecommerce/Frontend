@@ -23,6 +23,7 @@ const OrderManagement = () => {
     formatCurrency,
     getStatusText,
     handleViewOrderDetails,
+    navigate,
     clearOrderError
   } = useUserOrdersPage();
 
@@ -111,7 +112,7 @@ const OrderManagement = () => {
         <Alert
           severity="error"
           sx={{ mb: 4, borderRadius: '16px' }}
-          onClose={memoizedClearOrderError}
+          onClose={clearOrderError}
         >
           {error}
         </Alert>

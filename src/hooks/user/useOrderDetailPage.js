@@ -132,6 +132,7 @@ export const useOrderDetailPage = () => {
     handleRetryPayment,
     fetchOrderById,
     clearOrderError,
+    showToast,
     navigate
   };
 };

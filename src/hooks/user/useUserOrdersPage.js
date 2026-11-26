@@ -84,6 +84,7 @@ export const useUserOrdersPage = () => {
     formatCurrency,
     getStatusText,
     handleViewOrderDetails,
-    clearOrderError
+    clearOrderError,
+    navigate
   };
 };

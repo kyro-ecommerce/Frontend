@@ -207,6 +207,7 @@ const Checkout = () => {
     const CompleteStep = () => { /* ... (Giữ nguyên) ... */ const orderDetails = orderFromContext;
         const orderId = processedOrderId || orderDetails?.id;
         const orderCode = orderDetails?.orderCode;
+        const cancelled = orderDetails?.orderStatus === "CANCELLED";
 
         if (vnpayStatus === 'processing' || (isOrderContextLoadingGlobal && !orderDetails && !orderContextError && step === 4)) {
             return (
@@ -268,15 +269,18 @@ const Checkout = () => {
         return (
             <div className="text-center py-10 bg-white p-6 md:p-10 rounded-lg shadow-xl max-w-2xl mx-auto">
                 <div className="mb-6">
-                    {(vnpayStatus === 'success' || (orderDetails?.paymentMethod === 'COD' && String(orderDetails?.id) === String(orderId)) ) && (
+                    {!cancelled && (vnpayStatus === 'success' || (orderDetails?.paymentMethod === 'COD' && String(orderDetails?.id) === String(orderId)) ) && (
                         <svg className="mx-auto mb-4 h-16 w-16 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                         </svg>
                     )}
                     <h2 className="text-2xl sm:text-3xl font-bold mb-2 text-gray-800">
-                        {vnpayStatus === 'success' ? "Thanh toán VNPAY thành công!" : "Đặt hàng thành công!"}
+                        {cancelled ? "Đơn hàng đã hủy" : vnpayStatus === 'success' ? "Thanh toán VNPAY thành công!" : "Đã tiếp nhận đơn hàng"}
                     </h2>
-                    <p className="text-lg text-gray-600 mb-6">Cảm ơn bạn đã đặt hàng tại Kyro Store.</p>
+                    {cancelled && orderDetails?.paymentStatus === 'COMPLETED' && (
+                        <Alert severity="warning" sx={{ mb: 2 }}>Đơn đã hủy nhưng đã ghi nhận thanh toán. Vui lòng liên hệ hỗ trợ để kiểm tra khoản tiền.</Alert>
+                    )}
+                    {!cancelled && <p className="text-lg text-gray-600 mb-6">Cảm ơn bạn đã đặt hàng tại Kyro Store.</p>}
                     <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 mb-6 text-left space-y-3 text-sm sm:text-base">
                         <h3 className="text-xl font-semibold mb-3 text-gray-700 flex justify-between items-center">
                             <span>Thông tin đơn hàng {orderCode}</span>
@@ -310,6 +314,11 @@ const Checkout = () => {
                         <p><strong>Địa chỉ giao:</strong> {`${orderDetails?.shippingAddress?.street || ''}, ${orderDetails?.shippingAddress?.ward || ''}, ${orderDetails?.shippingAddress?.district || ''}, ${orderDetails?.shippingAddress?.province || ''}`}</p>
                         <p className="font-bold"><strong>Tổng tiền:</strong> <span className="text-red-600">{orderDetails ? formatCurrency(orderDetails.totalDiscountedPrice) : "Đang cập nhật..."}</span></p>
                     </div>
+                    <VnpayExpirationNotice
+                        order={orderDetails}
+                        onRetry={() => handleRetryVNPay(orderId)}
+                        isRetrying={isPlacingOrder}
+                    />
                     <p className="mb-8 text-gray-600">Chúng tôi sẽ xử lý đơn hàng của bạn trong thời gian sớm nhất.</p>
                     <div className="flex flex-col sm:flex-row justify-center gap-4">
                         <button
@@ -329,8 +338,11 @@ const Checkout = () => {
             </div>
         ); };
 
+    useEffect(() => {
+        if (step < 2 && !locationHook.pathname.endsWith('/cart')) navigate('/cart', { replace: true });
+    }, [step, locationHook.pathname, navigate]);
+
     if (step < 2 && !locationHook.pathname.endsWith('/cart')) {
-         useEffect(() => { navigate('/cart', { replace: true }); }, [navigate]);
         return <div className="text-center py-10">Đang chuyển hướng...</div>;
     }
 

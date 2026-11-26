@@ -21,6 +21,7 @@ const OrderDetail = () => {
     handleRetryPayment,
     fetchOrderById,
     clearOrderError,
+    showToast,
     navigate
   } = useOrderDetailPage();
 
@@ -28,7 +29,7 @@ const OrderDetail = () => {
   const orderHistory = [];
   if (order) {
     if (order.orderDate) orderHistory.push({ status: "PENDING", description: "Đơn hàng đã được tạo thành công", date: order.orderDate });
-    if (["CONFIRMED", "SHIPPED", "DELIVERED"].includes(order.orderStatus) || order.paymentStatus === "COMPLETED") {
+    if (["CONFIRMED", "SHIPPED", "DELIVERED"].includes(order.orderStatus)) {
       orderHistory.push({ status: "CONFIRMED", description: "Đơn hàng đã được xác nhận", date: order.paymentDetails?.paymentDate || order.orderDate });
     }
     if (["SHIPPED", "DELIVERED"].includes(order.orderStatus)) {
@@ -101,6 +102,9 @@ const OrderDetail = () => {
               <MuiButton variant="outlined" onClick={() => navigate('/my-order')} size="small">Quay lại danh sách</MuiButton>
             </div>
 
+            {order.orderStatus === 'CANCELLED' && order.paymentStatus === 'COMPLETED' && (
+              <Alert severity="warning" sx={{ mb: 2 }}>Đơn đã hủy nhưng đã ghi nhận thanh toán. Vui lòng liên hệ hỗ trợ để kiểm tra khoản tiền.</Alert>
+            )}
             <Paper elevation={0} sx={{ mb: 4, p: 3, border: '1px solid #e0e0e0', borderRadius: 2 }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
                     <Typography variant="h6" component="h2" sx={{ mr: 2, fontWeight: 'medium' }}>Trạng thái:</Typography>

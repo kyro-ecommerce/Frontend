@@ -1,4 +1,12 @@
 // src/services/order.service.js
+import { runIdempotent } from "./idempotentRequest.js";
+import { getTokenFromLocalStorage } from "./util";
+
+function actorScope() {
+  try { return JSON.parse(atob(getTokenFromLocalStorage().split(".")[1].replace(/-/g,"+").replace(/_/g,"/"))).id; }
+  catch { return "anonymous"; }
+}
+
 import { api } from "../../config/user/ApiConfig";
 
 export const orderService = {
@@ -7,7 +15,9 @@ export const orderService = {
             if (!addressId) {
                 throw new Error("Address ID is required to create an order.");
             }
-            const response = await api.post(`/orders`, { addressId, paymentMethod, cartItemIds, cartVersion, expectedTotalDiscountedPrice });
+            const payload = { addressId, paymentMethod, cartItemIds: [...cartItemIds].sort((a,b) => a-b), cartVersion, expectedTotalDiscountedPrice };
+            const response = await runIdempotent(`order:${actorScope()}`, payload,
+                key => api.post(`/orders`, payload, { headers: { "Idempotency-Key": key } }));
             return response; 
         } catch (error) {
             console.error('Lỗi khi tạo đơn hàng (Service):', error.response || error);
@@ -67,7 +77,8 @@ export const orderService = {
 
     createVNPayPayment: async (orderId) => {
         try {
-            const response = await api.post(`/orders/${orderId}/payments`);
+            const response = await runIdempotent(`payment:${actorScope()}`, { orderId },
+                key => api.post(`/orders/${orderId}/payments`, null, { headers: { "Idempotency-Key": key } }));
             return response;
         } catch (error) {
             console.error(`Lỗi khi tạo thanh toán VNPAY cho đơn ${orderId} (Service):`, error.response || error);

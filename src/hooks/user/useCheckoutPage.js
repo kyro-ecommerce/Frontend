@@ -73,6 +73,10 @@ export const useCheckoutPage = () => {
     const isProcessingVNPayCallback = useRef(false);
 
     useEffect(() => {
+        if (['CONFIRMED', 'SHIPPED', 'DELIVERED'].includes(orderFromContext?.orderStatus)) fetchCart();
+    }, [orderFromContext?.id, orderFromContext?.orderStatus, fetchCart]);
+
+    useEffect(() => {
         if (step < 4 && !isCartContextLoading && selectedItemIds.length === 0) {
             navigate('/cart', { replace: true });
         }
@@ -143,9 +147,9 @@ export const useCheckoutPage = () => {
 
         const processCallback = async () => {
             try {
-                await orderService.handleVNPayCallback(params);
+                const callback = await orderService.handleVNPayCallback(params);
                 await fetchOrderByIdContext(orderId);
-                if (responseCode === '00') {
+                if (callback.data?.success === true) {
                     setVnpayStatus('success');
                     setVnpayMessage('Thanh toán VNPAY thành công!');
                     showToast('Thanh toán VNPAY thành công!', 'success');
@@ -373,6 +377,12 @@ export const useCheckoutPage = () => {
             setOrderIdForPostProcessing(createdOrder.id.toString());
             setEmailSentForOrderId(null);
             setOrderProcessedForEmailAndCartClear(false);
+
+            // Persist the created order in the URL before requesting a gateway link.
+            // A link error must lead to retrying payment, not placing another order.
+            const completedParams = new URLSearchParams({ step: '4', orderId: String(createdOrder.id) });
+            navigate({ pathname: locationHook.pathname, search: completedParams.toString() }, { replace: true });
+            setStep(4);
 
             if (paymentMethod === "VNPAY") {
                 const paymentResponse = await orderService.createVNPayPayment(createdOrder.id);

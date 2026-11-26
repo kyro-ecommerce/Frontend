@@ -79,7 +79,7 @@ export const OrderProvider = ({ children }) => {
       actualOrderObject.id = orderIdValue;
       setCurrentOrder(actualOrderObject);
 
-      // PURCHASE is recorded by the AI service from order-service's order.created event.
+      // PURCHASE is recorded by the AI service from order-service's order.delivered event.
 
       return actualOrderObject;
     } catch (err) {
