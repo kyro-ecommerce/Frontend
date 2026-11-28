@@ -15,14 +15,15 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 const API_LOCATION_BASE_URL = "https://provinces.open-api.vn/api";
 
 const AccountForm = () => {
+  const confirm = useConfirm();
   const { user: userFromContext, isLoading: authContextLoading, fetchUserProfile, clearAuthError } = useAuthContext();
   const { showToast } = useToast();
 
   const [activeTab, setActiveTab] = useState("profile"); // 'profile' | 'addresses'
 
   // --- Profile Form State ---
-  const [formState, setFormState] = useState({ fullName: "", phone: "", email: "" });
-  const [initialData, setInitialData] = useState({ fullName: "", phone: "", email: "" });
+  const [formState, setFormState] = useState({ firstName: "", lastName: "", phone: "", email: "" });
+  const [initialData, setInitialData] = useState({ firstName: "", lastName: "", phone: "", email: "" });
   const [isUpdating, setIsUpdating] = useState(false);
 
   // --- Address Management State ---
@@ -55,17 +56,17 @@ const AccountForm = () => {
   // Sync user profile data
   useEffect(() => {
     if (userFromContext) {
-      let currentFullName = "";
-      if (userFromContext.firstName && userFromContext.lastName && userFromContext.lastName.trim() !== "") {
-        currentFullName = `${userFromContext.firstName} ${userFromContext.lastName}`;
-      } else if (userFromContext.firstName) {
-        currentFullName = userFromContext.firstName;
-      } else if (userFromContext.fullName) {
-        currentFullName = userFromContext.fullName;
+      let firstName = (userFromContext.firstName || "").trim();
+      let lastName = (userFromContext.lastName || "").trim();
+      if (!firstName && !lastName && userFromContext.fullName) {
+        const parts = userFromContext.fullName.trim().split(/\s+/);
+        firstName = parts[0] || "";
+        lastName = parts.slice(1).join(" ");
       }
 
       const data = {
-        fullName: currentFullName.trim(),
+        firstName,
+        lastName,
         phone: userFromContext.mobile || userFromContext.phoneNumber || "",
         email: userFromContext.email || ""
       };
@@ -152,7 +153,8 @@ const AccountForm = () => {
   };
 
   const hasProfileChanges = () => {
-    return formState.fullName.trim() !== initialData.fullName.trim() ||
+    return formState.firstName.trim() !== initialData.firstName.trim() ||
+           formState.lastName.trim() !== initialData.lastName.trim() ||
            formState.phone.trim() !== initialData.phone.trim();
   };
 
@@ -164,8 +166,8 @@ const AccountForm = () => {
     setIsUpdating(true);
     try {
       const userDataToSubmit = {
-        firstName: formState.fullName.trim(),
-        lastName: "",
+        firstName: formState.firstName.trim(),
+        lastName: formState.lastName.trim(),
         phoneNumber: formState.phone.trim()
       };
       await authService.updateProfile(userDataToSubmit);
@@ -241,7 +243,7 @@ const AccountForm = () => {
   const handleOpenAddModal = () => {
     setEditingAddress(null);
     setAddressForm({
-      fullName: formState.fullName || "",
+      fullName: `${formState.firstName} ${formState.lastName}`.trim(),
       phone: formState.phone || "",
       address: "",
       province: "",
@@ -333,7 +335,7 @@ const AccountForm = () => {
     }
   };
 
-  const displayName = initialData.fullName || "Tài khoản của tôi";
+  const displayName = `${initialData.firstName} ${initialData.lastName}`.trim() || "Tài khoản của tôi";
 
   return (
     <div className="flex-1 min-w-0">
@@ -379,18 +381,34 @@ const AccountForm = () => {
             <form onSubmit={handleProfileSubmit} className="space-y-5">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1.5" htmlFor="fullName">
-                    Họ và Tên
+                  <label className="block text-xs font-bold text-gray-700 mb-1.5" htmlFor="firstName">
+                    Họ
                   </label>
                   <input
                     type="text"
-                    id="fullName"
-                    name="fullName"
-                    value={formState.fullName}
+                    id="firstName"
+                    name="firstName"
+                    value={formState.firstName}
                     onChange={handleProfileChange}
                     className="w-full p-3 rounded-2xl border border-gray-200 text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
                     disabled={authContextLoading || isUpdating}
-                    placeholder="Nhập họ và tên..."
+                    placeholder="Nhập họ..."
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1.5" htmlFor="lastName">
+                    Tên
+                  </label>
+                  <input
+                    type="text"
+                    id="lastName"
+                    name="lastName"
+                    value={formState.lastName}
+                    onChange={handleProfileChange}
+                    className="w-full p-3 rounded-2xl border border-gray-200 text-sm font-medium focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all"
+                    disabled={authContextLoading || isUpdating}
+                    placeholder="Nhập tên..."
                   />
                 </div>
 
@@ -410,7 +428,7 @@ const AccountForm = () => {
                   />
                 </div>
 
-                <div className="md:col-span-2">
+                <div>
                   <label className="block text-xs font-bold text-gray-700 mb-1.5" htmlFor="email">
                     Địa chỉ Email
                   </label>

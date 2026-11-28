@@ -2,6 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useOrderContext } from "../../store/user/OrderContext";
 
+const DEFAULT_PAGE_SIZE = 10;
+
 export const useUserOrdersPage = () => {
   const navigate = useNavigate();
   const {
@@ -16,29 +18,25 @@ export const useUserOrdersPage = () => {
   const [selectedStatus, setSelectedStatus] = useState("all");
   const [currentPage, setCurrentPage] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
-
-  const memoizedFetchUserOrders = useCallback((status, page) => {
-    fetchUserOrders(status, page);
-  }, [fetchUserOrders]);
-
-  const memoizedClearOrderError = useCallback(() => {
-    clearOrderError();
-  }, [clearOrderError]);
+  const [debouncedSearch, setDebouncedSearch] = useState("");
 
   useEffect(() => {
-    memoizedClearOrderError();
-    memoizedFetchUserOrders(selectedStatus, currentPage);
-  }, [selectedStatus, currentPage, memoizedFetchUserOrders, memoizedClearOrderError]);
+    const timer = setTimeout(() => {
+      const trimmed = searchTerm.trim();
+      setDebouncedSearch((prev) => {
+        if (prev !== trimmed) {
+          setCurrentPage(0);
+        }
+        return trimmed;
+      });
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
-  const filteredOrders = orders.filter((order) => {
-    if (!searchTerm.trim()) return true;
-    const term = searchTerm.trim().toLowerCase();
-    const matchCode = order.orderCode?.toLowerCase().includes(term);
-    const matchProduct = order.orderItems?.some((item) =>
-      item.productTitle?.toLowerCase().includes(term)
-    );
-    return matchCode || matchProduct;
-  });
+  useEffect(() => {
+    clearOrderError();
+    fetchUserOrders(selectedStatus, currentPage, debouncedSearch, DEFAULT_PAGE_SIZE);
+  }, [selectedStatus, currentPage, debouncedSearch, fetchUserOrders, clearOrderError]);
 
   const formatCurrency = useCallback((amount) => {
     return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', minimumFractionDigits: 0 }).format(amount || 0);
@@ -70,7 +68,7 @@ export const useUserOrdersPage = () => {
 
   return {
     orders,
-    filteredOrders,
+    filteredOrders: orders,
     orderPagination,
     isLoading,
     error,
@@ -80,6 +78,7 @@ export const useUserOrdersPage = () => {
     setCurrentPage,
     searchTerm,
     setSearchTerm,
+    debouncedSearch,
     statusFilters,
     formatCurrency,
     getStatusText,

@@ -19,6 +19,7 @@ const OrderManagement = () => {
     setCurrentPage,
     searchTerm,
     setSearchTerm,
+    debouncedSearch,
     statusFilters,
     formatCurrency,
     getStatusText,
@@ -118,7 +119,25 @@ const OrderManagement = () => {
         </Alert>
       )}
 
-      {!isLoading && !error && orders.length === 0 ? (
+      {!isLoading && !error && orders.length === 0 && debouncedSearch ? (
+        <div className="flex flex-col items-center justify-center py-12 text-center bg-white p-8 rounded-3xl border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
+          <div className="w-16 h-16 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center mb-3">
+            <SearchIcon sx={{ fontSize: 32 }} />
+          </div>
+          <h2 className="text-base sm:text-lg font-extrabold text-gray-900 mb-1">
+            Không tìm thấy đơn hàng phù hợp
+          </h2>
+          <p className="text-xs sm:text-sm text-gray-500 max-w-sm mb-5 leading-relaxed">
+            Không tìm thấy đơn hàng nào khớp với từ khóa "<span className="font-semibold text-gray-800">{debouncedSearch}</span>".
+          </p>
+          <button
+            onClick={() => setSearchTerm("")}
+            className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs py-2 px-5 rounded-2xl transition-all cursor-pointer"
+          >
+            Xóa tìm kiếm
+          </button>
+        </div>
+      ) : !isLoading && !error && orders.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center bg-white p-8 rounded-3xl border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
           <div className="w-20 h-20 rounded-full bg-gray-100 text-gray-400 flex items-center justify-center mb-4">
             <ReceiptLongOutlinedIcon sx={{ fontSize: 40 }} />
@@ -134,24 +153,6 @@ const OrderManagement = () => {
             className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2.5 px-6 rounded-2xl shadow-md shadow-blue-100 transition-all cursor-pointer"
           >
             Khám phá sản phẩm
-          </button>
-        </div>
-      ) : !isLoading && !error && filteredOrders.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-12 text-center bg-white p-8 rounded-3xl border border-gray-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)]">
-          <div className="w-16 h-16 rounded-full bg-blue-50 text-blue-500 flex items-center justify-center mb-3">
-            <SearchIcon sx={{ fontSize: 32 }} />
-          </div>
-          <h2 className="text-base sm:text-lg font-extrabold text-gray-900 mb-1">
-            Không tìm thấy đơn hàng phù hợp
-          </h2>
-          <p className="text-xs sm:text-sm text-gray-500 max-w-sm mb-5 leading-relaxed">
-            Không tìm thấy đơn hàng nào khớp với từ khóa "<span className="font-semibold text-gray-800">{searchTerm}</span>".
-          </p>
-          <button
-            onClick={() => setSearchTerm("")}
-            className="bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs py-2 px-5 rounded-2xl transition-all cursor-pointer"
-          >
-            Xóa tìm kiếm
           </button>
         </div>
       ) : (

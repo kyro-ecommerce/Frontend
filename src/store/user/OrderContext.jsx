@@ -153,7 +153,7 @@ export const OrderProvider = ({ children }) => {
     }
   }, [isAuthenticated, fetchAddresses]);
 
-  const fetchUserOrders = useCallback(async (status = "all", page = 0) => {
+  const fetchUserOrders = useCallback(async (status = "all", page = 0, search = "", size = 10) => {
     if (!isAuthenticated) {
         setOrders([]);
         return;
@@ -162,7 +162,7 @@ export const OrderProvider = ({ children }) => {
     const requestId = ++latestOrderRequest.current;
     setError(null);
     try {
-        const response = await orderService.getAllOrders({ status, page, size: 20 });
+        const response = await orderService.getAllOrders({ status, search, page, size });
         if (requestId !== latestOrderRequest.current) return;
         const pageData = response.data || {};
         const fetchedOrders = pageData.content || [];

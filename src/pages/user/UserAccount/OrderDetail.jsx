@@ -6,6 +6,23 @@ import { useOrderDetailPage } from "../../../hooks/user/useOrderDetailPage";
 import { CircularProgress, Typography, Button as MuiButton, Box, Paper, Chip, Alert } from '@mui/material';
 import VnpayExpirationNotice from '../../../components/user/checkout/VnpayExpirationNotice';
 
+const getTimelineDotClass = (status) => {
+  switch (status) {
+    case "DELIVERED":
+      return "bg-emerald-500";
+    case "SHIPPED":
+      return "bg-blue-500";
+    case "CONFIRMED":
+      return "bg-purple-500";
+    case "PENDING":
+      return "bg-amber-500";
+    case "CANCELLED":
+      return "bg-red-500";
+    default:
+      return "bg-gray-300";
+  }
+};
+
 const OrderDetail = () => {
   const {
     orderId,
@@ -115,7 +132,7 @@ const OrderDetail = () => {
                     <Box className="mt-4 pl-1">
                     {orderHistory.map((event, index) => (
                         <Box key={index} className="relative pl-6 pb-4 border-l-2 border-gray-200 last:pb-0">
-                        <div className={`absolute -left-2.25 mt-1 w-4 h-4 rounded-full border-2 border-white ${getStatusColor(event.status) === 'default' ? 'bg-gray-300' : `bg-${getStatusColor(event.status)}-500`}`}></div>
+                        <div className={`absolute -left-2.25 mt-1 w-4 h-4 rounded-full border-2 border-white ${getTimelineDotClass(event.status)}`}></div>
                         <Typography variant="subtitle2" className="font-medium text-gray-700">{getStatusText(event.status)}</Typography>
                         <Typography variant="body2" className="text-sm text-gray-500">{event.description}</Typography>
                         <Typography variant="caption" className="text-xs text-gray-400">{new Date(event.date).toLocaleString('vi-VN')}</Typography>

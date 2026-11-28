@@ -103,11 +103,12 @@ export const orderService = {
         }
     },
 
-    getAllOrders: async ({ status, page = 0, size = 20 } = {}) => {
+    getAllOrders: async ({ status, search, page = 0, size = 10 } = {}) => {
         try {
             const response = await api.get("/orders", {
                 params: {
                     status: status && status !== "all" ? status : undefined,
+                    search: search && search.trim() ? search.trim() : undefined,
                     page,
                     size,
                     sort: "orderDate,desc"
