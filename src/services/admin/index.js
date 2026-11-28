@@ -5,6 +5,7 @@ import api from './api';
 import * as authService from './authService';
 import * as dashboardService from './dashboardService';
 import * as orderService from './orderService';
+import * as paymentService from './paymentService';
 import * as productService from './productService';
 import * as userService from './userService';
 import * as categoryService from './categoryService';
@@ -14,6 +15,7 @@ export {
     authService,
     dashboardService,
     orderService,
+    paymentService,
     productService,
     userService,
     categoryService,

@@ -1,13 +1,17 @@
 // src/pages/admin/OrdersManagement.jsx
 import React, { useState } from "react";
 import { Navigate } from "react-router-dom";
+import { ShieldAlert, ShoppingBag } from "lucide-react";
 import Layout from "../../../layouts/admin/Layout";
 import { useAuth } from "../../../hooks/admin/useAuth.jsx";
 import { useOrders } from "../../../hooks/admin/useOrders.jsx";
+import { usePaymentReviews } from "../../../hooks/admin/usePaymentReviews.jsx";
 import OrderList from "../../../features/admin/orders/OrderList";
 import OrderStats from "../../../features/admin/orders/OrderStats";
 import OrderFilters from "../../../features/admin/orders/OrderFilters";
 import OrderDetailModal from "../../../features/admin/orders/OrderDetailModal.jsx";
+import PaymentReviewList from "../../../features/admin/orders/PaymentReviewList.jsx";
+import PaymentReviewDetailModal from "../../../features/admin/orders/PaymentReviewDetailModal.jsx";
 
 
 const OrdersManagement = () => {
@@ -37,7 +41,27 @@ const OrdersManagement = () => {
         resetAllFilters
     } = useOrders();
 
+    // Read-only payment reconciliation hook
+    const {
+        filteredReviews,
+        reviewCount,
+        isLoading: isReviewsLoading,
+        error: reviewsError,
+        searchQuery: reviewSearchQuery,
+        setSearchQuery: setReviewSearchQuery,
+        reasonFilter: reviewReasonFilter,
+        setReasonFilter: setReviewReasonFilter,
+        resetReviewFilters,
+        refreshReviews,
+        selectedDetail: selectedReviewDetail,
+        isDetailLoading: isReviewDetailLoading,
+        detailError: reviewDetailError,
+        openReviewDetail,
+        closeReviewDetail
+    } = usePaymentReviews();
+
     // Local UI state
+    const [activeTab, setActiveTab] = useState("orders");
     const [selectedOrder, setSelectedOrder] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [pageInput, setPageInput] = useState("");
@@ -75,6 +99,22 @@ const OrdersManagement = () => {
         }
     };
 
+    const handleOrderStatusChangeWithSync = async (orderId, newStatus) => {
+        const ok = await handleStatusChange(orderId, newStatus);
+        if (ok) {
+            setTimeout(() => {
+                refreshReviews();
+            }, 400);
+        }
+        return ok;
+    };
+
+    const handleNavigateToReview = (orderId) => {
+        setReviewReasonFilter("all");
+        setReviewSearchQuery(orderId != null ? String(orderId) : "");
+        setActiveTab("reconciliation");
+    };
+
     // Handle view order with modal
     const handleViewOrderWithModal = async (orderId) => {
         const orderToView = await handleViewOrder(orderId);
@@ -88,6 +128,10 @@ const OrdersManagement = () => {
         setIsModalOpen(false);
         setSelectedOrder(null);
     };
+
+    const activeSelectedOrder = selectedOrder
+        ? orders.find((o) => o.id === selectedOrder.id) || selectedOrder
+        : null;
 
     // Loading state
     if (loading) {
@@ -106,114 +150,184 @@ const OrdersManagement = () => {
                     {/* Order Statistics */}
                     <OrderStats stats={stats} />
 
-                    {/* Order Filters & List Container */}
-                    <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] space-y-4">
-                        <OrderFilters
-                            currentFilter={filter}
-                            onFilterChange={setFilter}
-                            onSearch={handleSearch}
-                            paymentMethod={paymentMethod}
-                            onPaymentMethodChange={setPaymentMethod}
-                            paymentStatus={paymentStatus}
-                            onPaymentStatusChange={setPaymentStatus}
-                            sortBy={sortBy}
-                            sortDir={sortDir}
-                            onSortChange={handleSort}
-                            onResetAllFilters={resetAllFilters}
-                        />
+                    {/* Sub-Tab Switcher: Orders vs Read-Only Payment Reconciliation */}
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                        <div className="inline-flex items-center gap-1.5 bg-white p-1.5 rounded-2xl border border-slate-200/80 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab("orders")}
+                                className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all border-none cursor-pointer ${
+                                    activeTab === "orders"
+                                        ? "bg-[#1D7461] text-white shadow-sm shadow-[#1D7461]/20"
+                                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-50 bg-transparent"
+                                }`}
+                            >
+                                <ShoppingBag className="w-4 h-4" />
+                                <span>Danh sách đơn hàng</span>
+                            </button>
 
-                        {/* Error Message */}
-                        {error && <div className="text-red-600 bg-red-50 border border-red-200 p-3.5 rounded-xl text-xs font-semibold">{error}</div>}
-
-                        {/* Order List */}
-                        <OrderList
-                            orders={orders}
-                            isLoading={isLoading}
-                            onStatusChange={handleStatusChange}
-                            onDeleteOrder={handleDeleteOrder}
-                            onViewOrder={handleViewOrderWithModal}
-                            sortBy={sortBy}
-                            sortDir={sortDir}
-                            onSort={handleSort}
-                            currentFilter={filter}
-                            onFilterChange={setFilter}
-                            paymentStatus={paymentStatus}
-                            onPaymentStatusChange={setPaymentStatus}
-                            paymentMethod={paymentMethod}
-                            onPaymentMethodChange={setPaymentMethod}
-                            totalElements={pagination.totalElements}
-                        />
-
-                        {/* Pagination */}
-                        {!isLoading && orders.length > 0 && (
-                            <div className="flex justify-center items-center pt-3 border-t border-slate-200/60">
-                                <div className="flex flex-wrap items-center justify-center gap-1.5 bg-slate-50/80 p-1 rounded-2xl border border-slate-200/80">
-                                    <button
-                                        className="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-white text-slate-700 hover:bg-slate-100 border border-slate-200/80 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs"
-                                        onClick={() => goToPage(0)}
-                                        disabled={pagination.currentPage === 0}
-                                        title="Trang đầu"
-                                    >
-                                        « Đầu
-                                    </button>
-
-                                    <button
-                                        className="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-white text-slate-700 hover:bg-slate-100 border border-slate-200/80 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs"
-                                        disabled={!pagination.hasPrevious}
-                                        onClick={previousPage}
-                                    >
-                                        ‹ Trước
-                                    </button>
-
-                                    <div className="flex items-center gap-1.5 px-2">
-                                        <span className="text-xs font-bold text-slate-500">Trang</span>
-                                        <input
-                                            type="number"
-                                            value={pageInput}
-                                            onChange={handlePageInputChange}
-                                            onKeyPress={handlePageInputKeyPress}
-                                            placeholder={`${pagination.currentPage + 1}`}
-                                            min="1"
-                                            max={pagination.totalPages}
-                                            className="w-12 py-1 px-1 text-xs font-black text-center text-[#1D7461] bg-white border border-slate-300 rounded-lg outline-none focus:border-[#1D7461] focus:ring-1 focus:ring-[#1D7461]"
-                                        />
-                                        <span className="text-xs font-bold text-slate-500">/ {pagination.totalPages || 1}</span>
-                                    </div>
-
-                                    <button
-                                        className="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-white text-slate-700 hover:bg-slate-100 border border-slate-200/80 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs"
-                                        disabled={!pagination.hasNext}
-                                        onClick={nextPage}
-                                    >
-                                        Kế ›
-                                    </button>
-
-                                    <button
-                                        className="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-white text-slate-700 hover:bg-slate-100 border border-slate-200/80 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs"
-                                        onClick={() => goToPage(pagination.totalPages - 1)}
-                                        disabled={pagination.currentPage === pagination.totalPages - 1 || pagination.totalPages === 0}
-                                        title="Trang cuối"
-                                    >
-                                        Cuối »
-                                    </button>
-                                </div>
-                            </div>
-                        )}
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab("reconciliation")}
+                                className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-extrabold transition-all border-none cursor-pointer ${
+                                    activeTab === "reconciliation"
+                                        ? "bg-[#1D7461] text-white shadow-sm shadow-[#1D7461]/20"
+                                        : "text-slate-600 hover:text-slate-900 hover:bg-slate-50 bg-transparent"
+                                }`}
+                            >
+                                <ShieldAlert className="w-4 h-4" />
+                                <span>Cần đối soát</span>
+                                <span
+                                    className={`px-2 py-0.5 rounded-full text-[11px] font-black leading-none ${
+                                        activeTab === "reconciliation"
+                                            ? "bg-white/20 text-white"
+                                            : reviewCount > 0
+                                            ? "bg-amber-100 text-amber-800 border border-amber-200"
+                                            : "bg-slate-100 text-slate-500"
+                                    }`}
+                                >
+                                    {reviewCount}
+                                </span>
+                            </button>
+                        </div>
                     </div>
+
+                    {activeTab === "orders" ? (
+                        /* Order Filters & List Container */
+                        <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)] space-y-4">
+                            <OrderFilters
+                                currentFilter={filter}
+                                onFilterChange={setFilter}
+                                onSearch={handleSearch}
+                                paymentMethod={paymentMethod}
+                                onPaymentMethodChange={setPaymentMethod}
+                                paymentStatus={paymentStatus}
+                                onPaymentStatusChange={setPaymentStatus}
+                                sortBy={sortBy}
+                                sortDir={sortDir}
+                                onSortChange={handleSort}
+                                onResetAllFilters={resetAllFilters}
+                            />
+
+                            {/* Error Message */}
+                            {error && <div className="text-red-600 bg-red-50 border border-red-200 p-3.5 rounded-xl text-xs font-semibold">{error}</div>}
+
+                            {/* Order List */}
+                            <OrderList
+                                orders={orders}
+                                isLoading={isLoading}
+                                onStatusChange={handleOrderStatusChangeWithSync}
+                                onDeleteOrder={handleDeleteOrder}
+                                onViewOrder={handleViewOrderWithModal}
+                                sortBy={sortBy}
+                                sortDir={sortDir}
+                                onSort={handleSort}
+                                currentFilter={filter}
+                                onFilterChange={setFilter}
+                                paymentStatus={paymentStatus}
+                                onPaymentStatusChange={setPaymentStatus}
+                                paymentMethod={paymentMethod}
+                                onPaymentMethodChange={setPaymentMethod}
+                                onNavigateToReview={handleNavigateToReview}
+                                totalElements={pagination.totalElements}
+                            />
+
+                            {/* Pagination */}
+                            {!isLoading && orders.length > 0 && (
+                                <div className="flex justify-center items-center pt-3 border-t border-slate-200/60">
+                                    <div className="flex flex-wrap items-center justify-center gap-1.5 bg-slate-50/80 p-1 rounded-2xl border border-slate-200/80">
+                                        <button
+                                            className="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-white text-slate-700 hover:bg-slate-100 border border-slate-200/80 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs"
+                                            onClick={() => goToPage(0)}
+                                            disabled={pagination.currentPage === 0}
+                                            title="Trang đầu"
+                                        >
+                                            « Đầu
+                                        </button>
+
+                                        <button
+                                            className="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-white text-slate-700 hover:bg-slate-100 border border-slate-200/80 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs"
+                                            disabled={!pagination.hasPrevious}
+                                            onClick={previousPage}
+                                        >
+                                            ‹ Trước
+                                        </button>
+
+                                        <div className="flex items-center gap-1.5 px-2">
+                                            <span className="text-xs font-bold text-slate-500">Trang</span>
+                                            <input
+                                                type="number"
+                                                value={pageInput}
+                                                onChange={handlePageInputChange}
+                                                onKeyPress={handlePageInputKeyPress}
+                                                placeholder={`${pagination.currentPage + 1}`}
+                                                min="1"
+                                                max={pagination.totalPages}
+                                                className="w-12 py-1 px-1 text-xs font-black text-center text-[#1D7461] bg-white border border-slate-300 rounded-lg outline-none focus:border-[#1D7461] focus:ring-1 focus:ring-[#1D7461]"
+                                            />
+                                            <span className="text-xs font-bold text-slate-500">/ {pagination.totalPages || 1}</span>
+                                        </div>
+
+                                        <button
+                                            className="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-white text-slate-700 hover:bg-slate-100 border border-slate-200/80 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs"
+                                            disabled={!pagination.hasNext}
+                                            onClick={nextPage}
+                                        >
+                                            Kế ›
+                                        </button>
+
+                                        <button
+                                            className="px-3 py-1.5 text-xs font-extrabold rounded-xl bg-white text-slate-700 hover:bg-slate-100 border border-slate-200/80 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed shadow-2xs"
+                                            onClick={() => goToPage(pagination.totalPages - 1)}
+                                            disabled={pagination.currentPage === pagination.totalPages - 1 || pagination.totalPages === 0}
+                                            title="Trang cuối"
+                                        >
+                                            Cuối »
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    ) : (
+                        /* Read-only Payment Reconciliation Container */
+                        <div className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/60 shadow-[0_2px_12px_rgba(0,0,0,0.03)]">
+                            <PaymentReviewList
+                                reviews={filteredReviews}
+                                totalReviewCount={reviewCount}
+                                isLoading={isReviewsLoading}
+                                error={reviewsError}
+                                searchQuery={reviewSearchQuery}
+                                onSearchQueryChange={setReviewSearchQuery}
+                                reasonFilter={reviewReasonFilter}
+                                onReasonFilterChange={setReviewReasonFilter}
+                                onResetFilters={resetReviewFilters}
+                                onRefresh={refreshReviews}
+                                onViewDetail={openReviewDetail}
+                            />
+                        </div>
+                    )}
                 </div>
 
                 {/* Order Detail Modal */}
-                {isModalOpen && selectedOrder && (
+                {isModalOpen && activeSelectedOrder && (
                     <OrderDetailModal
-                        order={selectedOrder}
+                        order={activeSelectedOrder}
                         onClose={closeOrderDetail}
-                        onStatusChange={handleStatusChange}
+                        onStatusChange={handleOrderStatusChangeWithSync}
                         onDeleteOrder={async (orderId) => {
                             const ok = await handleDeleteOrder(orderId);
                             if (ok) closeOrderDetail();
                         }}
                     />
                 )}
+
+                {/* Read-Only Payment Review Detail Modal */}
+                <PaymentReviewDetailModal
+                    detail={selectedReviewDetail}
+                    isLoading={isReviewDetailLoading}
+                    error={reviewDetailError}
+                    onClose={closeReviewDetail}
+                />
             </div>
         </Layout>
     );

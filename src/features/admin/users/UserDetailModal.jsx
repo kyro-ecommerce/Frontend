@@ -1,14 +1,26 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {formatCurrency, formatDate} from "../../../utils/admin/format.js";
 
-const UserDetailModal = ({ user, onClose, onUpdateUser, onChangeRole, onToggleStatus }) => {
+const UserDetailModal = ({ user, currentAdminId, isStatsLoading = false, onClose, onUpdateUser, onToggleStatus }) => {
     const [isEditing, setIsEditing] = useState(false);
     const [editedUser, setEditedUser] = useState({
         ...user,
         role: user?.role || "CUSTOMER"
     });
 
+    useEffect(() => {
+        if (user) {
+            setEditedUser({
+                ...user,
+                role: user?.role || "CUSTOMER"
+            });
+            setIsEditing(false);
+        }
+    }, [user]);
+
     if (!user) return null;
+
+    const isSelf = currentAdminId != null && Number(user.id) === Number(currentAdminId);
 
     // Lấy thông tin từ user object hoặc sử dụng giá trị mặc định nếu không có
     const totalOrders = user.orderCount || 0;
@@ -53,11 +65,15 @@ const UserDetailModal = ({ user, onClose, onUpdateUser, onChangeRole, onToggleSt
                 <div className="p-5">
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                         <div className="bg-gray-50 p-4 rounded-lg text-center">
-                            <div className="text-lg font-semibold mb-2">{totalOrders}</div>
+                            <div className="text-lg font-semibold mb-2">
+                                {isStatsLoading ? "..." : totalOrders}
+                            </div>
                             <div className="text-[13px] text-gray-500">Đơn hàng</div>
                         </div>
                         <div className="bg-gray-50 p-4 rounded-lg text-center">
-                            <div className="text-lg font-semibold mb-2">{formatCurrency(totalSpent)}</div>
+                            <div className="text-lg font-semibold mb-2">
+                                {isStatsLoading ? "..." : formatCurrency(totalSpent)}
+                            </div>
                             <div className="text-[13px] text-gray-500">Đã chi tiêu</div>
                         </div>
                         <div className="bg-gray-50 p-4 rounded-lg text-center">
@@ -162,8 +178,18 @@ const UserDetailModal = ({ user, onClose, onUpdateUser, onChangeRole, onToggleSt
                 <div className="p-4 px-5 border-t border-gray-200 flex justify-end gap-3 flex-wrap">
                     <button className="py-2.5 px-5 rounded text-sm font-medium cursor-pointer bg-gray-50 border border-gray-200 text-gray-800 hover:bg-gray-100 transition-colors" onClick={onClose}>Đóng</button>
                     <button
-                        className={`py-2.5 px-5 rounded text-sm font-medium cursor-pointer transition-colors ${user.banned ? 'bg-blue-600 text-white border-none hover:bg-blue-700' : 'bg-red-50 text-red-500 border border-red-500 hover:bg-red-100'}`}
-                        onClick={handleToggleStatus}
+                        disabled={isSelf}
+                        title={isSelf ? "Không thể tự khóa tài khoản quản trị đang đăng nhập" : undefined}
+                        className={`py-2.5 px-5 rounded text-sm font-medium transition-colors ${
+                            isSelf
+                                ? 'bg-gray-100 text-gray-400 border border-gray-200 cursor-not-allowed'
+                                : user.banned
+                                ? 'bg-blue-600 text-white border-none hover:bg-blue-700 cursor-pointer'
+                                : 'bg-red-50 text-red-500 border border-red-500 hover:bg-red-100 cursor-pointer'
+                        }`}
+                        onClick={() => {
+                            if (!isSelf) handleToggleStatus();
+                        }}
                     >
                         {user.banned ? 'Mở khóa tài khoản' : 'Khóa tài khoản'}
                     </button>

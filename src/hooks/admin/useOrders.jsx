@@ -1,8 +1,11 @@
 // src/hooks/useOrders.jsx
 import { useState, useEffect, useCallback, useRef } from "react";
 import { orderService } from "../../services/admin/index.js";
+import { getErrorMessage } from "../../utils/errorUtils.js";
+import { useToast } from "../../store/admin/ToastContext.jsx";
 
 export const useOrders = () => {
+    const toast = useToast();
     const latestRequest = useRef(0);
     // State management
     const [orders, setOrders] = useState([]);
@@ -80,7 +83,7 @@ export const useOrders = () => {
         } catch (err) {
             if (requestId !== latestRequest.current) return;
             console.error("Error loading orders:", err);
-            setError("Cannot load orders. Please try again.");
+            setError(getErrorMessage(err, "Không thể tải danh sách đơn hàng. Vui lòng thử lại."));
             setOrders([]);
         } finally {
             if (requestId === latestRequest.current) setIsLoading(false);
@@ -143,39 +146,47 @@ export const useOrders = () => {
     // Handle status change
     const handleStatusChange = useCallback(async (orderId, actionOrStatus) => {
         try {
+            setError(null);
             const upper = String(actionOrStatus).toUpperCase();
             const status = { confirm: "CONFIRMED", ship: "SHIPPED", deliver: "DELIVERED", cancel: "CANCELLED" }[actionOrStatus] || upper;
             const response = await orderService.updateOrderStatus(orderId, status);
 
             if (response && (response.status === 200 || response.status === 204)) {
-                fetchOrders(pagination.currentPage, pagination.pageSize);
+                toast?.success(response.data?.message || "Cập nhật trạng thái đơn hàng thành công!");
+                await fetchOrders(pagination.currentPage, pagination.pageSize);
                 fetchStats();
                 return true;
             }
             return false;
         } catch (err) {
             console.error(`Error changing order status ${orderId}:`, err);
-            setError(`Không thể cập nhật trạng thái đơn hàng. Vui lòng thử lại.`);
+            const message = getErrorMessage(err, "Không thể cập nhật trạng thái đơn hàng.");
+            setError(message);
+            toast?.error(message);
             return false;
         }
-    }, [fetchOrders, fetchStats, pagination.currentPage, pagination.pageSize]);
+    }, [fetchOrders, fetchStats, pagination.currentPage, pagination.pageSize, toast]);
 
     // Handle delete order
     const handleDeleteOrder = useCallback(async (orderId) => {
         try {
+            setError(null);
             const response = await orderService.deleteOrder(orderId);
             if (response.status === 200 || response.status === 204) {
-                fetchOrders(pagination.currentPage, pagination.pageSize);
+                toast?.success(response.data?.message || "Xóa đơn hàng thành công!");
+                await fetchOrders(pagination.currentPage, pagination.pageSize);
                 fetchStats();
                 return true;
             }
             return false;
         } catch (err) {
             console.error(`Error deleting order ${orderId}:`, err);
-            setError(`Không thể xóa đơn hàng. Vui lòng thử lại.`);
+            const message = getErrorMessage(err, "Không thể xóa đơn hàng.");
+            setError(message);
+            toast?.error(message);
             return false;
         }
-    }, [fetchOrders, fetchStats, pagination.currentPage, pagination.pageSize]);
+    }, [fetchOrders, fetchStats, pagination.currentPage, pagination.pageSize, toast]);
 
     // View order details
     const handleViewOrder = useCallback(async (orderId) => {

@@ -1,6 +1,14 @@
 import React from "react";
 import { formatCurrency, formatDateTime } from "../../../utils/admin/format.js";
+import { AlertTriangle } from "lucide-react";
 import { useConfirm } from "../../../context/ConfirmContext.jsx";
+import {
+    canAdminDeleteOrder,
+    getDeleteDisabledReason,
+    getOrderStatusMeta,
+    getOrderStatusOptions,
+    isTerminalOrderStatus
+} from "./orderStatusUtils.js";
 
 const OrderDetailModal = ({ order, onClose, onStatusChange, onDeleteOrder }) => {
     const confirm = useConfirm();
@@ -70,6 +78,14 @@ const OrderDetailModal = ({ order, onClose, onStatusChange, onDeleteOrder }) => 
                                 <div className="w-full md:w-37.5 text-sm text-gray-500 mb-1 md:mb-0">Trạng thái thanh toán:</div>
                                 <div className="text-sm font-medium text-gray-800">{order.paymentStatus || "Chưa thanh toán"}</div>
                             </div>
+                            {order.paymentReviewRequired && (
+                                <div className="mt-3 p-3 rounded-lg bg-amber-50 border border-amber-200 flex items-start gap-2 text-xs text-amber-800">
+                                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                                    <div>
+                                        <span className="font-bold">Cần đối soát thanh toán:</span> Đơn hàng này có giao dịch VNPay lệch trạng thái hoặc thu trùng tiền. Vui lòng kiểm tra chi tiết tại tab <strong>Cần đối soát</strong>.
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         <div className="bg-gray-50 rounded-lg p-4 mb-5">
@@ -199,29 +215,38 @@ const OrderDetailModal = ({ order, onClose, onStatusChange, onDeleteOrder }) => 
                 <div className="p-4 px-5 border-t border-gray-200 flex flex-wrap justify-between items-center gap-3 sticky bottom-0 bg-white z-10">
                     <div className="flex items-center gap-3">
                         <span className="text-xs font-semibold text-gray-500">Cập nhật trạng thái:</span>
-                        <select
-                            value={order.orderStatus || "PENDING"}
-                            onChange={handleStatusSelect}
-                            className={`py-1.5 px-3 rounded-full text-xs font-bold border cursor-pointer outline-none transition-all shadow-2xs ${
-                                order.orderStatus === 'PENDING' ? 'bg-amber-50 text-amber-600 border-amber-200' :
-                                order.orderStatus === 'CONFIRMED' ? 'bg-blue-50 text-blue-600 border-blue-200' :
-                                order.orderStatus === 'SHIPPED' ? 'bg-purple-50 text-purple-600 border-purple-200' :
-                                order.orderStatus === 'DELIVERED' ? 'bg-green-50 text-green-600 border-green-200' :
-                                order.orderStatus === 'CANCELLED' ? 'bg-red-50 text-red-600 border-red-200' : 'bg-gray-50 text-gray-600 border-gray-200'
-                            }`}
-                        >
-                            <option value="PENDING">Chờ xử lý</option>
-                            <option value="CONFIRMED">Đã xác nhận</option>
-                            <option value="SHIPPED">Đang vận chuyển</option>
-                            <option value="DELIVERED">Đã giao</option>
-                            <option value="CANCELLED">Đã hủy</option>
-                        </select>
+                        {isTerminalOrderStatus(order.orderStatus) ? (
+                            <span
+                                title="Trạng thái kết thúc — không thể chuyển sang trạng thái khác"
+                                className={`py-1.5 px-3 rounded-full text-xs font-bold border select-none ${getOrderStatusMeta(order.orderStatus).badgeClass}`}
+                            >
+                                {getOrderStatusMeta(order.orderStatus).label} (Đã kết thúc)
+                            </span>
+                        ) : (
+                            <select
+                                value={order.orderStatus || "PENDING"}
+                                onChange={handleStatusSelect}
+                                className={`py-1.5 px-3 rounded-full text-xs font-bold border cursor-pointer outline-none transition-all shadow-2xs ${getOrderStatusMeta(order.orderStatus).badgeClass}`}
+                            >
+                                {getOrderStatusOptions(order).map((opt) => (
+                                    <option key={opt.value} value={opt.value} disabled={opt.disabled}>
+                                        {opt.label}
+                                    </option>
+                                ))}
+                            </select>
+                        )}
                     </div>
 
                     <div className="flex gap-3">
                         <button
                             type="button"
-                            className="py-2 px-4 bg-red-50 hover:bg-red-100 text-red-600 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+                            disabled={!canAdminDeleteOrder(order)}
+                            title={getDeleteDisabledReason(order)}
+                            className={`py-2 px-4 text-xs font-semibold rounded-lg transition-colors ${
+                                canAdminDeleteOrder(order)
+                                    ? "bg-red-50 hover:bg-red-100 text-red-600 cursor-pointer"
+                                    : "bg-gray-100 text-gray-400 cursor-not-allowed opacity-70"
+                            }`}
                             onClick={handleDelete}
                         >
                             Xóa đơn hàng

@@ -22,13 +22,15 @@ export const getAllOrders = (
     paymentMethod = '',
     paymentStatus = '',
     sortBy = 'orderDate',
-    sortDir = 'desc'
+    sortDir = 'desc',
+    userId = null
 ) => {
     const params = new URLSearchParams();
 
     params.append('page', page.toString());
     params.append('size', size.toString());
 
+    if (userId !== null && userId !== undefined && userId !== '') params.append('userId', userId.toString());
     if (search) params.append('search', search);
     if (status && status !== 'all') params.append('status', status.toUpperCase());
     if (startDate) params.append('startDate', startDate);

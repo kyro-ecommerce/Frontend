@@ -4,6 +4,7 @@ import { ArrowUpDown, ArrowUp, ArrowDown, Eye, Trash2, Filter } from "lucide-rea
 
 const UserList = ({
                       users = [],
+                      currentAdminId,
                       isLoading,
                       currentPage,
                       totalPages,
@@ -202,25 +203,40 @@ const UserList = ({
                                         </td>
                                     </tr>
                                 ) : (
-                                    users.map((user) => (
+                                    users.map((user) => {
+                                        const isSelf = currentAdminId != null && Number(user.id) === Number(currentAdminId);
+                                        return (
                                         <tr key={user.id} className="hover:bg-slate-50/80 transition-colors cursor-pointer" onClick={() => onViewDetail(user.id)}>
                                             <td className="p-3.5 px-4 text-center">
                                                 <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-lg border border-slate-200/60 font-bold text-xs">#{user.id}</span>
                                             </td>
-                                            <td className="p-3.5 px-4 text-left font-bold text-xs text-slate-800">{user.email}</td>
+                                            <td className="p-3.5 px-4 text-left font-bold text-xs text-slate-800">
+                                                <div className="flex items-center gap-1.5">
+                                                    <span>{user.email}</span>
+                                                    {isSelf && (
+                                                        <span className="px-1.5 py-0.5 rounded-md bg-[#F2F9F7] text-[#1D7461] border border-[#D5EFE8] text-[10px] font-extrabold">
+                                                            Bạn
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            </td>
                                             <td className="p-3.5 px-4 text-left font-semibold text-xs text-slate-600">
                                                 {user.firstName || user.lastName
-                                                    ? `${user.firstName || ''} ${user.lastName || ''}`
+                                                    ? `${user.firstName || ''} ${user.lastName || ''}`.trim()
                                                     : 'Chưa cập nhật'}
                                             </td>
                                             <td className="p-3.5 px-4 text-center" onClick={(e) => e.stopPropagation()}>
                                                 <select
                                                     value={user.role || "CUSTOMER"}
+                                                    disabled={isSelf}
+                                                    title={isSelf ? "Không thể tự thay đổi vai trò tài khoản đang đăng nhập" : "Đổi vai trò người dùng"}
                                                     onChange={(e) => {
                                                         e.stopPropagation();
                                                         if (onChangeRole) onChangeRole(user.id, e.target.value);
                                                     }}
-                                                    className={`py-1 px-3 rounded-full text-xs font-extrabold border cursor-pointer outline-none transition-all ${
+                                                    className={`py-1 px-3 rounded-full text-xs font-extrabold border outline-none transition-all ${
+                                                        isSelf ? 'opacity-60 cursor-not-allowed ' : 'cursor-pointer '
+                                                    }${
                                                         user.role === "ADMIN" ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-blue-50 text-blue-700 border-blue-200'
                                                     }`}
                                                 >
@@ -231,12 +247,16 @@ const UserList = ({
                                             <td className="p-3.5 px-4 text-center text-xs font-medium text-slate-500">{formatDate(user.createdAt)}</td>
                                             <td className="p-3.5 px-4 text-center" onClick={(e) => e.stopPropagation()}>
                                                 <button
-                                                    className={`py-1 px-3 rounded-full text-xs font-extrabold border cursor-pointer transition-all ${
+                                                    disabled={isSelf}
+                                                    title={isSelf ? "Không thể tự khóa tài khoản đang đăng nhập" : (user.banned ? "Mở khóa tài khoản" : "Khóa tài khoản")}
+                                                    className={`py-1 px-3 rounded-full text-xs font-extrabold border transition-all ${
+                                                        isSelf ? 'opacity-60 cursor-not-allowed ' : 'cursor-pointer '
+                                                    }${
                                                         user.banned ? 'bg-red-50 text-red-600 border-red-200' : 'bg-[#F2F9F7] text-[#1D7461] border-[#D5EFE8]'
                                                     }`}
                                                     onClick={(e) => {
                                                         e.stopPropagation();
-                                                        onToggleStatus(user.id, !user.banned);
+                                                        if (!isSelf) onToggleStatus(user.id, !user.banned);
                                                     }}
                                                 >
                                                     {user.banned ? 'Bị khóa' : 'Hoạt động'}
@@ -255,19 +275,25 @@ const UserList = ({
                                                         <Eye className="w-4 h-4 text-slate-700" />
                                                     </button>
                                                     <button
-                                                        className="w-8 h-8 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 cursor-pointer flex items-center justify-center transition-all border-none"
-                                                        title="Xóa người dùng"
+                                                        disabled={isSelf}
+                                                        className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all border-none ${
+                                                            isSelf
+                                                                ? "bg-slate-100 text-slate-300 cursor-not-allowed opacity-60"
+                                                                : "bg-red-50 hover:bg-red-100 text-red-600 cursor-pointer"
+                                                        }`}
+                                                        title={isSelf ? "Không thể tự xóa tài khoản đang đăng nhập" : "Xóa người dùng"}
                                                         onClick={(e) => {
                                                             e.stopPropagation();
-                                                            onDeleteUser(user.id);
+                                                            if (!isSelf) onDeleteUser(user.id);
                                                         }}
                                                     >
-                                                        <Trash2 className="w-4 h-4 text-red-500" />
+                                                        <Trash2 className={`w-4 h-4 ${isSelf ? "text-slate-400" : "text-red-500"}`} />
                                                     </button>
                                                 </div>
                                             </td>
                                         </tr>
-                                    ))
+                                        );
+                                    })
                                 )}
                             </tbody>
                         </table>

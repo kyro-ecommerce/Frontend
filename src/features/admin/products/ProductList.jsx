@@ -97,7 +97,7 @@ const ProductList = ({
                                             <div className="flex flex-col items-center">
                                                 <div className="font-extrabold text-xs text-[#1D7461]">{formatCurrency(product.minSalePrice)}</div>
                                                 {product.minSalePrice < product.minPrice && (
-                                                    <div className="line-through text-slate-400 text-[10px] font-normal m-0">{formatCurrency(product.price)}</div>
+                                                    <div className="line-through text-slate-400 text-[10px] font-normal m-0">{formatCurrency(product.minPrice)}</div>
                                                 )}
                                             </div>
                                         </td>

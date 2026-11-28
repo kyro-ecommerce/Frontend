@@ -1,7 +1,14 @@
 import React from "react";
 import { formatCurrency, formatDateTime } from "../../../utils/admin/format.js";
-import { ArrowUpDown, ArrowUp, ArrowDown, Eye, Trash2, Filter } from "lucide-react";
+import { AlertTriangle, ArrowUpDown, ArrowUp, ArrowDown, Eye, Trash2, Filter } from "lucide-react";
 import { useConfirm } from "../../../context/ConfirmContext.jsx";
+import {
+    canAdminDeleteOrder,
+    getDeleteDisabledReason,
+    getOrderStatusMeta,
+    getOrderStatusOptions,
+    isTerminalOrderStatus
+} from "./orderStatusUtils.js";
 
 const OrderList = ({
     orders = [],
@@ -16,6 +23,9 @@ const OrderList = ({
     onFilterChange,
     paymentStatus = "all",
     onPaymentStatusChange,
+    paymentMethod = "all",
+    onPaymentMethodChange,
+    onNavigateToReview,
     totalElements
 }) => {
     const confirm = useConfirm();
@@ -60,6 +70,7 @@ const OrderList = ({
     };
 
     const getActionButtons = (order) => {
+        const deletable = canAdminDeleteOrder(order);
         return (
             <div className="flex gap-1.5 justify-center items-center">
                 <button
@@ -73,10 +84,16 @@ const OrderList = ({
                     <Eye className="w-4 h-4 text-slate-700" />
                 </button>
                 <button
-                    className="w-8 h-8 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 cursor-pointer flex items-center justify-center transition-all border-none"
-                    title="Xóa đơn hàng"
+                    disabled={!deletable}
+                    className={`w-8 h-8 rounded-xl flex items-center justify-center transition-all border-none ${
+                        deletable
+                            ? "bg-red-50 hover:bg-red-100 text-red-600 cursor-pointer"
+                            : "bg-slate-100 text-slate-300 cursor-not-allowed opacity-60"
+                    }`}
+                    title={getDeleteDisabledReason(order)}
                     onClick={async (e) => {
                         e.stopPropagation();
+                        if (!deletable) return;
                         const isConfirmed = await confirm({
                             title: "Xóa đơn hàng",
                             message: `Bạn có chắc chắn muốn xóa đơn hàng ${order.orderCode} không? Thao tác này không thể hoàn tác.`,
@@ -89,7 +106,7 @@ const OrderList = ({
                         }
                     }}
                 >
-                    <Trash2 className="w-4 h-4 text-red-500" />
+                    <Trash2 className={`w-4 h-4 ${deletable ? "text-red-500" : "text-slate-400"}`} />
                 </button>
             </div>
         );
@@ -173,14 +190,25 @@ const OrderList = ({
 
                                 {/* THANH TOÁN - FILTER GẮN TRỰC TIẾP TRÊN HEADER */}
                                 <th className="py-3.5 px-4 text-center">
-                                    <div className="inline-flex items-center gap-1.5 bg-white border border-slate-200 px-2.5 py-1 rounded-xl shadow-2xs">
+                                    <div className="inline-flex flex-wrap items-center justify-center gap-1.5 bg-white border border-slate-200 px-2.5 py-1 rounded-xl shadow-2xs">
                                         <span className="text-slate-600 font-extrabold whitespace-nowrap">THANH TOÁN</span>
+                                        <select
+                                            value={paymentMethod || "all"}
+                                            onChange={(e) => onPaymentMethodChange && onPaymentMethodChange(e.target.value)}
+                                            title="Lọc theo phương thức thanh toán"
+                                            className="bg-slate-50 hover:bg-slate-100 text-[#1D7461] font-bold text-xs py-0.5 px-1.5 rounded-lg border border-slate-200 outline-none cursor-pointer transition-all"
+                                        >
+                                            <option value="all" className="bg-white text-slate-900" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>Tất cả PT</option>
+                                            <option value="VNPAY" className="bg-white text-slate-900" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>VNPAY</option>
+                                            <option value="COD" className="bg-white text-slate-900" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>COD</option>
+                                        </select>
                                         <select
                                             value={paymentStatus || "all"}
                                             onChange={(e) => onPaymentStatusChange && onPaymentStatusChange(e.target.value)}
+                                            title="Lọc theo trạng thái thanh toán"
                                             className="bg-slate-50 hover:bg-slate-100 text-[#1D7461] font-bold text-xs py-0.5 px-1.5 rounded-lg border border-slate-200 outline-none cursor-pointer transition-all"
                                         >
-                                            <option value="all" className="bg-white text-slate-900" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>Tất cả</option>
+                                            <option value="all" className="bg-white text-slate-900" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>Tất cả TT</option>
                                             <option value="PENDING" className="bg-white text-slate-900" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>Chờ TT</option>
                                             <option value="COMPLETED" className="bg-white text-slate-900" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>Đã TT</option>
                                             <option value="FAILED" className="bg-white text-slate-900" style={{ backgroundColor: '#ffffff', color: '#0f172a' }}>Thất bại</option>
@@ -232,24 +260,27 @@ const OrderList = ({
                                             {formatCurrency(order.totalDiscountedPrice)}
                                         </td>
                                         <td className="py-3.5 px-4 text-center" onClick={(e) => e.stopPropagation()}>
-                                            <select
-                                                value={order.orderStatus || "PENDING"}
-                                                onChange={(e) => handleStatusSelectChange(e, order.id)}
-                                                onClick={(e) => e.stopPropagation()}
-                                                className={`py-1 px-3 rounded-full text-xs font-extrabold border cursor-pointer outline-none transition-all ${
-                                                    order.orderStatus === 'PENDING' ? 'bg-amber-50 text-amber-600 border-amber-200' :
-                                                    order.orderStatus === 'CONFIRMED' ? 'bg-blue-50 text-blue-600 border-blue-200' :
-                                                    order.orderStatus === 'SHIPPED' ? 'bg-purple-50 text-purple-600 border-purple-200' :
-                                                    order.orderStatus === 'DELIVERED' ? 'bg-[#F2F9F7] text-[#1D7461] border-[#D5EFE8]' :
-                                                    order.orderStatus === 'CANCELLED' ? 'bg-red-50 text-red-600 border-red-200' : 'bg-slate-50 text-slate-600 border-slate-200'
-                                                }`}
-                                            >
-                                                <option value="PENDING">Chờ xử lý</option>
-                                                <option value="CONFIRMED">Đã xác nhận</option>
-                                                <option value="SHIPPED">Đang vận chuyển</option>
-                                                <option value="DELIVERED">Đã giao</option>
-                                                <option value="CANCELLED">Đã hủy</option>
-                                            </select>
+                                            {isTerminalOrderStatus(order.orderStatus) ? (
+                                                <span
+                                                    title="Trạng thái kết thúc — không thể chuyển sang trạng thái khác"
+                                                    className={`inline-block py-1 px-3 rounded-full text-xs font-extrabold border select-none ${getOrderStatusMeta(order.orderStatus).badgeClass}`}
+                                                >
+                                                    {getOrderStatusMeta(order.orderStatus).label}
+                                                </span>
+                                            ) : (
+                                                <select
+                                                    value={order.orderStatus || "PENDING"}
+                                                    onChange={(e) => handleStatusSelectChange(e, order.id)}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                    className={`py-1 px-3 rounded-full text-xs font-extrabold border cursor-pointer outline-none transition-all ${getOrderStatusMeta(order.orderStatus).badgeClass}`}
+                                                >
+                                                    {getOrderStatusOptions(order).map((opt) => (
+                                                        <option key={opt.value} value={opt.value} disabled={opt.disabled}>
+                                                            {opt.label}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            )}
                                         </td>
                                         <td className="py-3.5 px-4 text-center">
                                             <div className="flex flex-col gap-1 items-center justify-center">
@@ -258,6 +289,20 @@ const OrderList = ({
                                                     <span className={`text-[10px] font-extrabold py-0.5 px-2 rounded-full inline-block ${getPaymentStatusInfo(order.paymentStatus).className}`}>
                                                         {getPaymentStatusInfo(order.paymentStatus).text}
                                                     </span>
+                                                )}
+                                                {order.paymentReviewRequired && (
+                                                    <button
+                                                        type="button"
+                                                        title="Đơn hàng phát sinh giao dịch cần đối soát — bấm để mở tab Cần đối soát"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            if (onNavigateToReview) onNavigateToReview(order.id);
+                                                        }}
+                                                        className="inline-flex items-center gap-1 text-[10px] font-extrabold py-0.5 px-2 rounded-full bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200 cursor-pointer transition-colors"
+                                                    >
+                                                        <AlertTriangle className="w-2.5 h-2.5 shrink-0" />
+                                                        <span>Cần đối soát</span>
+                                                    </button>
                                                 )}
                                             </div>
                                         </td>

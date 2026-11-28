@@ -2,16 +2,19 @@ import React, { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import Layout from "../../../layouts/admin/Layout";
 import { useAuth } from "../../../hooks/admin/useAuth.jsx";
-import { userService } from "../../../services/admin/index.js";
+import { orderService, userService } from "../../../services/admin/index.js";
 import UserList from "../../../features/admin/users/UserList";
 import UserFilters from "../../../features/admin/users/UserFilters";
 import UserStats from "../../../features/admin/users/UserStats";
 import UserDetailModal from "../../../features/admin/users/UserDetailModal";
 import { useConfirm } from "../../../context/ConfirmContext.jsx";
+import { useToast } from "../../../store/admin/ToastContext.jsx";
+import { getErrorMessage } from "../../../utils/errorUtils.js";
 
 
 const UserManagement = () => {
     const confirm = useConfirm();
+    const toast = useToast();
     const { user, loading, isAdmin } = useAuth();
     const [users, setUsers] = useState([]);
     const [stats, setStats] = useState({});
@@ -26,7 +29,7 @@ const UserManagement = () => {
     const [sortBy, setSortBy] = useState("id");
     const [sortDir, setSortDir] = useState("asc");
     const [selectedUser, setSelectedUser] = useState(null);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isDetailStatsLoading, setIsDetailStatsLoading] = useState(false);
 
     // Xử lý khi lọc theo trạng thái trên header
     const handleStatusFilter = (status) => {
@@ -53,7 +56,6 @@ const UserManagement = () => {
             const pageNumber = parseInt(currentPage, 10) || 0;
             const pageSizeNumber = 10;
 
-            // Gọi API lấy danh sách người dùng với phân trang và lọc
             const response = await userService.getAllUsers(
                 pageNumber,
                 pageSizeNumber,
@@ -69,12 +71,11 @@ const UserManagement = () => {
                 const rawList = userData.content || (Array.isArray(userData) ? userData : []);
                 setUsers(rawList);
                 setTotalPages(userData.totalPages || 1);
-                setTotalElements(userData.totalElements || rawList.length);
+                setTotalElements(userData.totalElements ?? rawList.length);
             } else {
                 throw new Error("Không thể lấy dữ liệu người dùng");
             }
 
-            // Gọi API lấy thống kê về người dùng
             const statsResponse = await userService.getCustomerStats();
             if (statsResponse.status === 200) {
                 const statsData = statsResponse.data?.data || statsResponse.data || {};
@@ -86,7 +87,7 @@ const UserManagement = () => {
             }
         } catch (err) {
             console.error("Lỗi khi tải dữ liệu người dùng:", err);
-            setError("Không thể tải danh sách người dùng. Vui lòng thử lại sau.");
+            setError(getErrorMessage(err, "Không thể tải danh sách người dùng. Vui lòng thử lại sau."));
         } finally {
             setIsLoading(false);
         }
@@ -96,119 +97,124 @@ const UserManagement = () => {
         if (!loading && user) {
             fetchUsers();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [loading, user, currentPage, searchTerm, selectedRole, selectedStatus, sortBy, sortDir]);
 
-    // Xử lý khi người dùng thay đổi trang
     const handlePageChange = (newPage) => {
         setCurrentPage(newPage);
     };
 
-    // Xử lý khi người dùng tìm kiếm
     const handleSearch = (term) => {
         setSearchTerm(term);
-        setCurrentPage(0); // Reset về trang đầu tiên khi tìm kiếm
+        setCurrentPage(0);
     };
 
-    // Xử lý khi người dùng lọc theo vai trò
     const handleRoleFilter = (role) => {
         setSelectedRole(role);
-        setCurrentPage(0); // Reset về trang đầu tiên khi lọc
-    };
-
-    const closeUserDetail = () => {
-        setIsModalOpen(false);
-        setSelectedUser(null);
+        setCurrentPage(0);
     };
 
     // Xử lý cập nhật thông tin người dùng
     const handleUpdateUser = async (updatedUser) => {
         try {
-            setIsLoading(true);
+            setError(null);
             const currentUser = selectedUser;
-            // Gọi API cập nhật thông tin người dùng
-            if (updatedUser.firstName !== currentUser.firstName ||
+            if (
+                !currentUser ||
+                updatedUser.firstName !== currentUser.firstName ||
                 updatedUser.lastName !== currentUser.lastName ||
-                updatedUser.mobile !== currentUser.mobile) {
-
+                updatedUser.mobile !== currentUser.mobile
+            ) {
                 await userService.updateUser(updatedUser.id, {
                     firstName: updatedUser.firstName,
                     lastName: updatedUser.lastName,
                     phoneNumber: updatedUser.mobile
                 });
+                toast?.success("Cập nhật thông tin người dùng thành công!");
             }
             fetchUsers();
 
             if (selectedUser && selectedUser.id === updatedUser.id) {
-                // Fetch lại thông tin chi tiết để đảm bảo dữ liệu mới nhất
                 const response = await userService.getUserDetails(updatedUser.id);
                 if (response.status === 200) {
-                    setSelectedUser(response.data);
+                    const freshUser = response.data?.data || response.data;
+                    setSelectedUser((prev) => ({
+                        ...prev,
+                        ...freshUser
+                    }));
                 }
             }
         } catch (err) {
             console.error("Lỗi khi cập nhật thông tin người dùng:", err);
-            setError("Không thể cập nhật thông tin người dùng. Vui lòng thử lại sau.");
+            const message = getErrorMessage(err, "Không thể cập nhật thông tin người dùng.");
+            setError(message);
+            toast?.error(message);
         }
     };
 
     // Xử lý thay đổi vai trò người dùng
     const handleChangeRole = async (userId, newRole) => {
+        if (Number(userId) === Number(user?.id)) {
+            toast?.warning("Không thể tự thay đổi vai trò của tài khoản quản trị đang đăng nhập.");
+            return;
+        }
         try {
+            setError(null);
             const response = await userService.changeUserRole(userId, newRole);
             if (response.status === 200) {
-                // Cập nhật lại danh sách người dùng
+                toast?.success("Cập nhật vai trò người dùng thành công!");
                 fetchUsers();
 
-                // Nếu đang xem chi tiết người dùng này, cập nhật thông tin
                 if (selectedUser && selectedUser.id === userId) {
-                    setSelectedUser({
-                        ...selectedUser,
+                    setSelectedUser((prev) => ({
+                        ...prev,
                         role: newRole
-                    });
+                    }));
                 }
             }
         } catch (err) {
             console.error("Lỗi khi thay đổi vai trò người dùng:", err);
-            setError("Không thể thay đổi vai trò người dùng. Vui lòng thử lại sau.");
+            const message = getErrorMessage(err, "Không thể thay đổi vai trò người dùng.");
+            setError(message);
+            toast?.error(message);
         }
     };
 
-    const handleViewUser = async (userId) => {
-        try {
-            // Fetch order details if needed, or use existing order from list
-            const userToView = userId.find(user => user.id === userId);
-            setSelectedUser(userToView);
-            setIsModalOpen(true);
-        } catch (err) {
-            console.error("Error viewing user details:", err);
-            setError("Cannot load user details. Please try again.");
-        }
-    };
-
-    // Xử lý thay đổi trạng thái hoạt động của người dùng
+    // Xử lý thay đổi trạng thái khóa của người dùng
     const handleToggleStatus = async (userId, shouldBeBanned) => {
+        if (Number(userId) === Number(user?.id)) {
+            toast?.warning("Không thể tự khóa tài khoản quản trị đang đăng nhập.");
+            return;
+        }
         try {
+            setError(null);
             const response = await userService.banUser(userId, shouldBeBanned);
             if (response.status === 200) {
-                // Cập nhật lại danh sách người dùng
+                toast?.success(shouldBeBanned ? "Đã khóa tài khoản người dùng!" : "Đã mở khóa tài khoản người dùng!");
                 fetchUsers();
 
-                // Nếu đang xem chi tiết người dùng này, cập nhật thông tin
                 if (selectedUser && selectedUser.id === userId) {
-                    setSelectedUser({
-                        ...selectedUser,
+                    setSelectedUser((prev) => ({
+                        ...prev,
                         banned: shouldBeBanned
-                    });
+                    }));
                 }
             }
         } catch (err) {
             console.error("Lỗi khi thay đổi trạng thái người dùng:", err);
-            setError("Không thể thay đổi trạng thái người dùng. Vui lòng thử lại sau.");
+            const message = getErrorMessage(err, "Không thể thay đổi trạng thái người dùng.");
+            setError(message);
+            toast?.error(message);
         }
     };
 
     // Xử lý xóa người dùng
     const handleDeleteUser = async (userId) => {
+        if (Number(userId) === Number(user?.id)) {
+            toast?.warning("Không thể tự xóa tài khoản quản trị đang đăng nhập.");
+            return;
+        }
+
         const isConfirmed = await confirm({
             title: "Xóa người dùng",
             message: "Bạn có chắc chắn muốn xóa tài khoản người dùng này không?",
@@ -220,49 +226,78 @@ const UserManagement = () => {
         if (!isConfirmed) return;
 
         try {
+            setError(null);
             const response = await userService.deleteUser(userId);
-            if (response.status === 200) {
-                // Đóng modal nếu đang xem chi tiết người dùng bị xóa
+            if (response.status === 200 || response.status === 204) {
                 if (selectedUser && selectedUser.id === userId) {
                     setSelectedUser(null);
                 }
-
-                // Cập nhật lại danh sách người dùng
+                toast?.success(response.data?.message || "Đã xóa tài khoản người dùng thành công!");
                 fetchUsers();
             }
         } catch (err) {
             console.error("Lỗi khi xóa người dùng:", err);
-            setError("Không thể xóa người dùng. Vui lòng thử lại sau.");
+            const message = getErrorMessage(err, "Không thể xóa người dùng.");
+            setError(message);
+            toast?.error(message);
         }
     };
 
-    // Hàm lấy chi tiết người dùng
+    // Hàm lấy chi tiết người dùng kèm thống kê đơn hàng thực tế từ order-service
     const handleViewDetail = async (userId) => {
         try {
-            setIsLoading(true);
-            const response = await userService.getUserDetails(userId);
-            if (response.status === 200) {
-                setSelectedUser(response.data);
+            setError(null);
+            setIsDetailStatsLoading(true);
+            const existing = users.find((u) => u.id === userId);
+            if (existing) {
+                setSelectedUser({ ...existing, orderCount: 0, totalSpent: 0 });
             }
+
+            const [userRes, ordersRes] = await Promise.allSettled([
+                userService.getUserDetails(userId),
+                orderService.getAllOrders(0, 100, "", "", "", "", "", "", "orderDate", "desc", userId)
+            ]);
+
+            if (userRes.status !== "fulfilled" || userRes.value.status !== 200) {
+                throw userRes.status === "rejected" ? userRes.reason : new Error("Không thể lấy chi tiết người dùng");
+            }
+
+            const detailUser = userRes.value.data?.data || userRes.value.data || {};
+            let orderCount = 0;
+            let totalSpent = 0;
+
+            if (ordersRes.status === "fulfilled" && ordersRes.value.status === 200) {
+                const pageData = ordersRes.value.data?.data || ordersRes.value.data || {};
+                const orderList = pageData.content || (Array.isArray(pageData) ? pageData : []);
+                orderCount = pageData.totalElements ?? orderList.length;
+                totalSpent = orderList
+                    .filter((o) => o.orderStatus !== "CANCELLED")
+                    .reduce((sum, o) => sum + Number(o.totalDiscountedPrice || 0), 0);
+            }
+
+            setSelectedUser({
+                ...detailUser,
+                orderCount,
+                totalSpent
+            });
         } catch (err) {
             console.error("Lỗi khi lấy chi tiết người dùng:", err);
-            setError("Không thể lấy chi tiết người dùng. Vui lòng thử lại sau.");
+            const message = getErrorMessage(err, "Không thể lấy chi tiết người dùng.");
+            setError(message);
+            toast?.error(message);
         } finally {
-            setIsLoading(false);
+            setIsDetailStatsLoading(false);
         }
     };
 
-    // Hàm đóng modal
     const handleCloseDetail = () => {
         setSelectedUser(null);
     };
 
-    // Nếu đang tải thông tin người dùng
     if (loading) {
         return <div>Đang tải...</div>;
     }
 
-    // Nếu người dùng không đăng nhập hoặc không phải admin
     if (!user || !isAdmin()) {
         return <Navigate to="/login" replace />;
     }
@@ -288,6 +323,7 @@ const UserManagement = () => {
                         {/* Danh sách người dùng với header filter và sắp xếp */}
                         <UserList
                             users={users}
+                            currentAdminId={user?.id}
                             isLoading={isLoading}
                             currentPage={currentPage}
                             totalPages={totalPages}
@@ -312,6 +348,8 @@ const UserManagement = () => {
                 {selectedUser && (
                     <UserDetailModal
                         user={selectedUser}
+                        currentAdminId={user?.id}
+                        isStatsLoading={isDetailStatsLoading}
                         onClose={handleCloseDetail}
                         onUpdateUser={handleUpdateUser}
                         onChangeRole={handleChangeRole}
